@@ -34,12 +34,9 @@ N.times:
   if y_new: res += w_left
   cards.add((x,y))
 echo res
-
 # 1 x 5 x x
 # x . x . .
 # x x 2 x x
 # x . x . .
 # 4 x 3 x x
 # (4 + 4) + (3 + 3) + (3 + 0 - 1) + (0 + 0 - 1)
-# 1 2 x
-# x x .

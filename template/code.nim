@@ -1,11 +1,7 @@
 import sequtils,strutils,strscans,algorithm,math,future,sets,queues,tables
 template get():string = stdin.readLine()
 template times(n:int,body:untyped): untyped = (for _ in 0..<n: body)
-# newSeqWith(4,rand())
 # {key: val}.newOrderedTable.
-# @[1, 2, 3, 4].mapIt($(4 * it))
-
-
 
 template main(MAIN_BODY:untyped):untyped =
   if isMainModule:
@@ -49,7 +45,16 @@ template mathUtils():untyped =
       for j in countup(i*2,n,i):
         result[j] = false
   proc getPrimes(n:int):seq[int] =
+    # [2,3,5,...<n]
     let isPrime = getIsPrimes(n)
     result = newSeq[int](0)
     for i,p in isPrime:
       if p : result.add(i)
+  proc power(x,n:int,modulo:int = 0): int =
+    #繰り返し二乗法での x ** n
+    if n == 0: return 1
+    if n == 1: return x
+    let
+      pow_2 = power(x,n div 2,modulo)
+    result = pow_2 * pow_2 * (if n mod 2 == 1: x else: 1)
+    if modulo > 0: result = result mod modulo
