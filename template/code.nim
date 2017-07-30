@@ -23,9 +23,11 @@ template assignOperators():untyped =
   template `-=`(x,y:typed):void = x = x - y
   template `*=`(x,y:typed):void = x = x * y
   template `/=`(x,y:typed):void = x = x / y
-  template `^=`(x,y:typed):void = x = x ^ y
-  template `mod=`(x,y:typed):void = x = x mod y
-  template `div=`(x,y:typed):void = x = x div y
+  template `^=`(x,y:typed):void = x = x xor y
+  template `&=`(x,y:typed):void = x = x and y
+  template `|=`(x,y:typed):void = x = x or y
+  template `%=`(x,y:typed):void = x = x mod y
+  template `//=`(x,y:typed):void = x = x div y
   template `max=`(x,y:typed):void = x = max(x,y)
   template `min=`(x,y:typed):void = x = min(x,y)
   template `gcd=`(x,y:typed):void = x = gcd(x,y)
