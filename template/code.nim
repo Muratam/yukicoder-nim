@@ -19,14 +19,35 @@ template iterations():untyped =
 
 
 template assignOperators():untyped =
-  template  `+=`(x,y:typed):void = x = x + y
-  template  `-=`(x,y:typed):void = x = x - y
-  template  `*=`(x,y:typed):void = x = x * y
-  template  `/=`(x,y:typed):void = x = x / y
-  template  `%=`(x,y:typed):void = x = x mod y
-  template `//=`(x,y:typed):void = x = x div y
+  template `+=`(x,y:typed):void = x = x + y
+  template `-=`(x,y:typed):void = x = x - y
+  template `*=`(x,y:typed):void = x = x * y
+  template `/=`(x,y:typed):void = x = x / y
+  template `^=`(x,y:typed):void = x = x ^ y
+  template `mod=`(x,y:typed):void = x = x mod y
+  template `div=`(x,y:typed):void = x = x div y
+  template `max=`(x,y:typed):void = x = max(x,y)
+  template `min=`(x,y:typed):void = x = min(x,y)
+  template `gcd=`(x,y:typed):void = x = gcd(x,y)
+  template `lcm=`(x,y:typed):void = x = lcm(x,y)
+
 
 template bitOperators():untyped =
-  proc popcount(n:int):cint{.importC: "__builtin_popcount", noDecl .} # sum of "1"
+  # countBits32 / isPowerOfTwo / nextPowerOfTwo
   proc clz(n:int):cint{.importC: "__builtin_clz", noDecl .} # <0000>10 -> 4
   proc ctz(n:int):cint{.importC: "__builtin_ctz", noDecl .} # 01<0000> -> 4
+
+template mathUtils():untyped =
+  proc getIsPrimes(n:int) :seq[bool] =
+    result = newSeqWith(n+1,true)
+    result[0] = false
+    result[1] = false
+    for i in 2..n.float.sqrt.int :
+      if not result[i]: continue
+      for j in countup(i*2,n,i):
+        result[j] = false
+  proc getPrimes(n:int):seq[int] =
+    let isPrime = getIsPrimes(n)
+    result = newSeq[int](0)
+    for i,p in isPrime:
+      if p : result.add(i)
