@@ -48,4 +48,6 @@ template mathUtils():untyped =
     result = pow_2 * pow_2 * (if n mod 2 == 1: x else: 1)
     if modulo > 0: result = result mod modulo
 
+  proc parseDecimal(n:int) : auto = ($n).mapIt(it.ord - '0'.ord)
+
 
