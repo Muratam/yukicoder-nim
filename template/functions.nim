@@ -81,15 +81,18 @@ template bitOperators():untyped =
   # (countBits32 isPowerOfTwo nextPowerOfTwo)
   proc clz(n:int):cint{.importC: "__builtin_clz", noDecl .} # <0000>10 -> 4
   proc ctz(n:int):cint{.importC: "__builtin_ctz", noDecl .} # 01<0000> -> 4
-# countDuplicate enumerate ...
+# toSeq int{split,join} countDuplicate enumerate ...
 template seqUtils():untyped =
+  proc toSeq(str:string):seq[char] = result = @[];(for s in str: result &= s)
+  proc split(n:int):auto = ($n).toSeq().mapIt(it.ord- '0'.ord)
+  proc join(n:seq[int]):int = n.mapIt($it).join("").parseInt()
   proc coundDuplicate[T](arr:seq[T]): auto =
     arr.sorted(cmp[T]).foldl(
       if a[^1].key == b:
         a[0..<a.len-1] & (b, a[^1].val+1)
       else:
         a & (b, 1),
-      @[ (key:arr[0],val:0) ])
+      @[ (key:arr[0],val:1) ])
   proc enumerate[T](arr:seq[T]): seq[tuple[i:int,val:T]] =
     result = @[]; for i,a in arr: result &= (i,a)
 
