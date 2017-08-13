@@ -18,7 +18,7 @@ template assignOperators():untyped =
   template `gcd=`*(x,y:typed):void = x = gcd(x,y)
   template `lcm=`*(x,y:typed):void = x = lcm(x,y)
 
-# prime factor power parseDecimal
+# prime factor power parseDecimal,probAdd
 template mathUtils():untyped =
 
   proc millerRabinIsPrime(n:int):bool = # O(log n)
@@ -163,6 +163,12 @@ template mathUtils():untyped =
 
   proc parseDecimal(n:int) : seq[int] =
     result = @[]; for it in $n: result &= it.ord - '0'.ord
+  proc probAdd(ps,qs:seq[float]):seq[float] =
+    result = newSeqWith(ps.len + qs.len - 1,0.0)
+    for i,p in ps:
+      for j,q in qs:
+        result[i + j] += p * q
+
 
 # transpose matIt ...
 template matrixUtils():untyped =
