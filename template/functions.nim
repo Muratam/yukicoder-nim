@@ -114,7 +114,6 @@ template mathUtils():untyped =
         n = n div p
     if n != 1:
       result &= n
-
   template getFactorByProcess(n:int):seq[int] =
     import osproc
     when defined(macosx):
