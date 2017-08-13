@@ -1,8 +1,6 @@
 import sequtils,strutils,strscans,algorithm,math,future,macros
 template get*():string = stdin.readLine()
 
-
-
 proc millerRabinIsPrime(n:int):bool = # O(log n)
   proc ctz(n:int):cint{.importC: "__builtin_ctz", noDecl .} # 01<0000> -> 4
   proc power(x,n:int,modulo:int = 0): int =
