@@ -1,11 +1,16 @@
-# 二軍
+# 二軍 small template
 template optPow{`^`(2,n)}(n:int) : int = 1 shl n
 template If*(ex:untyped):untyped = (if not(ex) : continue)
 const INF = int.high div 4
 const dxdy4 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0)]
 const dxdy8 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0),(1,1),(1,-1),(-1,-1),(-1,1)]
 
-
+template io():untyped =
+  # when loooong readline()
+  template fgets(f:File,buf:untyped,size:int):void =
+    proc c_fgets(c: cstring, n: int, file: File): void {.importc: "fgets", header: "<stdio.h>", tags: [ReadIOEffect].}
+    var buf: array[size, char]
+    c_fgets(buf,sizeof((buf)),f)
 
 # bitset
 template bitsetOperators():untyped =
@@ -202,13 +207,16 @@ template seqUtils():untyped =
   proc toSeq(str:string):seq[char] = result = @[];(for s in str: result &= s)
   proc split(n:int):auto = ($n).toSeq().mapIt(it.ord- '0'.ord)
   proc join(n:seq[int]):int = n.mapIt($it).join("").parseInt()
-  proc coundDuplicate[T](arr:seq[T]): auto =
-    arr.sorted(cmp[T]).foldl(
-      if a[^1].key == b:
-        a[0..<a.len-1] & (b, a[^1].val+1)
-      else:
-        a & (b, 1),
-      @[ (key:arr[0],val:1) ])
+
+  proc toCountedTable*[A](keys: openArray[A]): CountTable[A] =
+    result = initCountTable[A](nextPowerOfTwo(keys.len * 3 div 2 + 4))
+    for key in items(keys): result[key] = 1 + (if key in result : result[key] else: 0)
+
+  proc coundDuplicate[T](keys:openArray[T]): seq[tuple[key:T,val:int]] =
+    var ct = initCountTable[T](nextPowerOfTwo(keys.len * 3 div 2 + 4))
+    for k in items(keys): ct[k] = 1 + (if k in ct : ct[k] else: 0)
+    return toSeq(ct.pairs)
+
   proc enumerate[T](arr:seq[T]): seq[tuple[i:int,val:T]] =
     result = @[]; for i,a in arr: result &= (i,a)
 
@@ -253,3 +261,14 @@ template geometory():untyped =
   proc `-`(p,v:Vec2):Vec2 = result.x = p.x-v.x; result.y = p.y-v.y
   proc `*`(p,v:Vec2):int = p.x * v.x + p.y * v.y
   proc sqlen(p:Vec2):int = p * p
+
+template deprecated():untyped =
+  # proc coundDuplicate[T](arr:openArray[T]): seq[tuple[key:T,val:int]] =
+  #   # 種類が多い時にはこっちの方が速いかも ?
+  #   var arr2 = arr.sorted(cmp[T])
+  #   result = @[(arr2[0],1)]
+  #   for a in arr2[1..arr2.len()-1]:
+  #     if result[^1].key == a:
+  #       result[^1].val += 1
+  #     else:
+  #       result &= (a,1)
