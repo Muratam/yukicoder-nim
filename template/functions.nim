@@ -1,6 +1,11 @@
+# 二軍
+template optPow{`^`(2,n)}(n:int) : int = 1 shl n
+template If*(ex:untyped):untyped = (if not(ex) : continue)
 const INF = int.high div 4
 const dxdy4 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0)]
 const dxdy8 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0),(1,1),(1,-1),(-1,-1),(-1,1)]
+
+
 
 # bitset
 template bitsetOperators():untyped =
