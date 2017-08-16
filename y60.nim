@@ -53,28 +53,3 @@ for xyhp in ene_XYHP:
   let (x,y,hp) = xyhp.unpack(3)
   damageSum += max(0, hp - field[x][y])
 echo damageSum
-
-
-#[
-let
-  (N,K) = get().split().map(parseInt).unpack(2)
-  ene_XYHP = newSeqWith(N,get().split().map(parseInt))
-  my_XYWHD = newSeqWith(K,get().split().map(parseInt))
-var field : array[-501..501,array[-501..501,int]]
-#################### 2-imos ######################
-for XYWHD in my_XYWHD:
-  let # [X,X+W] [Y,Y+W] に
-    (X,Y,W,H,D) = XYWHD.unpack(5)
-    x1 = X
-    y1 = Y
-    x2 = min(500,X+W)
-    y2 = min(500,Y+H)
-  field.imosRegist2(x1,y1,x2,y2,D)
-field.imosReduce2()
-
-var damageSum = 0
-for XYHP in ene_XYHP:
-  let (X,Y,HP) = XYHP.unpack(3)
-  damageSum += max(0,HP - field[X][Y])
-echo damageSum
-]#

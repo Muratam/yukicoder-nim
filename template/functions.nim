@@ -1,12 +1,27 @@
-# 二軍 small template
-template optPow{`^`(2,n)}(n:int) : int = 1 shl n
-template If*(ex:untyped):untyped = (if not(ex) : continue)
-const INF = int.high div 4
-const dxdy4 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0)]
-const dxdy8 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0),(1,1),(1,-1),(-1,-1),(-1,1)]
+# Main templates !!
+template templates():untyped=
+  import sequtils,strutils,algorithm,math,future,macros
+  # import sets,queues,tables,nre,pegs,rationals
+  template get*():string = stdin.readLine() #.strip()
+  macro unpack*(arr: auto,cnt: static[int]): auto =
+    let t = genSym(); result = quote do:(let `t` = `arr`;())
+    for i in 0..<cnt: result[0][1].add(quote do:`t`[`i`])
+  template times*(n:int,body:untyped): untyped = (for _ in 0..<n: body)
+  template `max=`*(x,y:typed) = x = max(x,y)
+  template `min=`*(x,y:typed) = x = min(x,y)
 
+
+# small template
+template almostTemplates():untyped =
+  template optPow{`^`(2,n)}(n:int) : int = 1 shl n
+  template If*(ex:untyped):untyped = (if not(ex) : continue)
+  const INF = int.high div 4
+  const dxdy4 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0)]
+  const dxdy8 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0),(1,1),(1,-1),(-1,-1),(-1,1)]
+
+
+# scanints (1e6 行入力以上の時)
 template io():untyped =
-  # when io bounded
   proc getchar():char {. importc:"getchar",header: "<stdio.h>" .}
   proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
   template scan1[T](thread_safe:bool): T =
@@ -21,25 +36,50 @@ template io():untyped =
     if minus: result *= -1
     result
   macro scanints(cnt:static[int]): auto =
-    result = nnkBracket.newNimNode
-    for i in 0..<cnt: result.add(quote do: scan1[int](false))
+    if cnt == 1:(result = (quote do: scan1[int](false)))
+    else:(result = nnkBracket.newNimNode;for i in 0..<cnt:(result.add(quote do: scan1[int](false))))
+# toSeq int{split,join} countDuplicate enumerate ...
+template seqUtils():untyped =
+  proc toSeq(str:string):seq[char] = result = @[];(for s in str: result &= s)
+  proc split(n:int):auto = ($n).toSeq().mapIt(it.ord- '0'.ord)
+  proc join(n:seq[int]):int = n.mapIt($it).join("").parseInt()
+
+  proc toCountedTable*[A](keys: openArray[A]): CountTable[A] =
+    result = initCountTable[A](nextPowerOfTwo(keys.len * 3 div 2 + 4))
+    for key in items(keys): result[key] = 1 + (if key in result : result[key] else: 0)
+
+  proc coundDuplicate[T](keys:openArray[T]): seq[tuple[key:T,val:int]] =
+    var ct = initCountTable[T](nextPowerOfTwo(keys.len * 3 div 2 + 4))
+    for k in items(keys): ct[k] = 1 + (if k in ct : ct[k] else: 0)
+    return toSeq(ct.pairs)
+
+  proc enumerate[T](arr:seq[T]): seq[tuple[i:int,val:T]] =
+    result = @[]; for i,a in arr: result &= (i,a)
+# Vec2(int) + - * len
+template geometory():untyped =
+  type Vec2 = object
+  x,y: int
+  proc `+`(p,v:Vec2):Vec2 = result.x = p.x+v.x; result.y = p.y+v.y
+  proc `-`(p,v:Vec2):Vec2 = result.x = p.x-v.x; result.y = p.y-v.y
+  proc `*`(p,v:Vec2):int = p.x * v.x + p.y * v.y
+  proc sqlen(p:Vec2):int = p * p
 
 
 # bitset
 template bitsetOperators():untyped =
-  proc `+=`[T](x:var set[T],y:T):void = x.incl(y)
-  proc `-=`[T](x:var set[T],y:T):void = x.excl(y)
-  proc `+=`[T](x:var set[T],y:set[T]):void = x = x.union(y)
-  proc `*=`[T](x:var set[T],y:set[T]):void = x = x.intersection(y)
-  proc `-=`[T](x:var set[T],y:set[T]):void = x = x.difference(y)
+  proc `+=`[T](x:var set[T],y:T) = x.incl(y)
+  proc `-=`[T](x:var set[T],y:T) = x.excl(y)
+  proc `+=`[T](x:var set[T],y:set[T]) = x = x.union(y)
+  proc `*=`[T](x:var set[T],y:set[T]) = x = x.intersection(y)
+  proc `-=`[T](x:var set[T],y:set[T]) = x = x.difference(y)
   converter toInt8(x:int) : int8 = x.toU8()
 
 # %=  //=  gcd= lcm=
 template assignOperators():untyped =
-  template `%=`*(x,y:typed):void = x = x mod y
-  template `//=`*(x,y:typed):void = x = x div y
-  template `gcd=`*(x,y:typed):void = x = gcd(x,y)
-  template `lcm=`*(x,y:typed):void = x = lcm(x,y)
+  template `%=`*(x,y:typed) = x = x mod y
+  template `//=`*(x,y:typed) = x = x div y
+  template `gcd=`*(x,y:typed) = x = gcd(x,y)
+  template `lcm=`*(x,y:typed) = x = lcm(x,y)
 
 # prime factor power parseDecimal,probAdd
 template mathUtils():untyped =
@@ -217,28 +257,12 @@ template matrixUtils():untyped =
         let b {.inject.} = matB[x][y]
         result[x][y] = op
     result
-# clz ctz ...
+# clz ctz pow2Ctz...
 template bitOperators():untyped =
   # (countBits32 isPowerOfTwo nextPowerOfTwo)
   proc clz(n:int):cint{.importC: "__builtin_clz", noDecl .} # <0000>10 -> 4
   proc ctz(n:int):cint{.importC: "__builtin_ctz", noDecl .} # 01<0000> -> 4
-# toSeq int{split,join} countDuplicate enumerate ...
-template seqUtils():untyped =
-  proc toSeq(str:string):seq[char] = result = @[];(for s in str: result &= s)
-  proc split(n:int):auto = ($n).toSeq().mapIt(it.ord- '0'.ord)
-  proc join(n:seq[int]):int = n.mapIt($it).join("").parseInt()
-
-  proc toCountedTable*[A](keys: openArray[A]): CountTable[A] =
-    result = initCountTable[A](nextPowerOfTwo(keys.len * 3 div 2 + 4))
-    for key in items(keys): result[key] = 1 + (if key in result : result[key] else: 0)
-
-  proc coundDuplicate[T](keys:openArray[T]): seq[tuple[key:T,val:int]] =
-    var ct = initCountTable[T](nextPowerOfTwo(keys.len * 3 div 2 + 4))
-    for k in items(keys): ct[k] = 1 + (if k in ct : ct[k] else: 0)
-    return toSeq(ct.pairs)
-
-  proc enumerate[T](arr:seq[T]): seq[tuple[i:int,val:T]] =
-    result = @[]; for i,a in arr: result &= (i,a)
+  proc pow2Ctz(n:int):int = n and -n # 0101<0000> -> 2^4
 
 # rep each eachit ...
 template iterations():untyped =
@@ -273,32 +297,25 @@ template searching():untyped =
         if cost[nx][ny] == INF :
           opens.push((nx,ny,n_v))
     return cost
-# Vec2(int) + - * len
-template geometory():untyped =
-  type Vec2 = object
-  x,y: int
-  proc `+`(p,v:Vec2):Vec2 = result.x = p.x+v.x; result.y = p.y+v.y
-  proc `-`(p,v:Vec2):Vec2 = result.x = p.x-v.x; result.y = p.y-v.y
-  proc `*`(p,v:Vec2):int = p.x * v.x + p.y * v.y
-  proc sqlen(p:Vec2):int = p * p
 
+# imos
 template algorithms():untyped =
   # var field : array[-501..501,array[-501..501,int]] などが可能...
   # range :: [x1..x2][y1..y2]
-  template imosReduce2(field:typed):void =
+  template imosReduce2(field:typed) =
     for x in field.low + 1 .. field.high:
       for y in field[x].low .. field[x].high:
         field[x][y] += field[x-1][y]
     for x in field.low .. field.high:
       for y in field[x].low + 1 .. field[x].high:
         field[x][y] += field[x][y-1]
-  template imosRegist2(field:typed,x1,y1,x2,y2:int,val:typed):void =
+  template imosRegist2(field:typed,x1,y1,x2,y2:int,val:typed) =
     field[x1][y1] += val
     field[x1][y2+1] -= val
     field[x2+1][y1] -= val
     field[x2+1][y2+1] += val
 
-
+# deprecated...
 template deprecated():untyped =
   # proc coundDuplicate[T](arr:openArray[T]): seq[tuple[key:T,val:int]] =
   #   # 種類が多い時にはこっちの方が速いかも ?
@@ -309,3 +326,87 @@ template deprecated():untyped =
   #       result[^1].val += 1
   #     else:
   #       result &= (a,1)
+  discard
+####### Begin Data Structures ##################
+# binary Heap
+template binaryHeap():untyped =
+  ####################### BINARY HEAP ############################
+  type
+    BinaryHeap*[T] = object
+      nodes: seq[T]
+      compare: proc(x,y:T):int
+      popchunk: bool
+  proc newBinaryHeap*[T](compare:proc(x,y:T):int): BinaryHeap[T] =
+    BinaryHeap[T](nodes:newSeq[T](),compare:compare,popchunk:false)
+  proc compareNode[T](h:BinaryHeap[T],i,j:int):int = h.compare(h.nodes[i],h.nodes[j])
+  proc size*[T](h:BinaryHeap[T]):int = h.nodes.len() - h.popchunk.int
+  proc items*[T](h:var BinaryHeap[T]):seq[T] =
+    if h.popchunk : discard h.popimpl()
+    return h.nodes
+  proc top*[T](h:var BinaryHeap[T]): T =
+    if h.popchunk : discard h.popimpl()
+    return h.nodes[0]
+  proc push*[T](h:var BinaryHeap[T],node:T) =
+    if h.popchunk :
+      h.nodes[0] = node
+      h.shiftdown()
+    else: h.pushimpl(node)
+  proc pop*[T](h:var BinaryHeap[T]):T =
+    if h.popchunk:
+      discard h.popimpl()
+    h.popchunk = true
+    return h.nodes[0]
+
+  proc shiftdown[T](h:var BinaryHeap[T]) =
+    h.popchunk = false
+    let size = h.nodes.len()
+    var i = 0
+    while true :
+      let L = i * 2 + 1
+      let R = i * 2 + 2
+      if L >= size : break
+      let child = if R < size and h.compareNode(R,L) <= 0 : R else: L
+      if h.compareNode(i,child) <= 0: break
+      swap(h.nodes[i],h.nodes[child])
+      i = child
+
+  proc pushimpl[T](h:var BinaryHeap[T],node:T) =
+    h.nodes.add(node) #末尾に追加
+    var i = h.nodes.len() - 1
+    while i > 0: # 末尾から木を整形
+      let parent = (i - 1) div 2
+      if h.compare(h.nodes[parent],node) <= 0: break
+      h.nodes[i] = h.nodes[parent]
+      i = parent
+    h.nodes[i] = node
+
+  proc popimpl[T](h:var BinaryHeap[T]):T =
+    result = h.nodes[0] # rootと末尾を入れ替えて木を整形
+    h.nodes[0] = h.nodes[^1]
+    h.nodes.setLen(h.nodes.len() - 1)
+    h.shiftdown()
+  ####################### BINARY HEAP ############################
+# BIT (Binary Indexed Tree)
+template binaryIndexedTree():untyped =
+  ############## Binary Indexed Tree #####################
+  type BinaryIndexedTree*[CNT:static[int],T] = object
+    data: array[CNT,T]
+  proc `[]`*[CNT,T](bit:BinaryIndexedTree[CNT,T],i:int): T =
+    result = 0 # 000111122[2]2223333
+    var index = i
+    while index >= 0:
+      result += bit.data[index]
+      index -= index and -index # 0111 -> 0110 -> 0100
+  proc inc*[CNT,T](bit:var BinaryIndexedTree[CNT,T],i:int,val:T) =
+    var index = i
+    while index < bit.data.len():
+      bit.data[index] += val
+      index += index and -index # 001101 -> 001110 -> 010001
+  proc `$`*[CNT,T](bit:BinaryIndexedTree[CNT,T]): string =
+    result = "["
+    for i in 0..bit.data.high: result &= $(bit[i]) & ", "
+    return result[0..result.len()-2] & "]"
+  proc len*[CNT,T](bit:BinaryIndexedTree[CNT,T]): int = bit.data.len()
+  ############## Binary Indexed Tree #####################
+
+######### End Data Structures ##################
