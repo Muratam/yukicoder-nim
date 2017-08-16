@@ -7,10 +7,25 @@ const dxdy8 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0),(1,1),(1,-1),(-1,
 
 template io():untyped =
   # when loooong readline()
-  template fgets(f:File,buf:untyped,size:int):void =
-    proc c_fgets(c: cstring, n: int, file: File): void {.importc: "fgets", header: "<stdio.h>", tags: [ReadIOEffect].}
-    var buf: array[size, char]
-    c_fgets(buf,sizeof((buf)),f)
+  # template fgets(f:File,buf:untyped,size:int):void =
+  #   proc c_fgets(c: cstring, n: int, file: File): void {.importc: "fgets", header: "<stdio.h>", tags: [ReadIOEffect].}
+  #   var buf: array[size, char]
+  #   c_fgets(buf,sizeof((buf)),f)
+  # when io bounded
+  proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
+  proc scan1[T](): T =
+    var minus = false
+    result = 0
+    while true:
+      var k = getchar_unlocked()
+      if k == '-' : minus = true
+      elif k < '0' or k > '9': break
+      else: result = 10 * result + k.ord - '0'.ord
+    if minus: result *= -1
+  macro scanints(cnt:static[int]): auto =
+    result = nnkBracket.newNimNode
+    for i in 0..<cnt: result.add(quote do: scan1[int]())
+
 
 # bitset
 template bitsetOperators():untyped =
@@ -134,6 +149,13 @@ template mathUtils():untyped =
     p[1..p.len()-1].map(parseInt)
 
 
+  proc power(x,n:int): int =
+    if n == 0: return 1
+    if n == 1: return x
+    let pow_2 = power(x,n div 2,modulo)
+    return pow_2 * pow_2 * (if n mod 2 == 1: x else: 1)
+
+  proc sign(n:int):int = (if n < 0 : -1 else: 1)
 
   proc power(x,n:int,modulo:int = 0): int =
     if n == 0: return 1
@@ -261,6 +283,21 @@ template geometory():untyped =
   proc `-`(p,v:Vec2):Vec2 = result.x = p.x-v.x; result.y = p.y-v.y
   proc `*`(p,v:Vec2):int = p.x * v.x + p.y * v.y
   proc sqlen(p:Vec2):int = p * p
+
+template algorithms():untyped =
+  template imosReduce2(field:typed):void =
+    for x in field.low + 1 .. field.high:
+      for y in field[x].low .. field[x].high:
+        field[x][y] += field[x-1][y]
+    for x in field.low .. field.high:
+      for y in field[x].low + 1 .. field[x].high:
+        field[x][y] += field[x][y-1]
+  template imosRegist2(field:typed,x1,y1,x2,y2:int,val:typed):void =
+    field[x1][y1] += val
+    field[x1][y2+1] -= val
+    field[x2+1][y1] -= val
+    field[x2+1][y2+1] += val
+
 
 template deprecated():untyped =
   # proc coundDuplicate[T](arr:openArray[T]): seq[tuple[key:T,val:int]] =
