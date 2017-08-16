@@ -20,7 +20,7 @@ template almostTemplates():untyped =
   const dxdy8 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0),(1,1),(1,-1),(-1,-1),(-1,1)]
 
 
-# scanints (1e6 行入力以上の時)
+# scanints (1e6 行 で 10ms の差)
 template io():untyped =
   proc getchar():char {. importc:"getchar",header: "<stdio.h>" .}
   proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
@@ -392,9 +392,10 @@ template binaryIndexedTree():untyped =
   type BinaryIndexedTree*[CNT:static[int],T] = object
     data: array[CNT,T]
   proc `[]`*[CNT,T](bit:BinaryIndexedTree[CNT,T],i:int): T =
+    if i == 0 : return bit.data[0]
     result = 0 # 000111122[2]2223333
     var index = i
-    while index >= 0:
+    while index > 0:
       result += bit.data[index]
       index -= index and -index # 0111 -> 0110 -> 0100
   proc inc*[CNT,T](bit:var BinaryIndexedTree[CNT,T],i:int,val:T) =

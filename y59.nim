@@ -1,6 +1,6 @@
 import sequtils,strutils,algorithm,math,future,macros
 # import sets,queues,tables,nre,pegs,rationals
-template get*():string = stdin.readLine() #.strip()
+template get*():string = stdin.readLine().strip()
 macro unpack*(arr: auto,cnt: static[int]): auto =
   let t = genSym(); result = quote do:(let `t` = `arr`;())
   for i in 0..<cnt: result[0][1].add(quote do:`t`[`i`])
@@ -12,9 +12,10 @@ template `min=`*(x,y:typed):void = x = min(x,y)
 type BinaryIndexedTree*[CNT:static[int],T] = object
     data: array[CNT,T]
 proc `[]`*[CNT,T](bit:BinaryIndexedTree[CNT,T],i:int): T =
+  if i == 0 : return bit.data[0]
   result = 0 # 000111122[2]2223333
   var index = i
-  while index >= 0:
+  while index > 0:
     result += bit.data[index]
     index -= index and -index # 0111 -> 0110 -> 0100
 proc inc*[CNT,T](bit:var BinaryIndexedTree[CNT,T],i:int,val:T) =
@@ -48,14 +49,17 @@ macro scanints(cnt:static[int]): auto =
   else:(result = nnkBracket.newNimNode;for i in 0..<cnt:(result.add(quote do: scan1[int](false))))
 
 let
-  (N,K) = scanints(2).unpack(2) # ~1e6
-  W = newSeqWith(N,scanints(1)) # ~1e6
+  (N,K) = get().split().map(parseInt).unpack(2) # ~1e6
+  W = newSeqWith(N,get().parseInt()) # ~1e6
 var cargo : BinaryIndexedTree[100_0001,int]
+var last = 0
 for w in W:
   if w > 0:
-    if cargo[^1] - cargo[w-1] >= K: continue # W以上の荷物がK個以上
+    if last - cargo[w-1] >= K: continue # W以上の荷物がK個以上
     cargo.inc w, 1
+    last += 1
   else:
     if cargo[-w-1] == cargo[-w] : continue # 荷物が無い
     cargo.inc -w,-1
-echo cargo[^1]
+    last -= 1
+echo last
