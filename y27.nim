@@ -2,14 +2,7 @@ import sequtils,strutils,algorithm,math,future,macros
 template get*():string = stdin.readLine().strip()
 template `min=`*(x,y:typed):void = x = min(x,y)
 
-macro scanints(cnt:static[int]): auto =
-  if cnt == 1:(result = (quote do: scan1[int](false)))
-  else:(result = nnkBracket.newNimNode;for i in 0..<cnt:(result.add(quote do: scan1[int](false))))
-
-macro parse() : seq = result = "[[[[4]]]]".replace("[","@[").parseStmt
-const a = parse()
-echo a
-#let V = get().split().map(parseInt).sorted(cmp) # 4 * [1,30]
+#[
 const INF = 1e6.int
 proc getABCCost() : array[31,array[31,array[31,array[31,int]]]] =
   for A in 1..30:
@@ -46,7 +39,20 @@ for v1 in 0..<30:
       for v4 in 0..<30: # ****0000 => ****
         if ans[v1][v2][v3][v4] == 99 : ans[v1][v2][v3][v4] = 0
 echo ans
-#[
+# import sequtils,strutils,algorithm,math,macros
+# macro parse() : seq = result = "[[[[4]]]]".replace("[","@[").parseStmt
+# let V = stdin.readLine.strip.split.map(parseInt).sorted(cmp,Descending)
+# const ANS = parse()
+# let (a0,a1,a2,a3) = (V[0]-1,V[1]-1,V[2]-1,V[3]-1)
+# if ANS.len > a0 and ANS[a0].len > a1 and ANS[a0][a1].len > a2 and ANS[a0][a1][a2].len > a3: echo ANS[a0][a1][a2][a3]
+# else: echo 4
+# SPACE
+# ,0]
+# ,0]]
+# default : 4 (,4]] delete)
+]#
+
+
 
 let V = get().split().map(parseInt).sorted(cmp) # 4 * [1,30]
 const INF = 1e6.int
@@ -69,4 +75,3 @@ echo ans
 # 0_________________
 # 0__1__2__3__4__5_
 # 0__11___
-]#
