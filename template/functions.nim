@@ -298,7 +298,7 @@ template searching():untyped =
           opens.push((nx,ny,n_v))
     return cost
 
-# imos
+# imos,toporogicalSort
 template algorithms():untyped =
   # var field : array[-501..501,array[-501..501,int]] などが可能...
   # range :: [x1..x2][y1..y2]
@@ -309,11 +309,26 @@ template algorithms():untyped =
     for x in field.low .. field.high:
       for y in field[x].low + 1 .. field[x].high:
         field[x][y] += field[x][y-1]
+
   template imosRegist2(field:typed,x1,y1,x2,y2:int,val:typed) =
     field[x1][y1] += val
     field[x1][y2+1] -= val
     field[x2+1][y1] -= val
     field[x2+1][y2+1] += val
+
+  proc topologicalSort(edges:seq[seq[int]]) : seq[int] =
+    # edges : n -> m の隣接リスト
+    var visited = newSeqWith(edges.len,0)
+    var tsorted = newSeq[int]()
+    proc visit(node:int) =
+      visited[node] += 1
+      if visited[node] > 1: return
+      for edge in edges[node]: visit(edge)
+      tsorted &= node
+    for n in 0..<edges.len: # 孤立点除去 ?
+      visit(n)
+    return tsorted.filterIt(visited[it] > 1 or edges[it].len > 0)
+
 
 # deprecated...
 template deprecated():untyped =
@@ -326,6 +341,10 @@ template deprecated():untyped =
   #       result[^1].val += 1
   #     else:
   #       result &= (a,1)
+  discard
+template plagmas():untyped =
+  #pragma GCC target ("sse4") #=>  __builtin_popcount系が 機械語 popcnt に
+  #pragma GCC optimize ("fast-math") #=> 浮動小数点系の高速化(+精度の悪化)
   discard
 ####### Begin Data Structures ##################
 # binary Heap
