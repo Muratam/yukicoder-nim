@@ -6,25 +6,23 @@ const dxdy4 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0)]
 const dxdy8 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0),(1,1),(1,-1),(-1,-1),(-1,1)]
 
 template io():untyped =
-  # when loooong readline()
-  # template fgets(f:File,buf:untyped,size:int):void =
-  #   proc c_fgets(c: cstring, n: int, file: File): void {.importc: "fgets", header: "<stdio.h>", tags: [ReadIOEffect].}
-  #   var buf: array[size, char]
-  #   c_fgets(buf,sizeof((buf)),f)
   # when io bounded
+  proc getchar():char {. importc:"getchar",header: "<stdio.h>" .}
   proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
-  proc scan1[T](): T =
+  template scan1[T](thread_safe:bool): T =
     var minus = false
-    result = 0
+    var result : T = 0
     while true:
-      var k = getchar_unlocked()
+      when thread_safe:(var k = getchar())
+      else:( var k = getchar_unlocked())
       if k == '-' : minus = true
       elif k < '0' or k > '9': break
       else: result = 10 * result + k.ord - '0'.ord
     if minus: result *= -1
+    result
   macro scanints(cnt:static[int]): auto =
     result = nnkBracket.newNimNode
-    for i in 0..<cnt: result.add(quote do: scan1[int]())
+    for i in 0..<cnt: result.add(quote do: scan1[int](false))
 
 
 # bitset
@@ -285,6 +283,8 @@ template geometory():untyped =
   proc sqlen(p:Vec2):int = p * p
 
 template algorithms():untyped =
+  # var field : array[-501..501,array[-501..501,int]] などが可能...
+  # range :: [x1..x2][y1..y2]
   template imosReduce2(field:typed):void =
     for x in field.low + 1 .. field.high:
       for y in field[x].low .. field[x].high:
