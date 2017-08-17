@@ -1,27 +1,28 @@
 # Main templates !!
-template templates():untyped=
+template templates()=
   import sequtils,strutils,algorithm,math,future,macros
-  # import sets,queues,tables,nre,pegs,rationals
-  template get*():string = stdin.readLine() #.strip()
+  # import nre,pegs,rationals,critbits
+  # import sets,queues,tables,intsets,heapqueue
+  template get*():string = stdin.readLine().strip()
   macro unpack*(arr: auto,cnt: static[int]): auto =
     let t = genSym(); result = quote do:(let `t` = `arr`;())
     for i in 0..<cnt: result[0][1].add(quote do:`t`[`i`])
-  template times*(n:int,body:untyped): untyped = (for _ in 0..<n: body)
-  template `max=`*(x,y:typed) = x = max(x,y)
-  template `min=`*(x,y:typed) = x = min(x,y)
+  template times*(n:int,body) = (for _ in 0..<n: body)
+  template `max=`*(x,y) = x = max(x,y)
+  template `min=`*(x,y) = x = min(x,y)
 
 
 # small template
-template almostTemplates():untyped =
+template almostTemplates() =
   template optPow{`^`(2,n)}(n:int) : int = 1 shl n
-  template If*(ex:untyped):untyped = (if not(ex) : continue)
+  template If*(ex) = (if not(ex) : continue)
   const INF = int.high div 4
   const dxdy4 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0)]
   const dxdy8 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0),(1,1),(1,-1),(-1,-1),(-1,1)]
 
 
 # scanints (1e6 行 で 10ms の差)
-template io():untyped =
+template io() =
   proc getchar():char {. importc:"getchar",header: "<stdio.h>" .}
   proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
   template scan1[T](thread_safe:bool): T =
@@ -39,7 +40,7 @@ template io():untyped =
     if cnt == 1:(result = (quote do: scan1[int](false)))
     else:(result = nnkBracket.newNimNode;for i in 0..<cnt:(result.add(quote do: scan1[int](false))))
 # toSeq int{split,join} countDuplicate enumerate ...
-template seqUtils():untyped =
+template seqUtils() =
   proc toSeq(str:string):seq[char] = result = @[];(for s in str: result &= s)
   proc split(n:int):auto = ($n).toSeq().mapIt(it.ord- '0'.ord)
   proc join(n:seq[int]):int = n.mapIt($it).join("").parseInt()
@@ -55,8 +56,9 @@ template seqUtils():untyped =
 
   proc enumerate[T](arr:seq[T]): seq[tuple[i:int,val:T]] =
     result = @[]; for i,a in arr: result &= (i,a)
+  # proc `*`(str:string,t:int):string = str.repeat(t)
 # Vec2(int) + - * len
-template geometory():untyped =
+template geometory() =
   type Vec2 = object
   x,y: int
   proc `+`(p,v:Vec2):Vec2 = result.x = p.x+v.x; result.y = p.y+v.y
@@ -64,9 +66,8 @@ template geometory():untyped =
   proc `*`(p,v:Vec2):int = p.x * v.x + p.y * v.y
   proc sqlen(p:Vec2):int = p * p
 
-
 # bitset
-template bitsetOperators():untyped =
+template bitsetOperators() =
   proc `+=`[T](x:var set[T],y:T) = x.incl(y)
   proc `-=`[T](x:var set[T],y:T) = x.excl(y)
   proc `+=`[T](x:var set[T],y:set[T]) = x = x.union(y)
@@ -75,14 +76,14 @@ template bitsetOperators():untyped =
   converter toInt8(x:int) : int8 = x.toU8()
 
 # %=  //=  gcd= lcm=
-template assignOperators():untyped =
+template assignOperators() =
   template `%=`*(x,y:typed) = x = x mod y
   template `//=`*(x,y:typed) = x = x div y
   template `gcd=`*(x,y:typed) = x = gcd(x,y)
   template `lcm=`*(x,y:typed) = x = lcm(x,y)
 
 # prime factor power parseDecimal,probAdd
-template mathUtils():untyped =
+template mathUtils() =
 
   proc millerRabinIsPrime(n:int):bool = # O(log n)
     proc ctz(n:int):cint{.importC: "__builtin_ctz", noDecl .} # 01<0000> -> 4
@@ -241,7 +242,7 @@ template mathUtils():untyped =
 
 
 # transpose matIt ...
-template matrixUtils():untyped =
+template matrixUtils() =
   proc transpose*[T](mat:seq[seq[T]]):seq[seq[T]] =
     result = newSeqWith(mat[0].len,newSeq[T](mat.len))
     for x,xs in mat: (for y,ys in xs:result[y][x] = mat[x][y])
@@ -249,7 +250,7 @@ template matrixUtils():untyped =
     result = mat1; for x,xs in mat2: (for y,ys in xs:result[x][y] += mat2[x][y])
   proc `-`[T](mat1,mat2:seq[seq[T]]):seq[seq[T]] =
     result = mat1; for x,xs in mat2: (for y,ys in xs:result[x][y] -= mat2[x][y])
-  template matIt*[T](matA,matB:seq[seq[T]],op:untyped):seq[seq[T]] =
+  template matIt*[T](matA,matB:seq[seq[T]],op):seq[seq[T]] =
     var result = matA
     for x {.inject.},xs in mat:
       for y{.inject.},ys in xs:
@@ -258,48 +259,27 @@ template matrixUtils():untyped =
         result[x][y] = op
     result
 # clz ctz pow2Ctz...
-template bitOperators():untyped =
+template bitOperators() =
   # (countBits32 isPowerOfTwo nextPowerOfTwo)
   proc clz(n:int):cint{.importC: "__builtin_clz", noDecl .} # <0000>10 -> 4
   proc ctz(n:int):cint{.importC: "__builtin_ctz", noDecl .} # 01<0000> -> 4
-  proc pow2Ctz(n:int):int = n and -n # 0101<0000> -> 2^4
+  proc pow2Ctz(n:int):int = n and -n # 0101<0000> -> 2^4 (== 16)
 
 # rep each eachit ...
-template iterations():untyped =
-  template each*[T](arr:var seq[T],i,a,body:untyped):untyped =
+template iterations() =
+  template each*[T](arr:var seq[T],i,a,body) =
     for i in 0..<arr.len:(var a{.inject.}=arr[i]; body; defer:arr[i]=a)
-  template eachIt*[T](arr:var seq[T],i,body:untyped):untyped =
+  template eachIt*[T](arr:var seq[T],i,body) =
     for i in 0..<arr.len:(var it{.inject.}=arr[i]; body; defer:arr[i]=it)
-  template rep*(i:untyped,n:int,body:untyped):untyped =
+  template rep*(i:untyped,n:int,body) =
     block:(var i = 0; while i < n:( body; i += 1))
-  template each*[T](arr:var seq[T],a,body:untyped):untyped =
+  template each*[T](arr:var seq[T],a,body) =
     for i in 0..<arr.len:(var a{.inject.}=arr[i]; body; defer:arr[i]=a)
-  template eachIt*[T](arr:var seq[T],body:untyped):untyped =
+  template eachIt*[T](arr:var seq[T],body) =
     for i in 0..<arr.len:(var it{.inject.}=arr[i]; body; defer:arr[i]=it)
-# dijekstra ...
-template searching():untyped =
-  proc dijkestra(L:seq[seq[int]], startX,startY:int,
-                 diffSeq:seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0)]) :auto =
-    type field = tuple[x,y,v:int]
-    let (W,H) = (L.len,L[0].len)
-    const INF = int.high div 4
-    var cost = newSeqWith(W,newSeqWith(H,INF))
-    var opens = newBinaryHeap[field](proc(a,b:field): int = a.v - b.v)
-    opens.push((startX,startY,0))
-    while opens.size() > 0:
-      let (x,y,v) = opens.pop()
-      if cost[x][y] != INF : continue
-      cost[x][y] = v
-      for d in diffSeq:
-        let (nx,ny) = (d.x + x,d.y + y)
-        if nx < 0 or ny < 0 or nx >= W or ny >= H : continue
-        var n_v = v + L[nx][ny]
-        if cost[nx][ny] == INF :
-          opens.push((nx,ny,n_v))
-    return cost
 
-# imos,toporogicalSort
-template algorithms():untyped =
+# imos,toporogicalSort ,dijekstra
+template algorithms() =
   # var field : array[-501..501,array[-501..501,int]] などが可能...
   # range :: [x1..x2][y1..y2]
   template imosReduce2(field:typed) =
@@ -328,10 +308,29 @@ template algorithms():untyped =
     for n in 0..<edges.len: # 孤立点除去 ?
       visit(n)
     return tsorted.filterIt(visited[it] > 1 or edges[it].len > 0)
+  proc dijkestra(L:seq[seq[int]], startX,startY:int,
+                 diffSeq:seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0)]) :auto =
+    type field = tuple[x,y,v:int]
+    let (W,H) = (L.len,L[0].len)
+    const INF = int.high div 4
+    var cost = newSeqWith(W,newSeqWith(H,INF))
+    var opens = newBinaryHeap[field](proc(a,b:field): int = a.v - b.v)
+    opens.push((startX,startY,0))
+    while opens.size() > 0:
+      let (x,y,v) = opens.pop()
+      if cost[x][y] != INF : continue
+      cost[x][y] = v
+      for d in diffSeq:
+        let (nx,ny) = (d.x + x,d.y + y)
+        if nx < 0 or ny < 0 or nx >= W or ny >= H : continue
+        var n_v = v + L[nx][ny]
+        if cost[nx][ny] == INF :
+          opens.push((nx,ny,n_v))
+    return cost
 
 
 # deprecated...
-template deprecated():untyped =
+template deprecated() =
   # proc coundDuplicate[T](arr:openArray[T]): seq[tuple[key:T,val:int]] =
   #   # 種類が多い時にはこっちの方が速いかも ?
   #   var arr2 = arr.sorted(cmp[T])
@@ -342,71 +341,14 @@ template deprecated():untyped =
   #     else:
   #       result &= (a,1)
   discard
-template plagmas():untyped =
+# speed up optimize plagma ?
+template plagmas() =
   #pragma GCC target ("sse4") #=>  __builtin_popcount系が 機械語 popcnt に
   #pragma GCC optimize ("fast-math") #=> 浮動小数点系の高速化(+精度の悪化)
   discard
 ####### Begin Data Structures ##################
-# binary Heap
-template binaryHeap():untyped =
-  ####################### BINARY HEAP ############################
-  type
-    BinaryHeap*[T] = object
-      nodes: seq[T]
-      compare: proc(x,y:T):int
-      popchunk: bool
-  proc newBinaryHeap*[T](compare:proc(x,y:T):int): BinaryHeap[T] =
-    BinaryHeap[T](nodes:newSeq[T](),compare:compare,popchunk:false)
-  proc compareNode[T](h:BinaryHeap[T],i,j:int):int = h.compare(h.nodes[i],h.nodes[j])
-  proc size*[T](h:BinaryHeap[T]):int = h.nodes.len() - h.popchunk.int
-  proc items*[T](h:var BinaryHeap[T]):seq[T] =
-    if h.popchunk : discard h.popimpl()
-    return h.nodes
-  proc top*[T](h:var BinaryHeap[T]): T =
-    if h.popchunk : discard h.popimpl()
-    return h.nodes[0]
-  proc push*[T](h:var BinaryHeap[T],node:T) =
-    if h.popchunk :
-      h.nodes[0] = node
-      h.shiftdown()
-    else: h.pushimpl(node)
-  proc pop*[T](h:var BinaryHeap[T]):T =
-    if h.popchunk:
-      discard h.popimpl()
-    h.popchunk = true
-    return h.nodes[0]
-
-  proc shiftdown[T](h:var BinaryHeap[T]) =
-    h.popchunk = false
-    let size = h.nodes.len()
-    var i = 0
-    while true :
-      let L = i * 2 + 1
-      let R = i * 2 + 2
-      if L >= size : break
-      let child = if R < size and h.compareNode(R,L) <= 0 : R else: L
-      if h.compareNode(i,child) <= 0: break
-      swap(h.nodes[i],h.nodes[child])
-      i = child
-
-  proc pushimpl[T](h:var BinaryHeap[T],node:T) =
-    h.nodes.add(node) #末尾に追加
-    var i = h.nodes.len() - 1
-    while i > 0: # 末尾から木を整形
-      let parent = (i - 1) div 2
-      if h.compare(h.nodes[parent],node) <= 0: break
-      h.nodes[i] = h.nodes[parent]
-      i = parent
-    h.nodes[i] = node
-
-  proc popimpl[T](h:var BinaryHeap[T]):T =
-    result = h.nodes[0] # rootと末尾を入れ替えて木を整形
-    h.nodes[0] = h.nodes[^1]
-    h.nodes.setLen(h.nodes.len() - 1)
-    h.shiftdown()
-  ####################### BINARY HEAP ############################
 # BIT (Binary Indexed Tree)
-template binaryIndexedTree():untyped =
+template binaryIndexedTree() =
   ############## Binary Indexed Tree #####################
   type BinaryIndexedTree*[CNT:static[int],T] = object
     data: array[CNT,T]

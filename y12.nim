@@ -26,7 +26,7 @@ proc parseDecimal(n:int) : seq[int] =
   result = @[]; for it in $n: result &= it.ord - '0'.ord
 #proc enumerate[T](arr:seq[T]): seq[tuple[i:int,val:T]] =
 #  result = @[]; for i,a in arr: result &= (i,a)
-
+# WARN: IntSet ?
 const
   N = 500_0000
 let
