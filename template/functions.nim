@@ -1,8 +1,6 @@
-# Main templates !!
 template templates()=
   import sequtils,strutils,algorithm,math,future,macros
-  # import nre,pegs,rationals,critbits
-  # import sets,queues,tables,intsets,heapqueue
+  # import sets,tables,intsets,queues,heapqueue,bitops
   template get*():string = stdin.readLine().strip()
   macro unpack*(arr: auto,cnt: static[int]): auto =
     let t = genSym(); result = quote do:(let `t` = `arr`;())
@@ -11,15 +9,16 @@ template templates()=
   template `max=`*(x,y) = x = max(x,y)
   template `min=`*(x,y) = x = min(x,y)
 
-
-# small template
-template almostTemplates() =
-  template optPow{`^`(2,n)}(n:int) : int = 1 shl n
-  template If*(ex) = (if not(ex) : continue)
-  const INF = int.high div 4
-  const dxdy4 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0)]
-  const dxdy8 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0),(1,1),(1,-1),(-1,-1),(-1,1)]
-
+# template If*(ex) = (if not(ex) : continue)
+# import rationals,critbits,ropes,nre,pegs,complex,stats
+# ------------------------------------------------------------
+#            | ordered | operate | Type | init/new |   key   |
+#   intset   |         |         | bool |   init   |   int   |
+#    set     |         |  + - *  | bool |          |  int8   |
+#  hashset   |    o    |  + - *  | bool |   init   |    *    |
+# countTable |    o    |         | int  |   init   |    *    |
+#   table    |         |         |  *   |   new    |    *    |
+#  critbits  |         | prefix  |  *   |          | string  |
 
 # scanints (1e6 行 で 10ms の差)
 template io() =
@@ -57,34 +56,54 @@ template seqUtils() =
   proc enumerate[T](arr:seq[T]): seq[tuple[i:int,val:T]] =
     result = @[]; for i,a in arr: result &= (i,a)
   # proc `*`(str:string,t:int):string = str.repeat(t)
-# Vec2(int) + - * len
+# dxdy Vec2[int] Matrix transpose
 template geometory() =
-  type Vec2 = object
-  x,y: int
-  proc `+`(p,v:Vec2):Vec2 = result.x = p.x+v.x; result.y = p.y+v.y
-  proc `-`(p,v:Vec2):Vec2 = result.x = p.x-v.x; result.y = p.y-v.y
-  proc `*`(p,v:Vec2):int = p.x * v.x + p.y * v.y
-  proc sqlen(p:Vec2):int = p * p
+  template dxdy() =
+    const dxdy4 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0)]
+    const dxdy8 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0),(1,1),(1,-1),(-1,-1),(-1,1)]
+  template vec2() =
+    type Vec2 = object
+      x,y: int
+    proc `+`(p,v:Vec2):Vec2 = result.x = p.x+v.x; result.y = p.y+v.y
+    proc `-`(p,v:Vec2):Vec2 = result.x = p.x-v.x; result.y = p.y-v.y
+    proc `*`(p,v:Vec2):int = p.x * v.x + p.y * v.y
+    proc sqlen(p:Vec2):int = p * p
+  template matrixUtils() =
+    proc transpose*[T](mat:seq[seq[T]]):seq[seq[T]] =
+      result = newSeqWith(mat[0].len,newSeq[T](mat.len))
+      for x,xs in mat: (for y,ys in xs:result[y][x] = mat[x][y])
+    proc `+`[T](mat1,mat2:seq[seq[T]]):seq[seq[T]] = #matIt(mat1,mat2, a + b)
+      result = mat1; for x,xs in mat2: (for y,ys in xs:result[x][y] += mat2[x][y])
+    proc `-`[T](mat1,mat2:seq[seq[T]]):seq[seq[T]] =
+      result = mat1; for x,xs in mat2: (for y,ys in xs:result[x][y] -= mat2[x][y])
+    template matOpIt*[T](matA,matB:seq[seq[T]],op):seq[seq[T]] =
+      var result = matA
+      for x {.inject.},xs in mat:
+        for y{.inject.},ys in xs:
+          let a {.inject.} = matA[x][y]
+          let b {.inject.} = matB[x][y]
+          result[x][y] = op
+      result
 
-# bitset
-template bitsetOperators() =
-  proc `+=`[T](x:var set[T],y:T) = x.incl(y)
-  proc `-=`[T](x:var set[T],y:T) = x.excl(y)
-  proc `+=`[T](x:var set[T],y:set[T]) = x = x.union(y)
-  proc `*=`[T](x:var set[T],y:set[T]) = x = x.intersection(y)
-  proc `-=`[T](x:var set[T],y:set[T]) = x = x.difference(y)
-  converter toInt8(x:int) : int8 = x.toU8()
-
-# %=  //=  gcd= lcm=
+# set : += -= *= | %=  //=  gcd= lcm=
 template assignOperators() =
-  template `%=`*(x,y:typed) = x = x mod y
-  template `//=`*(x,y:typed) = x = x div y
-  template `gcd=`*(x,y:typed) = x = gcd(x,y)
-  template `lcm=`*(x,y:typed) = x = lcm(x,y)
+  template setAssignOperators() =
+    proc `+=`[T](x:var set[T],y:T) = x.incl(y)
+    proc `-=`[T](x:var set[T],y:T) = x.excl(y)
+    proc `+=`[T](x:var set[T],y:set[T]) = x = x.union(y)
+    proc `*=`[T](x:var set[T],y:set[T]) = x = x.intersection(y)
+    proc `-=`[T](x:var set[T],y:set[T]) = x = x.difference(y)
+    converter toInt8(x:int) : int8 = x.toU8()
+  # %=  //=  gcd= lcm=
+  template assignOperators() =
+    template `%=`*(x,y:typed) = x = x mod y
+    template `//=`*(x,y:typed) = x = x div y
+    template `gcd=`*(x,y:typed) = x = gcd(x,y)
+    template `lcm=`*(x,y:typed) = x = lcm(x,y)
 
 # prime factor power parseDecimal,probAdd
 template mathUtils() =
-
+  const INF = int.high div 4
   proc millerRabinIsPrime(n:int):bool = # O(log n)
     proc ctz(n:int):cint{.importC: "__builtin_ctz", noDecl .} # 01<0000> -> 4
     proc power(x,n:int,modulo:int = 0): int =
@@ -104,7 +123,7 @@ template mathUtils() =
       a_list = @[2, 3, 5, 7, 11, 13, 17]
     if n in a_list : return true
     for a in a_list:
-      if power(a,d,n) == 1 : continue
+      if powerWhenTooBig(a,d,n) == 1 : continue
       let notPrime = toSeq(0..<s).allIt(power(a,d*(1 shl it),n) != n-1)
       if notPrime : return false
     return true
@@ -208,7 +227,7 @@ template mathUtils() =
     else :
       result = pow_2 * pow_2 * odd
 
-  proc powerBig(x,n:int,modulo:int = 0): int =
+  proc powerWhenTooBig(x,n:int,modulo:int = 0): int =
     proc mul(x,n,modulo:int):int =
       if n == 0: return 0
       if n == 1: return x
@@ -218,7 +237,7 @@ template mathUtils() =
       if n == 0: return 1
     if n == 1: return x
     let
-      pow_2 = powerBig(x,n div 2,modulo)
+      pow_2 = powerWhenTooBig(x,n div 2,modulo)
       odd = if n mod 2 == 1: x else: 1
     if modulo > 0:
       const maybig = int.high.float.sqrt.int div 2
@@ -232,8 +251,6 @@ template mathUtils() =
       return pow_2 * pow_2 * odd
 
 
-  proc parseDecimal(n:int) : seq[int] =
-    result = @[]; for it in $n: result &= it.ord - '0'.ord
   proc probAdd(ps,qs:seq[float]):seq[float] =
     result = newSeqWith(ps.len + qs.len - 1,0.0)
     for i,p in ps:
@@ -241,42 +258,19 @@ template mathUtils() =
         result[i + j] += p * q
 
 
-# transpose matIt ...
-template matrixUtils() =
-  proc transpose*[T](mat:seq[seq[T]]):seq[seq[T]] =
-    result = newSeqWith(mat[0].len,newSeq[T](mat.len))
-    for x,xs in mat: (for y,ys in xs:result[y][x] = mat[x][y])
-  proc `+`[T](mat1,mat2:seq[seq[T]]):seq[seq[T]] = #matIt(mat1,mat2, a + b)
-    result = mat1; for x,xs in mat2: (for y,ys in xs:result[x][y] += mat2[x][y])
-  proc `-`[T](mat1,mat2:seq[seq[T]]):seq[seq[T]] =
-    result = mat1; for x,xs in mat2: (for y,ys in xs:result[x][y] -= mat2[x][y])
-  template matIt*[T](matA,matB:seq[seq[T]],op):seq[seq[T]] =
-    var result = matA
-    for x {.inject.},xs in mat:
-      for y{.inject.},ys in xs:
-        let a {.inject.} = matA[x][y]
-        let b {.inject.} = matB[x][y]
-        result[x][y] = op
-    result
-# clz ctz pow2Ctz...
+# memos for bitoperators
 template bitOperators() =
-  # (countBits32 isPowerOfTwo nextPowerOfTwo)
-  proc clz(n:int):cint{.importC: "__builtin_clz", noDecl .} # <0000>10 -> 4
-  proc ctz(n:int):cint{.importC: "__builtin_ctz", noDecl .} # 01<0000> -> 4
-  proc pow2Ctz(n:int):int = n and -n # 0101<0000> -> 2^4 (== 16)
-
-# rep each eachit ...
-template iterations() =
-  template each*[T](arr:var seq[T],i,a,body) =
-    for i in 0..<arr.len:(var a{.inject.}=arr[i]; body; defer:arr[i]=a)
-  template eachIt*[T](arr:var seq[T],i,body) =
-    for i in 0..<arr.len:(var it{.inject.}=arr[i]; body; defer:arr[i]=it)
-  template rep*(i:untyped,n:int,body) =
-    block:(var i = 0; while i < n:( body; i += 1))
-  template each*[T](arr:var seq[T],a,body) =
-    for i in 0..<arr.len:(var a{.inject.}=arr[i]; body; defer:arr[i]=a)
-  template eachIt*[T](arr:var seq[T],body) =
-    for i in 0..<arr.len:(var it{.inject.}=arr[i]; body; defer:arr[i]=it)
+  # @math :: nextPowerOfTwo,isPowerOfTwo
+  # @bitops
+  #   popcount :: 100101010 -> 4 (1 is 4)
+  #   parityBits :: 1001010 -> 1 (1 is odd)
+  #   firstlog2 :: int -> int
+  #   countLeadingZeroBits :: <0000>10 -> 4
+  #   countTrailingZeroBits :: 01<0000> -> 4 (if 0 then 140734606624512)
+  #   firstSetBit :: countTrailingZeroBits + 1 (if 0 then 0)
+  #   when unsigned :: rotateLeftBits rotateRightBits
+  proc factorOf2(n:int):int = n and -n # 80:0101<0000> => 16:2^4
+  template optPow{`^`(2,n)}(n:int) : int = 1 shl n
 
 # imos,toporogicalSort ,dijekstra
 template algorithms() =
@@ -331,22 +325,33 @@ template algorithms() =
 
 # deprecated...
 template deprecated() =
-  # proc coundDuplicate[T](arr:openArray[T]): seq[tuple[key:T,val:int]] =
-  #   # 種類が多い時にはこっちの方が速いかも ?
-  #   var arr2 = arr.sorted(cmp[T])
-  #   result = @[(arr2[0],1)]
-  #   for a in arr2[1..arr2.len()-1]:
-  #     if result[^1].key == a:
-  #       result[^1].val += 1
-  #     else:
-  #       result &= (a,1)
-  discard
-# speed up optimize plagma ?
-template plagmas() =
-  #pragma GCC target ("sse4") #=>  __builtin_popcount系が 機械語 popcnt に
-  #pragma GCC optimize ("fast-math") #=> 浮動小数点系の高速化(+精度の悪化)
-  discard
-####### Begin Data Structures ##################
+  # rep each eachit ...
+  template iterations() =
+    template each*[T](arr:var seq[T],i,a,body) =
+      for i in 0..<arr.len:(var a{.inject.}=arr[i]; body; defer:arr[i]=a)
+    template eachIt*[T](arr:var seq[T],i,body) =
+      for i in 0..<arr.len:(var it{.inject.}=arr[i]; body; defer:arr[i]=it)
+    template rep*(i:untyped,n:int,body) =
+      block:(var i = 0; while i < n:( body; i += 1))
+    template each*[T](arr:var seq[T],a,body) =
+      for i in 0..<arr.len:(var a{.inject.}=arr[i]; body; defer:arr[i]=a)
+    template eachIt*[T](arr:var seq[T],body) =
+      for i in 0..<arr.len:(var it{.inject.}=arr[i]; body; defer:arr[i]=it)
+  # 種類が多い時にはこっちの方が速いかも ?
+  proc coundDuplicate[T](arr:openArray[T]): seq[tuple[key:T,val:int]] =
+    var arr2 = arr.sorted(cmp[T])
+    result = @[(arr2[0],1)]
+    for a in arr2[1..arr2.len()-1]:
+      if result[^1].key == a:
+        result[^1].val += 1
+      else:
+        result &= (a,1)
+  # speed up optimize plagma ?
+  template plagmas() =
+    #pragma GCC target ("sse4") #=>  __builtin_popcount系が 機械語 popcnt に
+    #pragma GCC optimize ("fast-math") #=> 浮動小数点系の高速化(+精度の悪化)
+    discard
+####### Data Structures ########
 # BIT (Binary Indexed Tree)
 template binaryIndexedTree() =
   ############## Binary Indexed Tree #####################
@@ -371,4 +376,4 @@ template binaryIndexedTree() =
   proc len*[CNT,T](bit:BinaryIndexedTree[CNT,T]): int = bit.data.len()
   ############## Binary Indexed Tree #####################
 
-######### End Data Structures ##################
+#

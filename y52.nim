@@ -7,7 +7,7 @@ var
   table = initCountTable[Word]()
   queue = initQueue[Word]()
   ans = 0
-proc append(word:Word):void =
+proc append(word:Word) =
   if word in table : return
   queue.add(word)
   table[word] = 1
