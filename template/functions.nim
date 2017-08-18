@@ -8,8 +8,6 @@ template templates()=
   template times*(n:int,body) = (for _ in 0..<n: body)
   template `max=`*(x,y) = x = max(x,y)
   template `min=`*(x,y) = x = min(x,y)
-
-# template If*(ex) = (if not(ex) : continue)
 # import rationals,critbits,ropes,nre,pegs,complex,stats
 # ------------------------------------------------------------
 #            | ordered | operate | Type | init/new |   key   |
@@ -20,23 +18,25 @@ template templates()=
 #   table    |         |         |  *   |   new    |    *    |
 #  critbits  |         | prefix  |  *   |          | string  |
 
+
+#{.checks: off, optimization: speed.} / {. global .}
+# notin
 # scanints (1e6 行 で 10ms の差)
-template io() =
-  proc getchar():char {. importc:"getchar",header: "<stdio.h>" .}
+template IO() =
+  # thread unsafe !!
   proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
-  template scan1[T](thread_safe:bool): T =
+  template scan1[T](): T =
     var minus = false
     var result : T = 0
     while true:
-      when thread_safe:(var k = getchar())
-      else:( var k = getchar_unlocked())
+      var k = getchar_unlocked()
       if k == '-' : minus = true
       elif k < '0' or k > '9': break
       else: result = 10 * result + k.ord - '0'.ord
     if minus: result *= -1
     result
   macro scanints(cnt:static[int]): auto =
-    if cnt == 1:(result = (quote do: scan1[int](false)))
+    if cnt == 1:(result = (quote do: scan1[int]()))
     else:(result = nnkBracket.newNimNode;for i in 0..<cnt:(result.add(quote do: scan1[int](false))))
 # toSeq int{split,join} countDuplicate enumerate ...
 template seqUtils() =
@@ -325,8 +325,10 @@ template algorithms() =
 
 # deprecated...
 template deprecated() =
-  # rep each eachit ...
+  # If exit rep each eachit ...
   template iterations() =
+    template If*(ex) = (if not(ex) : continue)
+    template exit(message:string) = (echo message;quit())
     template each*[T](arr:var seq[T],i,a,body) =
       for i in 0..<arr.len:(var a{.inject.}=arr[i]; body; defer:arr[i]=a)
     template eachIt*[T](arr:var seq[T],i,body) =
@@ -346,6 +348,7 @@ template deprecated() =
         result[^1].val += 1
       else:
         result &= (a,1)
+  proc getchar():char {. importc:"getchar",header: "<stdio.h>" .}
   # speed up optimize plagma ?
   template plagmas() =
     #pragma GCC target ("sse4") #=>  __builtin_popcount系が 機械語 popcnt に

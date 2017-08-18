@@ -4,7 +4,7 @@ template times(n:int,body:untyped): untyped = (for _ in 0..<n: body)
 # proc popcount(n:int):cint{.importC: "__builtin_popcount", noDecl .} # sum of "1"
 
 # close = initTable[int,int]() # hash is slow
-# if not (succ in close): # hash is slow
+# if succ notin close: # hash is slow
 # let diff = n.toBin(64).count('1') # string is slow
 
 let N = get().parseInt
