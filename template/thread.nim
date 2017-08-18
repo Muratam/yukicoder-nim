@@ -49,56 +49,6 @@ for m in 0..<M:
 
 
 ' > h.nim""","nim --hints:off -o:b.out -d:release --threads:on --experimental --parallelBuild:4 c h.nim"].mapIt(it.gorge)
-
-
-import os except sleep
-import posix, parseutils
-template daemonize*(pidfile, si, so, se, cd: string,body: stmt): stmt {.immediate.} =
-  var
-    pid: Pid
-    pidFileInner: string
-    fi, fo, fe: File
-  proc c_signal(sig: cint, handler: proc (a: cint) {.noconv.}) {.importc: "signal", header: "<signal.h>".}
-  proc onStop(sig: cint) {.noconv.} =
-    close(fi)
-    close(fo)
-    close(fe)
-    removeFile(pidFileInner)
-    quit(QuitSuccess)
-  if fileExists(pidfile):
-    raise newException(IOError, "pidfile " & pidfile & " already exist, daemon already running?")
-  pid = fork()
-  if pid > 0:
-    quit(QuitSuccess)
-  if cd != nil and cd != "":
-    discard chdir(cd)
-  discard setsid()
-  discard umask(0)
-  pid = fork()
-  if pid > 0:
-    quit(QuitSuccess)
-  flushFile(stdout)
-  flushFile(stderr)
-  if not si.isNil and si != "":
-    fi = open(si, fmRead)
-    discard dup2(getFileHandle(fi), getFileHandle(stdin))
-  if not so.isNil and so != "":
-    fo = open(so, fmAppend)
-    discard dup2(getFileHandle(fo), getFileHandle(stdout))
-  if not se.isNil and se != "":
-    fe = open(se, fmAppend)
-    discard dup2(getFileHandle(fe), getFileHandle(stderr))
-  pidFileInner = pidfile
-  c_signal(SIGINT, onStop)
-  c_signal(SIGTERM, onStop)
-  c_signal(SIGHUP, onStop)
-  c_signal(SIGQUIT, onStop)
-  pid = getpid()
-  writeFile(pidfile, $pid)
-  body
-
-daemonize("/tmp/daemonize.pid", "/dev/null", "/tmp/daemonize.out", "/tmp/daemonize.err", "/"):
-  discard execProcess("""a="$(ls -1t ../time/ | head -1)";./b.out < ../test_in/$a > ../out/$a """)
 #echo execProcess("./b.out").strip()
 # IO バウンドかも
 # parallel hello world # https://yukicoder.me/submissions/197995
@@ -110,3 +60,30 @@ daemonize("/tmp/daemonize.pid", "/dev/null", "/tmp/daemonize.out", "/tmp/daemoni
 #   poStdErrToStdOut,poEchoCmd
 # }) # 上手く動作しない
 
+#[
+  yukicoder lscpu (KVM)
+    Architecture:          x86_64
+    CPU op-mode(s):        32-bit, 64-bit
+    Byte Order:            Little Endian
+    CPU(s):                4
+    On-line CPU(s) list:   0-3
+    Thread(s) per core:    1
+    Core(s) per socket:    1
+    Socket(s):             4
+    NUMA node(s):          1
+    Vendor ID:             GenuineIntel
+    CPU family:            6
+    Model:                 62
+    Model name:            Intel(R) Xeon(R) CPU E5-2650 v2 @ 2.60GHz
+    Stepping:              4
+    CPU MHz:               2599.998
+    BogoMIPS:              5199.99
+    Virtualization:        VT-x
+    Hypervisor vendor:     KVM
+    Virtualization type:   full
+    L1d cache:             32K
+    L1i cache:             32K
+    L2 cache:              256K
+    L3 cache:              20480K
+    NUMA node0 CPU(s):     0-3
+]#
