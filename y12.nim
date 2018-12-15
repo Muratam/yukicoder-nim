@@ -1,3 +1,15 @@
+var game = "きららファンタジア"
+
+
+
+
+
+
+
+
+
+
+
 import sequtils,strutils,strscans,algorithm,math,future,sets,queues,tables,macros
 macro unpack*(rhs: seq,cnt: static[int]): auto =
   let t = genSym(); result = quote do:(let `t` = `rhs`;())

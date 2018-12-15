@@ -30,7 +30,7 @@ for i,b in B[1..^1]:
   var n_ans = ans
   for x in b.getOKState().items:
     for y in ans.items:
-      If: (x and y) == 0
+      if not (x and y) == 0 : continue
       n_ans.incl(x xor y)
   ans = n_ans
   if 2^N-1 in ans:

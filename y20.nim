@@ -1,8 +1,9 @@
-import sequtils,strutils,strscans,algorithm,math,future,sets,queues,tables,macros
+{.checks: off, optimization: speed.}
+import sequtils,strutils,strscans,algorithm,math,sugar,sets,queues,tables,macros
 import heapqueue
 macro unpack*(rhs: seq,cnt: static[int]): auto =
   let t = genSym(); result = quote do:(let `t` = `rhs`;())
-  for i in 0..<cnt: result[0][1].add(quote do:`t`[`i`])
+  for i in 0..<cnt: result[1].add(quote do:`t`[`i`])
 template get*():string = stdin.readLine()
 template times*(n:int,body) = (for _ in 0..<n: body)
 template `max=`*(x,y)= (x = max(x,y))

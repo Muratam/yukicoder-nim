@@ -6,7 +6,6 @@ template times(n:int,body:untyped): untyped = (for _ in 0..<n: body)
 # close = initTable[int,int]() # hash is slow
 # if succ notin close: # hash is slow
 # let diff = n.toBin(64).count('1') # string is slow
-
 let N = get().parseInt
 var
   open = initQueue[int]() # n
