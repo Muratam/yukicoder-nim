@@ -9,12 +9,4 @@ template `max=`*(x,y) = x = max(x,y)
 template `min=`*(x,y) = x = min(x,y)
 
 let n = get().parseInt()
-let X = newSeqWitH(n,get().parseInt())
-if X[0].abs() != 1 :
-  echo "F"
-  quit(0)
-for i in 1..<X.len():
-  if abs(X[i] - X[i-1]) != 1 :
-    echo "F"
-    quit(0)
-echo "T"
+echo newSeqWith(n,get()).join("")
