@@ -186,24 +186,14 @@ template mathUtils() =
     for i,p in isPrimes:
       if p : result &= i
 
-  proc getFactors(N:int):seq[int] =
-    let primes = getPrimes(N.float.sqrt.int + 1)
-    var n = N
-    result = @[]
-    for p in primes:
-      if p >= n : break
-      while n mod p == 0:
-        result &= p
-        n = n div p
-    if n != 1:
-      result &= n
+
   template getFactorByProcess(n:int):seq[int] =
     import osproc
     when defined(macosx):
       const factor = "gfactor "
     else :
       const factor = "factor "
-    let p = execProcess(factor & $N ).strip().split()
+    let p = execProcess(factor & $n ).strip().split()
     p[1..p.len()-1].map(parseInt)
 
 
