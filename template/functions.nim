@@ -128,7 +128,7 @@ template mathUtils() =
       if notPrime : return false
     return true
   proc squareFormFactor(n:int):int =
-    #if millerRabinIsPrime(n) : return n
+    if millerRabinIsPrime(n) : return n
     proc check(k:int):int =
       proc √(x:int):int = x.float.sqrt.int
       if n <= 1 : return n
@@ -195,6 +195,17 @@ template mathUtils() =
       const factor = "factor "
     let p = execProcess(factor & $n ).strip().split()
     p[1..p.len()-1].map(parseInt)
+
+  proc getAllFactors(n:int):seq[int] =
+    let factors = n.getFactorByProcess()
+    var xs = initIntSet()
+    xs.incl 1
+    for f in factors:
+      for x in toSeq(xs.items):
+        xs.incl(x * f)
+    return toSeq(xs.items)
+
+
 
 
   proc power(x,n:int): int =
