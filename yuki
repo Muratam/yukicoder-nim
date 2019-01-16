@@ -1,0 +1,32 @@
+#! /usr/local/bin/python3
+import sys
+from shutil import copyfile
+from os.path import exists
+from subprocess import call
+from onlinejudge.implementation.main import main as ojmain
+
+if len(sys.argv) == 1:
+    print(f"""
+      - <num> setup :: setup y<num>.nim
+      - <num> test :: try test
+      - <num> <in.txt> :: try by in.txt
+    """)
+    exit()
+num = sys.argv[1]
+new_file = "y" + num + ".nim"
+if len(sys.argv) == 2 or sys.argv[2] in ["setup", "start", "s"]:
+    if not exists(new_file):
+        copyfile("./template.nim", new_file)
+    call(["code", new_file])
+    exit()
+
+if sys.argv[2] in ["dl", "download", "d"]:
+    call(["rm", "-rf", "test"])
+    ojmain(args=["dl", "https://yukicoder.me/problems/no/" + num])
+    call(["./" + sys.argv[0], num, "test"])
+
+if sys.argv[2] in ["test", "t"]:
+    call(["nim", "c", "--hints:off", "--verbosity:0",
+          "--nimcache:./nimcache", new_file])
+    call(["mv", "y" + num, "a.out"])
+    ojmain(args=["test"])

@@ -1,4 +1,4 @@
-import sequtils,strutils,algorithm,math,future,macros
+import sequtils,strutils,algorithm,math,sugar,macros
 template get*():string = stdin.readLine() #.strip()
 macro unpack*(arr: auto,cnt: static[int]): auto =
   let t = genSym(); result = quote do:(let `t` = `arr`;())
