@@ -13,6 +13,7 @@ proc toCountSeq[T](x:seq[T]) : seq[tuple[k:T,v:int]] = toSeq(x.toCountTable().pa
 
 #
 template useUnsafeInput() =
+  proc scanf(formatstr: cstring){.header: "<stdio.h>", varargs.}
   proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
   proc scan(): int =
     var minus = false
@@ -66,6 +67,9 @@ template useUnsafeOutput() =
           l = l div 10
         printInt(r,true)
     putchar_unlocked('\n')
+
+
+
 
 # 10進数
 template useDecimal() =

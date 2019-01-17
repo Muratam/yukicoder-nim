@@ -1,15 +1,22 @@
 import sequtils,strutils,algorithm,math,sugar,macros,strformat
-import sets,tables,intsets,queues,heapqueue,bitops
 template get*():string = stdin.readLine().strip()
 macro unpack*(arr: auto,cnt: static[int]): auto =
   let t = genSym(); result = quote do:(let `t` = `arr`;())
   for i in 0..<cnt: result[1].add(quote do:`t`[`i`])
-template times*(n:int,body) = (for _ in 0..<n: body)
-proc toCountSeq[T](x:seq[T]) : seq[tuple[k:T,v:int]] = toSeq(x.toCountTable().pairs)
 template `max=`*(x,y) = x = max(x,y)
-template `min=`*(x,y) = x = min(x,y)
+proc sqrt(x:int):int = x.float.sqrt.int
 
-let (n,m) = get().split().map(parseInt).unpack(2)
-let A = get().split().map(parseInt)
-let n = get().parseInt()
-let B = newSeqWith(n,get().parseInt())
+var results : array[1000_0010,int16]
+const INF = 1000_0000
+const SQRTINF = INF.sqrt
+for a in 0..SQRTINF: results[a * a] += 1
+for a in 0..SQRTINF div 2: results[2 * a * a] += 1
+for a in 1..SQRTINF:
+  for b in (a+1)..sqrt(INF - a * a):
+    var c = a * a + b * b
+    results[c] += 2
+
+let (x,y) = get().split().map(parseInt).unpack(2)
+var ans = 0
+for r in x..y: ans .max= results[r]
+echo ans * 4

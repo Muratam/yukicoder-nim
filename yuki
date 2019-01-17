@@ -25,8 +25,14 @@ if sys.argv[2] in ["dl", "download", "d"]:
     ojmain(args=["dl", "https://yukicoder.me/problems/no/" + num])
     call(["./" + sys.argv[0], num, "test"])
 
-if sys.argv[2] in ["test", "t"]:
-    call(["nim", "c", "--hints:off", "--verbosity:0",
-          "--nimcache:./nimcache", new_file])
+if sys.argv[2] in ["test", "t", "tr"]:
+    pre_code = ["nim", "c", "--hints:off", "--verbosity:0"]
+    pro_code = ["--nimcache:./nimcache", new_file]
+    if sys.argv[2] == "tr":
+        retcode = call(pre_code + ["-d:release"] + pro_code)
+    else:
+        retcode = call(pre_code + pro_code)
+    if retcode != 0:
+        exit()
     call(["mv", "y" + num, "a.out"])
     ojmain(args=["test"])
