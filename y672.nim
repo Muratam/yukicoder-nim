@@ -1,31 +1,15 @@
 proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
 template `max=`*(x,y) = x = max(x,y)
 template `min=`*(x,y) = x = min(x,y)
-# 3 -2 5 -2 8 -4
-#[
-var alen = 0
-var blen = 0
+var X : array[-200010..200010,int32]
+var xi = 1
+X[xi] = 1
 var ans = 0
-var preIsA = false
-var preIsB = false
-while true:
-  let c = getchar_unlocked()
-  if c != 'A' and c != 'B' : break
-  if c == 'A':
-    if preIsB :
-      ans .max= alen.min(blen) * 2
-      alen = 0
-    alen += 1
-    preIsA = true
-    preIsB = false
-  else:
-    if preIsA :
-      ans .max= alen.min(blen) * 2
-      blen = 0
-    blen += 1
-    preIsB = true
-    preIsA = false
-
-ans .max= alen.min(blen) * 2
+for i in 2.int32..<4e6.int32:
+  let k = getchar_unlocked()
+  if k < 'A' : break
+  if k == 'A': xi += 1
+  else: xi -= 1
+  if X[xi] == 0 : X[xi] = i
+  ans .max= i - X[xi]
 echo ans
-]#

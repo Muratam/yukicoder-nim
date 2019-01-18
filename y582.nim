@@ -9,22 +9,13 @@ proc toCountSeq[T](x:seq[T]) : seq[tuple[k:T,v:int]] = toSeq(x.toCountTable().pa
 template `max=`*(x,y) = x = max(x,y)
 template `min=`*(x,y) = x = min(x,y)
 
-let (n,m) = get().split().map(parseInt).unpack(2)
-let A = get().split().map(parseInt)
-let n = get().parseInt()
-let B = newSeqWith(n,get().parseInt())
-
 proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
 proc scan(): int =
   while true:
     var k = getchar_unlocked()
     if k < '0' or k > '9': break
     else: result = 10 * result + k.ord - '0'.ord
-proc scan(): int =
-  var minus = false
-  while true:
-    var k = getchar_unlocked()
-    if k == '-' : minus = true
-    elif k < '0' or k > '9': break
-    else: result = 10 * result + k.ord - '0'.ord
-  if minus: result *= -1
+let n = scan()
+let C = newSeqWith(n,scan())
+# A-1 B:(-1,-2)
+# [1]:A [<=2]:B の勝ち

@@ -9,10 +9,8 @@ proc toCountSeq[T](x:seq[T]) : seq[tuple[k:T,v:int]] = toSeq(x.toCountTable().pa
 template `max=`*(x,y) = x = max(x,y)
 template `min=`*(x,y) = x = min(x,y)
 
-let (n,m) = get().split().map(parseInt).unpack(2)
-let A = get().split().map(parseInt)
-let n = get().parseInt()
-let B = newSeqWith(n,get().parseInt())
+let S = get()
+
 
 proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
 proc scan(): int =

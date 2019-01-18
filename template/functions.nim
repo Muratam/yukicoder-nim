@@ -16,6 +16,11 @@ template useUnsafeInput() =
   proc scanf(formatstr: cstring){.header: "<stdio.h>", varargs.}
   proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
   proc scan(): int =
+    while true:
+      var k = getchar_unlocked()
+      if k < '0' or k > '9': break
+      result = 10 * result + k.ord - '0'.ord
+  proc scan(): int =
     var minus = false
     while true:
       var k = getchar_unlocked()
@@ -23,34 +28,35 @@ template useUnsafeInput() =
       elif k < '0' or k > '9': break
       else: result = 10 * result + k.ord - '0'.ord
     if minus: result *= -1
-  macro scanints(cnt:static[int]): auto =
-    if cnt == 1:(result = (quote do: scan1[int]()))
-    else:(result = nnkBracket.newNimNode;for i in 0..<cnt:(result.add(quote do: scan1[int](false))))
 #
 template useUnsafeOutput() =
+  proc printf(formatstr: cstring){.header: "<stdio.h>", varargs.}
   proc putchar_unlocked(c:char){.header: "<stdio.h>" .}
-  proc printInt(a:int,skipLeavingZeros:bool = false) =
-    # https://stackoverflow.com/questions/18006748/using-putchar-unlocked-for-fast-output
+  proc printInt(a:int32) =
     if a == 0:
       putchar_unlocked('0')
       return
+    # https://stackoverflow.com/questions/18006748/using-putchar-unlocked-for-fast-output
+    template div10(a:int32) : int32 = cast[int32]((0x1999999A * cast[int64](a)) shr 32)
+    template mod10(a:int32) : int32 = a - (a.div10 * 10)
     var n = a
     var rev = a
     var cnt = 0
-    while rev mod 10 == 0:
+    while rev.mod10 == 0:
       cnt += 1
-      rev = rev div 10
+      rev = rev.div10
     rev = 0
     while n != 0:
-      rev = (rev shl 3) + (rev shl 1) + n mod 10
-      n = n div 10
+      rev = rev * 10 + n.mod10
+      n = n.div10
     while rev != 0:
-      putchar_unlocked((rev mod 10 + '0'.ord).chr)
-      rev = rev div 10
-    if not skipLeavingZeros:
-      while cnt != 0:
-        putchar_unlocked('0')
-        cnt -= 1
+      putchar_unlocked((rev.mod10 + '0'.ord).chr)
+      rev = rev.div10
+    while cnt != 0:
+      putchar_unlocked('0')
+      cnt -= 1
+
+
 
   proc printFloat(a,b:int) =
     if a == 0:
@@ -92,3 +98,9 @@ template useBitOperators() =
   #   when unsigned :: rotateLeftBits rotateRightBits
   proc factorOf2(n:int):int = n and -n # 80:0101<0000> => 16:2^4
   template optPow{`^`(2,n)}(n:int) : int = 1 shl n
+
+# 配列操作
+proc getNeignborDiff[T](arr:seq[T]) : seq[T] =
+  if arr.len == 0 : return @[]
+  result = newSeq[T](arr.len()-1)
+  for i in 1..<arr.len(): result[i-1] = arr[i] - arr[i-1]
