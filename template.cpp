@@ -1,8 +1,6 @@
 #pragma GCC optimize("O3")
 #pragma GCC target("avx")
-#include <stdio.h>
-#include <vector>
-// #include <bits/stdc++.h>
+#include "bits/stdc++.h"
 
 using namespace std;
 #define int long long
