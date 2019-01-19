@@ -2,11 +2,12 @@
 template useVector2() =
   const dxdy4 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0)]
   const dxdy8 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0),(1,1),(1,-1),(-1,-1),(-1,1)]
-  type Vec2 = tuple[x,y:int]
-  proc `+`(p,v:Vec2):Vec2 = result.x = p.x+v.x; result.y = p.y+v.y
-  proc `-`(p,v:Vec2):Vec2 = result.x = p.x-v.x; result.y = p.y-v.y
-  proc `*`(p,v:Vec2):int = p.x * v.x + p.y * v.y
-  proc sqlen(p:Vec2):int = p.x * p.x + p.y * p.y
+  type Pos = tuple[x,y:int]
+  proc `+`(p,v:Pos):Pos = (p.x+v.x,p.y+v.y)
+  proc `-`(p,v:Pos):Pos = (p.x-v.x,p.y-v.y)
+  proc `==`(p,v:Pos):bool = p.x == v.x and p.y == v.y
+  proc `*`(p,v:Pos):Pos = (p.x*v.x,p.y*v.y)
+  proc dot(p,v:Pos):int = p.x * v.x + p.y * v.y
 # 二次元行列
 template useMatrix() =
   proc transpose*[T](mat:seq[seq[T]]):seq[seq[T]] =

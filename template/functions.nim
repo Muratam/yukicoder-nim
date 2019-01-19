@@ -31,7 +31,7 @@ template useUnsafeInput() =
 #
 template useUnsafeOutput() =
   proc printf(formatstr: cstring){.header: "<stdio.h>", varargs.}
-  proc putchar_unlocked(c:char){.header: "<stdio.h>" .}
+  proc putchar_unlocked(c:char){. importc:"putchar_unlocked",header: "<stdio.h>" .}
   proc printInt(a:int32) =
     if a == 0:
       putchar_unlocked('0')
@@ -100,6 +100,20 @@ template useBitOperators() =
   template optPow{`^`(2,n)}(n:int) : int = 1 shl n
 
 # 配列操作
+proc argMax[T](arr:seq[T]):int =
+  result = 0
+  var val = arr[0]
+  for i,a in arr:
+    if a <= val: continue
+    val = a
+    result = i
+proc argMin[T](arr:seq[T]):int =
+  result = 0
+  var val = arr[0]
+  for i,a in arr:
+    if a >= val: continue
+    val = a
+    result = i
 proc getNeignborDiff[T](arr:seq[T]) : seq[T] =
   if arr.len == 0 : return @[]
   result = newSeq[T](arr.len()-1)
