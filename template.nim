@@ -3,8 +3,6 @@ import sets,tables,intsets,queues,heapqueue,bitops
 template times*(n:int,body) = (for _ in 0..<n: body)
 template `max=`*(x,y) = x = max(x,y)
 template `min=`*(x,y) = x = min(x,y)
-proc toCountSeq[T](x:seq[T]) : seq[tuple[k:T,v:int]] = toSeq(x.toCountTable().pairs)
-
 template get*():string = stdin.readLine().strip()
 macro unpack*(arr: auto,cnt: static[int]): auto =
   let t = genSym(); result = quote do:(let `t` = `arr`;())

@@ -6,7 +6,7 @@ using namespace std;
 #define int long long
 #define REP(i, n) for (int i = 0; i < (n); i++)
 #define FOR(i, a, b) for (int i = (a); i < (b); i++)
-#define FORR(i, a, b) for (int i = (b); i >= (a); i--)
+#define FORR(i, a, b) for (int i = (b - 1); i >= (a); i--)
 #define ALL(a) begin(a), end(a)
 #define let const auto
 int scan() {

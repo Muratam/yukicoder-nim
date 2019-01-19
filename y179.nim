@@ -1,13 +1,4 @@
 import sequtils,strutils,algorithm,math,sugar,macros,strformat
-import sets,tables,intsets,queues,heapqueue,bitops
-template get*():string = stdin.readLine().strip()
-macro unpack*(arr: auto,cnt: static[int]): auto =
-  let t = genSym(); result = quote do:(let `t` = `arr`;())
-  for i in 0..<cnt: result[1].add(quote do:`t`[`i`])
-template times*(n:int,body) = (for _ in 0..<n: body)
-proc toCountSeq[T](x:seq[T]) : seq[tuple[k:T,v:int]] = toSeq(x.toCountTable().pairs)
-template `max=`*(x,y) = x = max(x,y)
-template `min=`*(x,y) = x = min(x,y)
 
 proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
 proc scan(): int =
@@ -18,4 +9,35 @@ proc scan(): int =
 
 let h = scan()
 let w = scan()
-let S = newSeqWith(h,toSeq(stdin.readLine().items))
+var S = newSeqWith(w,newSeqWith(h,false))
+var blockSum = 0
+for y in 0..<h:
+  for x in 0..<w:
+    let s = getchar_unlocked() == '#'
+    S[x][y] = s
+    if s : blockSum += 1
+  discard getchar_unlocked()
+
+if blockSum <= 1: quit "NO",0
+proc check(sx,sy:int) =
+  if sx == 0 and sy == 0 : return
+  var already = newSeqWith(w,newSeqWith(h,false))
+  for xy in 0.countdown(0): break
+  for x in 0..<w:
+    for y in 0..<h:
+      if not S[x][y] : continue
+      if already[x][y]:continue
+      if x + sx >= w or y + sy >= h : return
+      if not S[x+sx][y+sy]: return
+      already[x+sx][y+sy] = true
+  quit "YES",0
+
+for sx in 0..<w:
+  for sy in 0..<h:
+    check(sx,sy)
+for x in 0..<w: S[x].reverse()
+for sx in 0..<w:
+  for sy in 0..<h:
+    check(sx,sy)
+
+echo "NO"

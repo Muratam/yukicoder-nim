@@ -99,22 +99,3 @@ template useBitOperators() =
   proc factorOf2(n:int):int = n and -n # 80:0101<0000> => 16:2^4
   template optPow{`^`(2,n)}(n:int) : int = 1 shl n
 
-# 配列操作
-proc argMax[T](arr:seq[T]):int =
-  result = 0
-  var val = arr[0]
-  for i,a in arr:
-    if a <= val: continue
-    val = a
-    result = i
-proc argMin[T](arr:seq[T]):int =
-  result = 0
-  var val = arr[0]
-  for i,a in arr:
-    if a >= val: continue
-    val = a
-    result = i
-proc getNeignborDiff[T](arr:seq[T]) : seq[T] =
-  if arr.len == 0 : return @[]
-  result = newSeq[T](arr.len()-1)
-  for i in 1..<arr.len(): result[i-1] = arr[i] - arr[i-1]

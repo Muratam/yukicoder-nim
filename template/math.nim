@@ -134,6 +134,10 @@ template usePrimeFactor() =
 
 # 整数 の数学関数
 template useNaturalMath() =
+  proc roundedDiv(a,b:int) : int = # a / b の四捨五入
+    let c = (a * 10) div b
+    if c mod 10 >= 5: return 1 + c div 10
+    return c div 10
   proc sign(n:int):int = (if n < 0 : -1 else: 1)
   proc sq(n:int):int = n * n
 
