@@ -29,7 +29,7 @@ template usePrimeFactor() =
     for f in factors:
       for x in toSeq(xs.items):
         xs.incl(x * f)
-    return toSeq(xs.items)
+    return toSeq(xs.items).sorted(cmp)
 
   proc rhoFactor(n:int):int = # (O(n/4)),1~0.1%で失敗
     proc f(x:int):int = (2 + x * x) mod n

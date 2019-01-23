@@ -1,4 +1,10 @@
 # 配列操作
+template permutationIter[T](arr:seq[T],arrRef,body) =
+  var arrRef{.inject.} = arr
+  while true:
+    body
+    if not arrRef.nextPermutation() : break
+
 proc argMax[T](arr:seq[T]):int =
   result = 0
   var val = arr[0]
