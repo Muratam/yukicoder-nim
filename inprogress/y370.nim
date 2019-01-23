@@ -16,5 +16,3 @@ proc scan(): int =
   if minus: result *= -1
 
 let n = scan()
-let m = scan()
-let D = newSeqWith(m,scan()).sorted(cmp)

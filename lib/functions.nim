@@ -36,7 +36,6 @@ template useUnsafeOutput() =
     if a == 0:
       putchar_unlocked('0')
       return
-    # https://stackoverflow.com/questions/18006748/using-putchar-unlocked-for-fast-output
     template div10(a:int32) : int32 = cast[int32]((0x1999999A * cast[int64](a)) shr 32)
     template mod10(a:int32) : int32 = a - (a.div10 * 10)
     var n = a
@@ -55,6 +54,9 @@ template useUnsafeOutput() =
     while cnt != 0:
       putchar_unlocked('0')
       cnt -= 1
+  proc printInt(a:int,last:char) =
+    a.int32.printInt()
+    putchar_unlocked(last)
 
 
 
@@ -98,4 +100,14 @@ template useBitOperators() =
   #   when unsigned :: rotateLeftBits rotateRightBits
   proc factorOf2(n:int):int = n and -n # 80:0101<0000> => 16:2^4
   template optPow{`^`(2,n)}(n:int) : int = 1 shl n
+  proc binary(x:int,reverse:bool=false):string = # 二進表示
+    if x == 0 : return "0"
+    result = ""
+    var x = x
+    while x > 0:
+      result &= ('0'.ord + x mod 2).chr
+      x = x div 2
+    if reverse : return
+    for i in 0..<result.len div 2: swap(result[i],result[result.len-1-i])
+
 

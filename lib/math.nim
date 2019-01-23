@@ -134,13 +134,22 @@ template usePrimeFactor() =
 
 # 整数 の数学関数
 template useNaturalMath() =
+  proc permutation(n,k:int):int = # nPk をすばやく誤差なく計算
+    result = 1
+    for i in (n-k+1)..n: result = result * i
+  proc combination(n,k:int):int = # nCk をすばやく誤差なく計算
+    result = 1
+    let x = k.max(n - k)
+    let y = k.min(n - k)
+    for i in 1..y: result = result * (n+1-i) div i
   proc roundedDiv(a,b:int) : int = # a / b の四捨五入
     let c = (a * 10) div b
     if c mod 10 >= 5: return 1 + c div 10
     return c div 10
   proc sign(n:int):int = (if n < 0 : -1 else: 1)
-  proc sq(n:int):int = n * n
 
+# x^a
+template usePower() =
   proc power(x,n:int): int =
     if n == 0: return 1
     if n == 1: return x

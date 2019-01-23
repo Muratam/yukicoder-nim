@@ -1,3 +1,10 @@
+template useEncodeInt()=
+  const INF = 10000
+  proc encode(x,y:int):int = x * INF + y
+  proc decodeX(i:int):int = i mod INF
+  proc decodeY(i:int):int = i div INF
+
+
 
 # += -= *= | %=  //=  gcd= lcm=
 template useAssignOperators() =

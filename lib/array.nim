@@ -14,6 +14,12 @@ proc argMin[T](arr:seq[T]):int =
     val = a
     result = i
 
+proc find*[T](arr: seq[T],item: T,start,fin:int): int {.inline.}=
+  for i in start..<fin:
+    if arr[i] == item : return i
+  return -1
+
+
 iterator chair(w,h:int): tuple[x,y:int] = # [0,w), [0,h) までを 和が等しい順に回す
   for n in 0..w + h:
     for x in 0.max(n-h+1)..n.min(w-1):
