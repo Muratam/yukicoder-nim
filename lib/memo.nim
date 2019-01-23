@@ -4,6 +4,22 @@ template useEncodeInt()=
   proc decodeX(i:int):int = i mod INF
   proc decodeY(i:int):int = i div INF
 
+proc evalPlusMinusExpression(S:string): tuple[ok:bool,val:int] = # 012+223-123+...
+  if S[0] == '+'  or S[0] == '-'  : return (false,0)
+  if S[^1] == '+' or S[^1] == '-' : return (false,0)
+  var minus = false
+  var val = 0
+  var ans = 0
+  for i,s in S:
+    if '0' <= s and s <= '9' :
+      val = 10 * val + s.ord - '0'.ord
+      if i != S.len - 1 : continue
+    if minus : ans -= val
+    else: ans += val
+    val = 0
+    minus = s == '-'
+  return (true,ans)
+
 
 
 # += -= *= | %=  //=  gcd= lcm=

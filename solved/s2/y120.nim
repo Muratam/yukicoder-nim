@@ -1,32 +1,43 @@
-# ------------------------------------------------------------
-#            | ordered | operate | Type | init/new |   key   |
-#   intset   |         |         | bool |   init   |   int   |
-#    set     |         |  + - *  | bool |          |  int8   |
-#  hashset   |    o    |  + - *  | bool |   init   |    *    |
-# countTable |    o    |         | int  |   init   |    *    |
-#   table    |         |         |  *   |   new    |    *    |
-#  critbits  |         | prefix  |  *   |          | string  |
+import sequtils,algorithm,math,tables
+import sets,intsets,queues,heapqueue,bitops,strutils
+template times*(n:int,body) = (for _ in 0..<n: body)
+template `max=`*(x,y) = x = max(x,y)
+template `min=`*(x,y) = x = min(x,y)
 
-template binaryIndexedTree() =
-  type BinaryIndexedTree*[CNT:static[int],T] = object
-    data: array[CNT,T]
-  proc `[]`*[CNT,T](bit:BinaryIndexedTree[CNT,T],i:int): T =
-    if i == 0 : return bit.data[0]
-    result = 0 # 000111122[2]2223333
-    var index = i
-    while index > 0:
-      result += bit.data[index]
-      index -= index and -index # 0111 -> 0110 -> 0100
-  proc inc*[CNT,T](bit:var BinaryIndexedTree[CNT,T],i:int,val:T) =
-    var index = i
-    while index < bit.data.len():
-      bit.data[index] += val
-      index += index and -index # 001101 -> 001110 -> 010001
-  proc `$`*[CNT,T](bit:BinaryIndexedTree[CNT,T]): string =
-    result = "["
-    for i in 0..bit.data.high: result &= $(bit[i]) & ", "
-    return result[0..result.len()-2] & "]"
-  proc len*[CNT,T](bit:BinaryIndexedTree[CNT,T]): int = bit.data.len()
+proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
+proc scan(): int =
+  while true:
+    let k = getchar_unlocked()
+    if k < '0': break
+    result = 10 * result + k.ord - '0'.ord
+
+proc putchar_unlocked(c:char){. importc:"putchar_unlocked",header: "<stdio.h>" .}
+proc printInt(a:int32) =
+  if a == 0:
+    putchar_unlocked('0')
+    return
+  template div10(a:int32) : int32 = cast[int32]((0x1999999A * cast[int64](a)) shr 32)
+  template mod10(a:int32) : int32 = a - (a.div10 * 10)
+  var n = a
+  var rev = a
+  var cnt = 0
+  while rev.mod10 == 0:
+    cnt += 1
+    rev = rev.div10
+  rev = 0
+  while n != 0:
+    rev = rev * 10 + n.mod10
+    n = n.div10
+  while rev != 0:
+    putchar_unlocked((rev.mod10 + '0'.ord).chr)
+    rev = rev.div10
+  while cnt != 0:
+    putchar_unlocked('0')
+    cnt -= 1
+proc printInt(a:int,last:char) =
+  a.int32.printInt()
+  putchar_unlocked(last)
+
 
 template useBinaryHeap() =
   type
@@ -82,3 +93,30 @@ template useBinaryHeap() =
     h.nodes[0] = h.nodes[^1]
     h.nodes.setLen(h.nodes.len() - 1)
     h.shiftdown()
+
+useBinaryHeap()
+
+proc solve() : int =
+  let n = scan()
+  let L = newSeqWith(n,scan()).sorted(cmp)
+  var R = @[1]
+  for i in 1..<n:
+    if L[i-1] == L[i] : R[^1] += 1
+    else: R &= 1
+  if R.len < 3: return
+  var q = newBinaryHeap[int](proc(x,y:int):int=y-x)
+  for r in R: q.push(r)
+  while true:
+    let a = q.pop() - 1
+    let b = q.pop() - 1
+    let c = q.pop() - 1
+    if a < 0 or b < 0 or c < 0 : return
+    result += 1
+    q.push(a)
+    q.push(b)
+    q.push(c)
+
+scan().times: solve().printInt('\n')
+
+
+
