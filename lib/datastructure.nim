@@ -6,8 +6,44 @@
 # countTable |    o    |         | int  |   init   |    *    |
 #   table    |         |         |  *   |   new    |    *    |
 #  critbits  |         | prefix  |  *   |          | string  |
+template useStack() = # consider using deques queues
+  type Stack*[T] = ref object
+    data: seq[T]
+    size: int
+    index: int
+  proc newStack*[T](size: int = 64): Stack[T] =
+    new(result)
+    result.data = newSeq[T](size)
+    result.size = size
+    result.index = -1
+  proc deepCopy*[T](self: Stack[T]): Stack[T] =
+    new(result)
+    result.size = self.size
+    result.index = self.index
+    result.data = self.data
+  proc isEmpty*[T](self: Stack[T]): bool = self.index < 0
+  proc isValid*[T](self: Stack[T]): bool = self.index >= 0 and
+      self.index < self.size
+  proc len*[T](self: Stack[T]): int =
+    if self.isEmpty(): return 0
+    return self.index + 1
+  proc top*[T](self: Stack[T]): T =
+    assert self.isValid()
+    return self.data[self.index]
+  proc pop*[T](self: var Stack[T]): T {.discardable.} =
+    assert self.index >= 0
+    result = self.top()
+    self.index -= 1
+  proc push*[T](self: var Stack[T], elem: T) =
+    self.index += 1
+    if self.index < self.size:
+      self.data[self.index] = elem
+    else:
+      self.data.add(elem)
+      self.size += 1
+  proc `$`*[T](self: Stack[T]): string = $(self.data[..self.index])
 
-template binaryIndexedTree() =
+template useBinaryIndexedTree() =
   type BinaryIndexedTree*[CNT:static[int],T] = object
     data: array[CNT,T]
   proc `[]`*[CNT,T](bit:BinaryIndexedTree[CNT,T],i:int): T =
@@ -82,3 +118,46 @@ template useBinaryHeap() =
     h.nodes[0] = h.nodes[^1]
     h.nodes.setLen(h.nodes.len() - 1)
     h.shiftdown()
+
+template useUnionFind =
+  type UnionFind[T] = object
+    parent : seq[T]
+  proc root[T](self:var UnionFind[T],x:T): T =
+    if self.parent[x] == x: return x
+    self.parent[x] = self.root(self.parent[x])
+    return self.parent[x]
+  proc initUnionFind[T](size:int) : UnionFind[T] =
+    result.parent = newSeqUninitialized[T](size)
+    for i in 0.int32..<size.int32: result.parent[i] = i
+  proc same[T](self:var UnionFind[T],x,y:T) : bool = self.root(x) == self.root(y)
+  proc unite[T](self:var UnionFind[T],sx,sy:T) : bool {.discardable.} =
+    let rx = self.root(sx)
+    let ry = self.root(sy)
+    if rx == ry : return false
+    self.parent[rx] = ry
+    return true
+
+template useRankingUnionFind =
+  type UnionFind[T] = object
+    parent : seq[T]
+    rank : seq[int16]
+  proc root[T](self:var UnionFind[T],x:T): T =
+    if self.parent[x] == x: return x
+    self.parent[x] = self.root(self.parent[x])
+    return self.parent[x]
+  proc initUnionFind[T](size:int) : UnionFind[T] =
+    result.parent = newSeqUninitialized[T](size)
+    result.rank = newSeq[int16](size)
+    for i in 0.int32..<size.int32: result.parent[i] = i
+  proc same[T](self:var UnionFind[T],x,y:T) : bool = self.root(x) == self.root(y)
+  proc unite[T](self:var UnionFind[T],sx,sy:T) : bool {.discardable.} =
+    let rx = self.root(sx)
+    let ry = self.root(sy)
+    if rx == ry : return false
+    self.parent[rx] = ry
+    if self.rank[rx] < self.rank[ry] : self.parent[rx] = ry
+    else:
+      self.parent[ry] = rx
+      if self.rank[rx] == self.rank[ry]: self.rank[rx] += 1
+    return true
+

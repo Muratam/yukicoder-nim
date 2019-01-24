@@ -1,9 +1,5 @@
-import sequtils,strutils,algorithm,math,sugar,macros,strformat
-import sets,tables,intsets,queues,heapqueue,bitops
-template times*(n:int,body) = (for _ in 0..<n: body)
-template `max=`*(x,y) = x = max(x,y)
+import sequtils,algorithm
 template `min=`*(x,y) = x = min(x,y)
-
 
 proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
 proc scan(): int =
@@ -16,3 +12,18 @@ proc scan(): int =
   if minus: result *= -1
 
 let n = scan()
+let m = scan()
+let D = newSeqWith(m,scan()).sorted(cmp)
+if m == 1:
+  echo D[0].abs
+  quit 0
+var ans = int.high
+for x in 0..<m:
+  let y = x + n - 1
+  if y >= m : break
+  if D[y] <= 0: ans .min= -D[x]
+  elif D[x] >= 0 : ans .min= D[y]
+  else:
+    ans .min= -D[x] + D[y] * 2
+    ans .min= -D[x] * 2 + D[y]
+echo ans
