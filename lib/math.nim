@@ -137,16 +137,103 @@ template useNaturalMath() =
   proc permutation(n,k:int):int = # nPk をすばやく誤差なく計算
     result = 1
     for i in (n-k+1)..n: result = result * i
-  proc combination(n,k:int):int = # nCk をすばやく誤差なく計算
+  proc combination(n,k:int):int = # nCk
     result = 1
     let x = k.max(n - k)
     let y = k.min(n - k)
     for i in 1..y: result = result * (n+1-i) div i
+  proc combinationWithMod(n,k:int,MOD:int):int = # nCk を剰余ありで
+    result = 1
+    let x = k.max(n - k)
+    let y = k.min(n - k)
+    var req = 1
+    for i in 1..y: req *= i
+    for i in 1..y:
+      var m = n+1-i
+      let g = m.gcd(req)
+      m = m div g
+      req = req div g
+      result = (result * m) mod MOD
+
   proc roundedDiv(a,b:int) : int = # a / b の四捨五入
     let c = (a * 10) div b
     if c mod 10 >= 5: return 1 + c div 10
     return c div 10
   proc sign(n:int):int = (if n < 0 : -1 else: 1)
+
+# mod
+template useModulo() =
+  const MOD = 1000000007
+  type ModInt = object
+    v:int # 0~MODに収まる
+  proc toModInt*(a:int) : ModInt =
+    if a < -MOD : result.v = ((a mod MOD) + MOD) mod MOD
+    elif a < 0 : result.v = a + MOD
+    elif a >= MOD: result.v = a mod MOD
+    else: result.v = a
+  proc `+`*(a,b:ModInt) : ModInt =
+    result.v = a.v + b.v
+    if result.v >= MOD : result.v = result.v mod MOD
+  proc `*`*(a,b:ModInt) : ModInt =
+    result.v = a.v * b.v
+    if result.v >= MOD : result.v = result.v mod MOD
+  proc `^`*(a:ModInt,b:int) : ModInt =
+    if b == 0 : return 1.toModInt()
+    if b == 1 : return a
+    let pow = a^(b div 2)
+    if b mod 2 == 0 : return pow * pow
+    return pow * pow * a
+  proc `+`*(a:int,b:ModInt) : ModInt = a.toModInt() + b
+  proc `+`*(a:ModInt,b:int) : ModInt = a + b.toModInt()
+  proc `-`*(a:ModInt,b:int) : ModInt = a + (-b)
+  proc `-`*(a,b:ModInt) : ModInt = a + (-b.v)
+  proc `-`*(a:int,b:ModInt) : ModInt = a.toModInt() + (-b.v)
+  proc `*`*(a:int,b:ModInt) : ModInt = a.toModInt() * b
+  proc `*`*(a:ModInt,b:int) : ModInt = a * b.toModInt()
+  proc `/`*(a,b:ModInt) : ModInt = a * b^(MOD-2)
+  proc `$`*(a:ModInt) : string = $a.v
+
+template useFixed() = # 10桁精度で計算
+  proc scanFixed(): tuple[a,b:int64] =
+    var minus = false
+    var now = 0
+    var isA = true
+    var bcnt = 10_0000_00000
+    while true:
+      let k = getchar_unlocked()
+      if k == '-' : minus = true
+      elif k == '.':
+        if minus : now *= -1
+        result.a = now
+        now = 0
+        isA = false
+      elif k < '0':
+        if minus : now *= -1
+        if isA : result.a = now
+        else: result.b = now * bcnt
+        return
+      else:
+        now = 10 * now + k.ord - '0'.ord
+        if not isA: bcnt = bcnt div 10
+
+  proc printFixed(x:tuple[a,b:int64]) =
+    var a = x.a + x.b div 10_0000_00000
+    var b = x.b mod 10_0000_00000
+    if (a < 0) xor (b < 0) :
+      var minus = a <= 0
+      if minus :
+        stdout.write "-"
+        a *= -1
+        b *= -1
+      if b mod 10_0000_00000 != 0:
+        a -= 1
+        b += 10_0000_00000
+      if ($(b.abs)).len >= 11:
+        a += 1
+        b -= 10_0000_00000
+    let B = "0".repeat(10 - ($(b.abs)).len) & ($b.abs)
+    echo a,".",B
+
 
 # x^a
 template usePower() =
