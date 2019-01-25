@@ -23,7 +23,7 @@ template usePrimeFactor() =
     p[1..p.len()-1].map(parseInt)
 
   proc getAllFactors(n:int):seq[int] =
-    let factors = n.getFactorByProcess()
+    let factors = n.getFactors()
     var xs = initIntSet()
     xs.incl 1
     for f in factors:
@@ -74,8 +74,8 @@ template usePrimeFactor() =
         result = pow_2 * pow_2 * (if n mod 2 == 1: x else: 1)
         if modulo > 0: result = result mod modulo
       if n <= 1 : return false
-      if n div 2 == 0: return false
       if n == 2 or n == 3 or n == 5: return true
+      if n mod 2 == 0: return false
       let
         s = ctz(n - 1)
         d = (n - 1) div (1 shl s)
@@ -95,6 +95,8 @@ template usePrimeFactor() =
         if n <= 1 : return n
         if n mod 2 == 0 : return 2
         if √(n) * √(n) == n : return √(n)
+        let ncb = n.float.cbrt.int
+        if ncb * ncb * ncb == n : return ncb
         var P,Q = newSeq[int]()
         block:
           P &= √(k * n)

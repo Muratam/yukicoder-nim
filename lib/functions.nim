@@ -23,7 +23,7 @@ template useUnsafeInput() =
   proc scan(): int =
     var minus = false
     while true:
-      var k = getchar_unlocked()
+      let k = getchar_unlocked()
       if k == '-' : minus = true
       elif k < '0' or k > '9': break
       else: result = 10 * result + k.ord - '0'.ord
@@ -32,58 +32,47 @@ template useUnsafeInput() =
 template useUnsafeOutput() =
   proc printf(formatstr: cstring){.header: "<stdio.h>", varargs.}
   proc putchar_unlocked(c:char){. importc:"putchar_unlocked",header: "<stdio.h>" .}
-  proc printInt(a:int32) =
+  proc printInt(a0:int32) =
+    template div10(a:int32) : int32 = cast[int32]((0x1999999A * cast[int64](a)) shr 32)
+    template put(n:int32) = putchar_unlocked("0123456789"[n])
+    proc getPrintIntNimCode(n,maxA:static[int32]):string =
+      result = "if a0 < " & $maxA & ":\n"
+      for i in 1..n: result &= "  let a" & $i & " = a" & $(i-1) & ".div10\n"
+      result &= "  put(a" & $n & ")\n"
+      for i in n.countdown(1): result &= "  put(a" & $(i-1) & "-a" & $i & "*10)\n"
+      result &= "  return"
+    macro eval(s:static[string]): auto = parseStmt(s)
+    eval(getPrintIntNimCode(0,10))
+    eval(getPrintIntNimCode(1,100))
+    eval(getPrintIntNimCode(2,1000))
+    eval(getPrintIntNimCode(3,10000))
+    eval(getPrintIntNimCode(4,100000))
+    eval(getPrintIntNimCode(5,1000000))
+    eval(getPrintIntNimCode(6,10000000))
+    eval(getPrintIntNimCode(7,100000000))
+    eval(getPrintIntNimCode(8,1000000000))
+
+  proc printInt(a:int) =
     if a == 0:
       putchar_unlocked('0')
       return
-    template div10(a:int32) : int32 = cast[int32]((0x1999999A * cast[int64](a)) shr 32)
-    template mod10(a:int32) : int32 = a - (a.div10 * 10)
     var n = a
     var rev = a
     var cnt = 0
-    while rev.mod10 == 0:
+    while rev mod 10 == 0:
       cnt += 1
-      rev = rev.div10
+      rev = rev div 10
     rev = 0
     while n != 0:
-      rev = rev * 10 + n.mod10
-      n = n.div10
+      rev = rev * 10 + n mod 10
+      n = n div 10
     while rev != 0:
-      putchar_unlocked((rev.mod10 + '0'.ord).chr)
-      rev = rev.div10
+      putchar_unlocked((rev mod 10 + '0'.ord).chr)
+      rev = rev div 10
     while cnt != 0:
       putchar_unlocked('0')
       cnt -= 1
-  proc printInt(a:int,last:char) =
-    a.int32.printInt()
-    putchar_unlocked(last)
 
-  proc printInt(a:int32) =
-    template div10(a:int32) : int32 = cast[int32]((0x1999999A * cast[int64](a)) shr 32)
-    template put(n:int32) = putchar_unlocked("0123456789"[n])
-    if a < 10:
-      put(a)
-      return
-    if a < 100:
-      let a1 = a.div10
-      (put(a1);put(a-a1*10))
-      return
-    if a < 1000:
-      let a1 = a.div10
-      let a2 = a1.div10
-      put(a2)
-      put(a1-a2*10)
-      put(a-a1*10)
-      return
-    if a < 10000:
-      let a1 = a.div10
-      let a2 = a1.div10
-      let a3 = a2.div10
-      put(a3)
-      put(a2-a3*10)
-      put(a1-a2*10)
-      put(a-a1*10)
-      return
 
   proc printFloat(a,b:int) =
     if a == 0:
