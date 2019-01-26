@@ -13,6 +13,7 @@ proc toCountSeq[T](x:seq[T]) : seq[tuple[k:T,v:int]] = toSeq(x.toCountTable().pa
 
 #
 template useUnsafeInput() =
+  proc gets(str: untyped){.header: "<stdio.h>", varargs.}
   proc scanf(formatstr: cstring){.header: "<stdio.h>", varargs.}
   proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
   proc scan(): int =
@@ -30,6 +31,7 @@ template useUnsafeInput() =
     if minus: result *= -1
 #
 template useUnsafeOutput() =
+  proc puts(str: untyped){.header: "<stdio.h>", varargs.}
   proc printf(formatstr: cstring){.header: "<stdio.h>", varargs.}
   proc putchar_unlocked(c:char){. importc:"putchar_unlocked",header: "<stdio.h>" .}
   proc printInt(a0:int32) =

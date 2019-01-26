@@ -1,9 +1,17 @@
 # 配列操作
-template permutationIter[T](arr:seq[T],arrRef,body) =
-  var arrRef{.inject.} = arr
+template permutationIter[T](arr:var seq[T],body) =
+  # arr.sort()
   while true:
     body
-    if not arrRef.nextPermutation() : break
+    if not arr.nextPermutation() : break
+
+template pairPermutationIter[T](arr:var seq[T],body) =
+  # arr.sort()
+  while true:
+    body
+    arr.reverse(arr.len div 2,arr.len - 1)
+    if not arr.nextPermutation() : break
+
 
 proc argMax[T](arr:seq[T]):int =
   result = 0
