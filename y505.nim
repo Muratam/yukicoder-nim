@@ -12,8 +12,21 @@ proc scan(): int =
     result = 10 * result + k.ord - '0'.ord
 
 let n = scan()
-# 3 4 5
-# 5 12 13
-# 7 24 25
-# 8 15 17
-# 9 40 41
+let A = newSeqWith(n,scan())
+var ans = 0
+if A.filterIt(it < -1).len mod 2 == 0:
+  for i,a in A:
+    if a == 0 : continue
+    if a.abs() == 1 :
+      ans += 1
+      continue
+    ans *= a.abs()
+  echo ans
+else:
+  for i,a in A:
+    if a == 0 : continue
+    if a.abs() == 1 :
+      ans += 1
+      continue
+    ans *= a.abs()
+  echo ans
