@@ -152,8 +152,10 @@ template useModulo() =
     result.v = a.v * b.v
     if result.v >= MOD : result.v = result.v mod MOD
   proc `^`*(a:ModInt,b:int) : ModInt =
+    if a.v == 0 : return 0.toModInt()
     if b == 0 : return 1.toModInt()
     if b == 1 : return a
+    if b > MOD: return a^(b mod (MOD-1)) # フェルマーの小定理
     let pow = a^(b div 2)
     if b mod 2 == 0 : return pow * pow
     return pow * pow * a
