@@ -31,16 +31,6 @@ template usePrimeFactor() =
         xs.incl(x * f)
     return toSeq(xs.items).sorted(cmp)
 
-  proc rhoFactor(n:int):int = # (O(n/4)),1~0.1%で失敗
-    proc f(x:int):int = (2 + x * x) mod n
-    var (x,y,d) = (2,2,1)
-    while d == 1:
-      x = f(x)
-      y = f(f(y))
-      d = gcd(abs(x-y),n)
-    if d == n : return 0
-    else : return d
-
   proc getFactors(n:int):seq[int]=
     const INF = int.high div 4
     proc powerWhenTooBig(x,n:int,modulo:int = 0): int =
@@ -134,34 +124,15 @@ template usePrimeFactor() =
       if p == m: return
       m = m div p
 
-# 整数 の数学関数
-template useNaturalMath() =
-  proc permutation(n,k:int):int = # nPk をすばやく誤差なく計算
-    result = 1
-    for i in (n-k+1)..n: result = result * i
-  proc combination(n,k:int):int = # nCk
-    result = 1
-    let x = k.max(n - k)
-    let y = k.min(n - k)
-    for i in 1..y: result = result * (n+1-i) div i
-  proc roundedDiv(a,b:int) : int = # a / b の四捨五入
-    let c = (a * 10) div b
-    if c mod 10 >= 5: return 1 + c div 10
-    return c div 10
-  proc sign(n:int):int = (if n < 0 : -1 else: 1)
-  proc combinationWithMod(n,k:int):int = # nCk を剰余ありで(n-kかkが小さいとき)
-    const MOD = 1_000_000_007
-    result = 1
-    let x = k.max(n - k)
-    let y = k.min(n - k)
-    var req = 1
-    for i in 1..y: req *= i
-    for i in 1..y:
-      var m = n+1-i
-      let g = m.gcd(req)
-      m = m div g
-      req = req div g
-      result = (result * m) mod MOD
+  proc rhoFactor(n:int):int = # (O(n/4)),1~0.1%で失敗
+    proc f(x:int):int = (2 + x * x) mod n
+    var (x,y,d) = (2,2,1)
+    while d == 1:
+      x = f(x)
+      y = f(f(y))
+      d = gcd(abs(x-y),n)
+    if d == n : return 0
+    else : return d
 
 
 # mod
@@ -196,7 +167,9 @@ template useModulo() =
   proc `/`*(a,b:ModInt) : ModInt = a * b^(MOD-2)
   proc `$`*(a:ModInt) : string = $a.v
 
-  proc combination(n,k:int) : ModInt = # nCk を剰余ありで
+  # 剰余が必要な大きな計算
+  # nCk
+  proc combination(n,k:int) : ModInt =
     result = 1.toModInt()
     let x = k.max(n - k)
     let y = k.min(n - k)
@@ -204,6 +177,19 @@ template useModulo() =
     for i in 2..y: fact = fact * i
     for i in 1..y: result = result * (n+1-i)
     result = result / fact
+  # フィボナッチ数列の第n項
+  proc calcFib(n:int) : tuple[x:ModInt,y:ModInt] =
+    if n == 0 : return (0.toModInt(),1.toModInt())
+    let (fn,fn1) = calcFib(n div 2)
+    let fnx1 = fn1 - fn
+    let f2n = (fn1 + fnx1) * fn
+    let f2nx1 = fn * fn + fnx1 * fnx1
+    let f2n1 = f2n + f2nx1
+    if n mod 2 == 0 : return (f2n,f2n1)
+    else: return (f2n1,f2n1 + f2n)
+
+
+
 
 
 # 行列
@@ -382,58 +368,26 @@ template useFixed() = # 10桁精度で計算
     echo a,".",B
 
 
-# x^a
-template usePower() =
+
+# 整数 の数学関数(剰余無しver)
+template useNaturalMath() =
+  proc permutation(n,k:int):int = # nPk
+    result = 1
+    for i in (n-k+1)..n: result = result * i
+  proc combination(n,k:int):int = # nCk
+    result = 1
+    let x = k.max(n - k)
+    let y = k.min(n - k)
+    for i in 1..y: result = result * (n+1-i) div i
   proc power(x,n:int): int =
-    if n == 0: return 1
-    if n == 1: return x
+    if n <= 1: return if n == 1: x else: 1
     let pow_2 = power(x,n div 2)
     return pow_2 * pow_2 * (if n mod 2 == 1: x else: 1)
-
-  proc power(x,n:int,modulo:int = 0): int =
-    if n == 0: return 1
-    if n == 1: return x
-    let
-      pow_2 = power(x,n div 2,modulo)
-      odd = if n mod 2 == 1: x else: 1
-    if modulo > 0:
-      result = (pow_2 * odd) mod modulo
-      result = (result * pow_2) mod modulo
-    else :
-      result = pow_2 * pow_2 * odd
-
-  proc bigPower(x,n:int,modulo:int = 0): int =
-    proc mul(x,n,modulo:int):int =
-      if n == 0: return 0
-      if n == 1: return x
-      result = mul(x,n div 2,modulo) mod modulo
-      result = (result * 2) mod modulo
-      result = (result + x * (n mod 2 == 1).int) mod modulo
-      if n == 0: return 1
-    if n == 1: return x
-    let
-      pow_2 = bigPower(x,n div 2,modulo)
-      odd = if n mod 2 == 1: x else: 1
-    if modulo > 0:
-      const maybig = int.high.float.sqrt.int div 2
-      if pow_2 > maybig or odd > maybig:
-        result = mul(pow_2,pow_2,modulo)
-        result = mul(result,odd,modulo)
-      else:
-        result = (pow_2 * pow_2) mod modulo
-        result = (result * odd) mod modulo
-    else:
-      return pow_2 * pow_2 * odd
-
-  proc calcFib(n:int) : tuple[x:ModInt,y:ModInt] =
-    if n == 0 : return (0.toModInt(),1.toModInt())
-    let (fn,fn1) = calcFib(n div 2)
-    let fnx1 = fn1 - fn
-    let f2n = (fn1 + fnx1) * fn
-    let f2nx1 = fn * fn + fnx1 * fnx1
-    let f2n1 = f2n + f2nx1
-    if n mod 2 == 0 : return (f2n,f2n1)
-    else: return (f2n1,f2n1 + f2n)
+  proc roundedDiv(a,b:int) : int = # a / b の四捨五入
+    let c = (a * 10) div b
+    if c mod 10 >= 5: return 1 + c div 10
+    return c div 10
+  proc sign(n:int):int = (if n < 0 : -1 else: 1)
 
 # 統計
 template statistics() =
