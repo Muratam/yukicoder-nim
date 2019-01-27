@@ -1,9 +1,4 @@
-import sequtils,algorithm,math,tables
-import sets,intsets,queues,heapqueue,bitops,strutils
-template times*(n:int,body) = (for _ in 0..<n: body)
-template `max=`*(x,y) = x = max(x,y)
-template `min=`*(x,y) = x = min(x,y)
-
+import tables
 proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
 proc scan(): int =
   while true:
@@ -11,10 +6,11 @@ proc scan(): int =
     if k < '0': break
     result = 10 * result + k.ord - '0'.ord
 
+var dp = newTable[int,int]()
+dp[0] = 1
 proc solve(n:int):int =
-  if n == 0 : return 1
-  return solve(n div 3) + solve(n div 5)
+  if n in dp : return dp[n]
+  result = solve(n div 3) + solve(n div 5)
+  dp[n] = result
 
-for i in 0..1000:
-  echo i,":",solve(i)
-let n = scan()
+echo solve(scan())

@@ -144,7 +144,13 @@ template useNaturalMath() =
     let x = k.max(n - k)
     let y = k.min(n - k)
     for i in 1..y: result = result * (n+1-i) div i
-  proc combinationWithMod(n,k:int,MOD:int):int = # nCk を剰余ありで
+  proc roundedDiv(a,b:int) : int = # a / b の四捨五入
+    let c = (a * 10) div b
+    if c mod 10 >= 5: return 1 + c div 10
+    return c div 10
+  proc sign(n:int):int = (if n < 0 : -1 else: 1)
+  proc combinationWithMod(n,k:int):int = # nCk を剰余ありで(n-kかkが小さいとき)
+    const MOD = 1_000_000_007
     result = 1
     let x = k.max(n - k)
     let y = k.min(n - k)
@@ -157,11 +163,6 @@ template useNaturalMath() =
       req = req div g
       result = (result * m) mod MOD
 
-  proc roundedDiv(a,b:int) : int = # a / b の四捨五入
-    let c = (a * 10) div b
-    if c mod 10 >= 5: return 1 + c div 10
-    return c div 10
-  proc sign(n:int):int = (if n < 0 : -1 else: 1)
 
 # mod
 template useModulo() =
@@ -195,31 +196,41 @@ template useModulo() =
   proc `/`*(a,b:ModInt) : ModInt = a * b^(MOD-2)
   proc `$`*(a:ModInt) : string = $a.v
 
+  proc combination(n,k:int) : ModInt = # nCk を剰余ありで
+    result = 1.toModInt()
+    let x = k.max(n - k)
+    let y = k.min(n - k)
+    var fact = 1.toModInt()
+    for i in 2..y: fact = fact * i
+    for i in 1..y: result = result * (n+1-i)
+    result = result / fact
+
+
 # 行列
 template useMatrix =
-  type Matrix = ref object
+  type Matrix[T] = ref object
     w,h:int
-    data: seq[int]
-  proc `[]`(m:Matrix,x,y:int):int = m.data[x + y * m.w]
-  proc `[]=`(m:var Matrix,x,y,val:int) = m.data[x + y * m.w] = val
-  proc newMatrix(w,h:int):Matrix =
+    data: seq[T]
+  proc `[]`[T](m:Matrix[T],x,y:int):T = m.data[x + y * m.w]
+  proc `[]=`[T](m:var Matrix[T],x,y:int,val:T) = m.data[x + y * m.w] = val
+  proc newMatrix[T](w,h:int):Matrix[T] =
     new(result)
     result.w = w
     result.h = h
-    result.data = newSeq[int](w * h)
-  proc identityMatrix(n:int):Matrix =
-    result = newMatrix(n,n)
+    result.data = newSeq[T](w * h)
+  proc identityMatrix[T](n:int):Matrix[T] =
+    result = newMatrix[T](n,n)
     for i in 0..<n: result[i,i] = 1
-  proc newMatrix(arr:seq[seq[int]]):Matrix =
+  proc newMatrix[T](arr:seq[seq[T]]):Matrix[T] =
     new(result)
     result.w = arr[0].len
     result.h = arr.len
-    result.data = newSeqUninitialized[int](result.w * result.h)
+    result.data = newSeq[T](result.w * result.h)
     for x in 0..<result.w:
       for y in 0..<result.h:
         result[x,y] = arr[y][x]
 
-  proc `$`(m:Matrix) : string =
+  proc `$`[T](m:Matrix[T]) : string =
     result = ""
     for y in 0..<m.h:
       result &= "["
@@ -228,26 +239,26 @@ template useMatrix =
         if x != m.w - 1 : result &= ","
       result &= "]"
       if y != m.h - 1 : result &= "\n"
-    result &= ""
+    result &= "\n"
 
-  proc `*`(a,b:Matrix): Matrix =
+  proc `*`[T](a,b:Matrix[T]): Matrix[T] =
     assert a.w == b.h
-    result = newMatrix(a.h,b.w)
+    result = newMatrix[T](a.h,b.w)
     for y in 0..<a.h:
       for x in 0..<b.w:
-        var n = 0
+        var n : T
         for k in 0..<a.w:
           when declared(MOD):
             n = (n + (a[k,y] * b[x,k]) mod MOD) mod MOD
           else:
             n += a[k,y] * b[x,k]
-        result[y,x] = n
+        result[x,y] = n
 
-  proc `*`(a:Matrix,b:seq[int]):seq[int] =
+  proc `*`[T](a:Matrix,b:seq[T]):seq[T] =
     assert a.w == b.len
-    result = newSeq[int](b.len)
+    result = newSeq[T](b.len)
     for x in 0..<a.h:
-      var n = 0
+      var n : T
       for k in 0..<a.w:
         when declared(MOD):
           n = (n + (a[k,x] * b[k]) mod MOD) mod MOD
@@ -255,14 +266,79 @@ template useMatrix =
           n += a[k,x] * b[k]
       result[x] = n
 
-  proc `^`(m:Matrix,n:int) : Matrix =
+  proc `^`[T](m:Matrix[T],n:int) : Matrix[T] =
     assert m.w == m.h
-    if n <= 0 : return identityMatrix(m.w)
+    if n <= 0 : return identityMatrix[T](m.w)
     if n == 1 : return m
     let m2 = m^(n div 2)
     if n mod 2 == 0 : return m2 * m2
     return m2 * m2 * m
 
+  # CSR 実装
+  # let M = newMatrix(@[@[1,2,3,0],@[0,0,0,1],@[2,0,0,2],@[0,0,0,1]])
+  type SparseMatrix[T] = ref object
+    w,h:int
+    data: seq[T]
+    row: seq[int]
+    col: seq[int]
+  proc newSparseMatrix[T](m:Matrix[T]):SparseMatrix[T] =
+    new(result)
+    result.w = m.w
+    result.h = m.h
+    for y in 0..<m.h:
+      result.col &= result.data.len
+      for x in 0..<m.w:
+        if m[x,y] <= T(0) : continue
+        result.data &= m[x,y]
+        result.row &= x
+    result.col &= result.data.len
+  proc newSparseMatrix[T](m:seq[seq[T]]):SparseMatrix[T] =
+    new(result)
+    result.w = m.len()
+    result.h = m[0].len
+    for y in 0..<result.h:
+      result.col &= result.data.len
+      for x in 0..<result.w:
+        if m[x][y] <= T(0) : continue
+        result.data &= m[x][y]
+        result.row &= x
+    result.col &= result.data.len
+  proc newSparseMatrix[T](w,h:int):SparseMatrix[T] =
+    new(result)
+    result.w = w
+    result.h = h
+    result.data = @[]
+    result.col = @[]
+    result.row = @[]
+  proc `*`[T](m:SparseMatrix[T],v:seq[T]):seq[T] =
+    result = newSeq[T](m.h)
+    for y in 0..<m.h:
+      var n : T
+      for x in m.col[y]..<m.col[y+1]:
+        n += m.data[x] * v[m.row[x]]
+      result[y] = n
+  proc `*`[T](m1,m2:SparseMatrix[T]) : SparseMatrix[T] =
+    var R = newSeqWith(m2.w,newSeq[T](m2.h))
+    for y in 0..<m2.h:
+      for x in m2.col[y]..<m2.col[y+1]:
+        R[m2.row[x]][y] = m2.data[x]
+    for x in 0..<m2.w: R[x] = m1 * R[x]
+    return newSparseMatrix(R)
+  proc `^`[T](m:SparseMatrix[T],n:int) : SparseMatrix[T] =
+    assert m.w == m.h
+    if n <= 0 : return identityMatrix[T](m.w).newSparseMatrix()
+    if n == 1 : return m
+    let m2 = m^(n div 2)
+    if n mod 2 == 0 : return m2 * m2
+    return m2 * m2 * m
+  proc `$`[T](m:SparseMatrix[T]):string =
+    result = ""
+    for y in 0..<m.h:
+      result &= "["
+      for x in m.col[y]..<m.col[y+1]:
+        result &= $m.data[x] & "(" & $m.row[x] & ") "
+      result &= "]\n"
+    result &= "\n"
 
 template useFixed() = # 10桁精度で計算
   proc scanFixed(): tuple[a,b:int64] =
@@ -358,3 +434,21 @@ template usePower() =
     let f2n1 = f2n + f2nx1
     if n mod 2 == 0 : return (f2n,f2n1)
     else: return (f2n1,f2n1 + f2n)
+
+# 統計
+template statistics() =
+  # 線形回帰(最小二乗法) f(x) = ax + b
+  proc leastSquares(X,Y:seq[float]):tuple[a,b,err:float] =
+    assert X.len == Y.len
+    let n = X.len.float
+    let XY = toSeq(0..<X.len).mapIt(X[it] * Y[it]).sum()
+    let XX = X.mapIt(it*it).sum()
+    let XS = X.sum()
+    let YS = Y.sum()
+    let d = n * XX - XS * XS
+    let a = (n * XY - XS * YS) / d
+    let b = (XX * YS - XY * XS) / d
+    let err = toSeq(0..<X.len)
+      .mapIt((let e = X[it] * a + b - Y[it];e*e))
+      .sum()
+    return (a ,b,err)
