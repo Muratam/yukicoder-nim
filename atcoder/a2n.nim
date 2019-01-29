@@ -12,9 +12,16 @@ proc scan(): int =
     if k < '0': return
     result = 10 * result + k.ord - '0'.ord
 
-# echo toSeq(0..10)
-# echo toSeq("123".items)
-# let (n,m) = stdin.readLine().split().map(parseInt).unpack(2)
-# let A = stdin.readLine().split().map(parseInt)
-# let n = stdin.readLine().parseInt()
-# let B = newSeqWith(n,stdin.readLine().parseInt())
+let n = scan()
+let A = stdin.readLine()
+let B = stdin.readLine()
+let C = stdin.readLine()
+var ans = 0
+for i in 0..<n:
+  let a = A[i]
+  let b = B[i]
+  let c = C[i]
+  if a == b and b == c : continue
+  elif a != b and b != c and c != a : ans += 2
+  else: ans += 1
+echo ans

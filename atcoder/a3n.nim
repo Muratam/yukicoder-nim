@@ -12,9 +12,16 @@ proc scan(): int =
     if k < '0': return
     result = 10 * result + k.ord - '0'.ord
 
-# echo toSeq(0..10)
-# echo toSeq("123".items)
-# let (n,m) = stdin.readLine().split().map(parseInt).unpack(2)
-# let A = stdin.readLine().split().map(parseInt)
-# let n = stdin.readLine().parseInt()
-# let B = newSeqWith(n,stdin.readLine().parseInt())
+let n = scan()
+let AB = newSeqWith(n,(a:scan(),b:scan())).sortedByIt(- it.a - it.b)
+  # .sorted(proc (x,y:tuple[a,b:int]) : int =
+  #   if x.a - x.b != y.a - y.b : return (x.a - x.b) - (y.a - y.b)
+  #   return  - x.b + y.b
+  # )
+# echo AB
+var aSum = 0
+var bSum = 0
+for i,ab in AB:
+  if i mod 2 == 0 : aSum += ab.a
+  else: bSum += ab.b
+echo aSum - bSum

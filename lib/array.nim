@@ -1,17 +1,14 @@
-# 配列操作
-template permutationIter[T](arr:var seq[T],body) =
-  # arr.sort()
-  while true:
-    body
-    if not arr.nextPermutation() : break
+# 配列変換
+proc toArray(s:string) :seq[char]= toSeq(s.items)
+proc toCountSeq[T](x:seq[T]) : seq[tuple[k:T,v:int]] = toSeq(x.toCountTable().pairs)
+macro unpack*(arr: auto,cnt: static[int]): auto =
+  let t = genSym(); result = quote do:(let `t` = `arr`;())
+  for i in 0..<cnt: result[0][1].add(quote do:`t`[`i`])
 
-template pairPermutationIter[T](arr:var seq[T],body) =
-  # arr.sort()
-  while true:
-    body
-    arr.reverse(arr.len div 2,arr.len - 1)
-    if not arr.nextPermutation() : break
-
+proc find*[T](arr: seq[T],item: T,start,fin:int): int {.inline.}=
+  for i in start..<fin:
+    if arr[i] == item : return i
+  return -1
 
 proc argMax[T](arr:seq[T]):int =
   result = 0
@@ -28,10 +25,19 @@ proc argMin[T](arr:seq[T]):int =
     val = a
     result = i
 
-proc find*[T](arr: seq[T],item: T,start,fin:int): int {.inline.}=
-  for i in start..<fin:
-    if arr[i] == item : return i
-  return -1
+# イテレーション
+template permutationIter[T](arr:var seq[T],body) =
+  # arr.sort()
+  while true:
+    body
+    if not arr.nextPermutation() : break
+
+template pairPermutationIter[T](arr:var seq[T],body) =
+  # arr.sort()
+  while true:
+    body
+    arr.reverse(arr.len div 2,arr.len - 1)
+    if not arr.nextPermutation() : break
 
 
 iterator chair(w,h:int): tuple[x,y:int] = # [0,w), [0,h) までを 和が等しい順に回す
@@ -39,8 +45,6 @@ iterator chair(w,h:int): tuple[x,y:int] = # [0,w), [0,h) までを 和が等し�
     for x in 0.max(n-h+1)..n.min(w-1):
       yield (x,n-x)
 
-proc toArray(s:string) :seq[char]= toSeq(s.items)
-proc toCountSeq[T](x:seq[T]) : seq[tuple[k:T,v:int]] = toSeq(x.toCountTable().pairs)
 
 proc overWrite[T](dst,src:seq[T],index:int) : seq[T] =
   result = dst
@@ -64,11 +68,3 @@ proc getNeignborDiff[T](arr:seq[T]) : seq[T] =
   result = newSeq[T](arr.len()-1)
   for i in 1..<arr.len(): result[i-1] = arr[i] - arr[i-1]
 
-proc toAlphabet(a:int) : string = # 26進数(A..Z,AA..ZZ,...)
-  proc impl(a:int) : seq[char] =
-    let c = a mod 26
-    let s = ('A'.ord + c).chr
-    if a < 26: return @[s]
-    result = impl(a div 26 - 1)
-    result &= s
-  return cast[string](impl(a))

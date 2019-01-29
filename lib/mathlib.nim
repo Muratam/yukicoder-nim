@@ -236,22 +236,15 @@ template useMatrix =
       for x in 0..<b.w:
         var n : T
         for k in 0..<a.w:
-          when declared(MOD):
-            n = (n + (a[k,y] * b[x,k]) mod MOD) mod MOD
-          else:
-            n += a[k,y] * b[x,k]
+          n += a[k,y] * b[x,k]
         result[x,y] = n
 
   proc `*`[T](a:Matrix,b:seq[T]):seq[T] =
     assert a.w == b.len
     result = newSeq[T](b.len)
     for x in 0..<a.h:
-      var n : T
       for k in 0..<a.w:
-        when declared(MOD):
-          n = (n + (a[k,x] * b[k]) mod MOD) mod MOD
-        else:
-          n += a[k,x] * b[k]
+        n += a[k,x] * b[k]
       result[x] = n
 
   proc `^`[T](m:Matrix[T],n:int) : Matrix[T] =
@@ -261,6 +254,21 @@ template useMatrix =
     let m2 = m^(n div 2)
     if n mod 2 == 0 : return m2 * m2
     return m2 * m2 * m
+
+  proc `+`[T](a,b:Matrix[T]): Matrix[T] =
+    assert a.w == b.w and a.h == b.h
+    result = newMatrix[T](a.w,a.h)
+    for y in 0..<a.h:
+      for x in 0..<b.w:
+        result[x,y] = a[x,y] + b[x,y]
+
+  proc transpose[T](a:Matrix[T]): Matrix[T] =
+    result = newMatrix[T](a.h,a.w)
+    for y in 0..<a.h:
+      for x in 0..<b.w:
+        result[x,y] = a[y,x]
+
+
 
   # CSR 実装
   # let M = newMatrix(@[@[1,2,3,0],@[0,0,0,1],@[2,0,0,2],@[0,0,0,1]])

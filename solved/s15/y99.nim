@@ -2,6 +2,12 @@ proc printf(formatstr: cstring){.header: "<stdio.h>", varargs.}
 proc scanf(formatstr: cstring){.header: "<stdio.h>", varargs.}
 proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
 
+proc scan(): int32 =
+  while true:
+    let k = getchar_unlocked()
+    if k < '0': return
+    result = 10.int32 * result + k.ord.int32 - '0'.ord.int32
+
 
 var n :int32
 scanf("%d\n",addr n)
