@@ -5,6 +5,8 @@ template times*(n:int,body) = (for _ in 0..<n: body)
 template `max=`*(x,y) = x = max(x,y)
 template `min=`*(x,y) = x = min(x,y)
 template stopwatch(body) = (let t1 = cpuTime();body;echo "TIME:",(cpuTime() - t1) * 1000,"ms")
+template `^`(n:int) : int = (1 shl n)
+
 #
 template useUnsafeInput() =
   proc gets(str: untyped){.header: "<stdio.h>", varargs.}
@@ -119,7 +121,6 @@ template useBitOperators() =
   #   countTrailingZeroBits :: 01<0000> -> 4 (if 0 then 140734606624512)
   #   firstSetBit :: countTrailingZeroBits + 1 (if 0 then 0)
   #   when unsigned :: rotateLeftBits rotateRightBits
-  template `^`(n:int) : int = (1 shl n)
   proc factorOf2(n:int):int = n and -n # 80:0101<0000> => 16:2^4
   proc binary(x:int,reverse:bool=false):string = # 二進表示
     if x == 0 : return "0"

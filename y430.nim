@@ -1,8 +1,5 @@
-import sequtils,algorithm,math,tables
-import sets,intsets,queues,heapqueue,bitops,strutils
+import sequtils,algorithm
 template times*(n:int,body) = (for _ in 0..<n: body)
-template `max=`*(x,y) = x = max(x,y)
-template `min=`*(x,y) = x = min(x,y)
 
 proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
 proc scan(): int =
@@ -11,25 +8,46 @@ proc scan(): int =
     if k < '0': break
     result = 10 * result + k.ord - '0'.ord
 
-let S = stdin.readLine()
-let n = scan()
-var ans = 0
-n.times:
-  ans += S.count(stdin.readLine())
-echo ans
+template useRollingHash() =
+  type RollingHash = object
+    A,B: seq[int]
+    AP,BP: seq[int]
+    modA,modB : int
+    baseA,baseB : int
+  proc initRollingHash(
+      S:string, baseA:int=17, baseB:int=19,
+      modA:int=1_0000_0000_7.int, modB:int=1_0000_0000_9.int) : RollingHash =
+    result.baseA = baseA
+    result.baseB = baseB
+    result.modA = modA
+    result.modB = modB
+    result.A = newSeq[int](S.len + 1) # baseA 進数表示した時の値
+    result.B = newSeq[int](S.len + 1)
+    result.AP = newSeq[int](S.len + 1) # base^n
+    result.BP = newSeq[int](S.len + 1)
+    result.AP[0] = 1
+    result.BP[0] = 1
+    for i in 0..<S.len: result.A[i+1] = (result.A[i] * baseA + S[i].ord) mod modA
+    for i in 0..<S.len: result.B[i+1] = (result.B[i] * baseB + S[i].ord) mod modB
+    for i in 0..<S.len: result.AP[i+1] = (result.AP[i] * baseA) mod modA
+    for i in 0..<S.len: result.BP[i+1] = (result.BP[i] * baseB) mod modB
+  proc hash(self:RollingHash,l,r:int):(int,int) = # [l,r)
+    ((self.AP[r-l] * self.A[l] - self.A[r] + self.modA) mod self.modA,
+    (self.BP[r-l] * self.B[l] - self.B[r] + self.modB) mod self.modB)
+    # 67800 と 678 は 67800 == 678 * 100 で得られる
+useRollingHash()
 
-#[
-proc scan(): int =
-  var minus = false
-  while true:
-    let k = getchar_unlocked()
-    if k == '-' : minus = true
-    elif k < '0' or k > '9': break
-    else: result = 10 * result + k.ord - '0'.ord
-  if minus: result *= -1
-import strutils,strformat,sugar,macros
-template get*():string = stdin.readLine().strip()
-macro unpack*(arr: auto,cnt: static[int]): auto =
-  let t = genSym(); result = quote do:(let `t` = `arr`;())
-  for i in 0..<cnt: result[1].add(quote do:`t`[`i`])
-]#
+let S = stdin.readLine()
+let m = scan()
+let RH = S.initRollingHash()
+var H = newSeqWith(11,newSeq[(int,int)]())
+for i in 1..10:
+  for j in 0..S.len-i:
+    H[i] &= RH.hash(j,j+i)
+for i in 1..10: H[i].sort(cmp)
+var ans = 0
+m.times:
+  let S2 = stdin.readLine()
+  let h = S2.initRollingHash().hash(0,S2.len)
+  ans += H[S2.len].upperBound(h) - H[S2.len].lowerBound(h)
+echo ans
