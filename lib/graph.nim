@@ -1,6 +1,6 @@
 import sequtils
 
-# トポロジカルソート
+# トポロジカルソート / 強連結成分分解
 template useTrimingGraph =
   # 隣接リスト([n->[m1,m2,m3], ... ])を トポロジカルソート
   proc topologicalSort(E:seq[seq[int]],deleteIsolated:bool = false) : seq[int] =
@@ -16,31 +16,69 @@ template useTrimingGraph =
       return answer.filterIt(visited[it] > 1 or E[it].len > 0)
     return answer
 
+  # SCC:強連結成分分解 O(V+E)
+  type Graph = object
+    graph : seq[seq[int]] # 隣接リスト
+    rev : seq[seq[int]] # 逆
+  proc initGraph(maxSize:int):Graph =
+    result.graph = newSeqWith(maxSize,newSeq[int]())
+    result.rev = newSeqWith(maxSize,newSeq[int]())
+  proc add(G:var Graph,src,dst:int) =
+    G.graph[src] &= dst
+    G.rev[dst] &= src
+  # 属する強連結成分のトポロジカル順の頂点番号を返却(サイクル順)
+  proc storonglyConnectedComponentDecomposition(G:Graph) : seq[seq[int]] =
+    var used = newSeq[bool](G.graph.len)
+    var postOrders = newSeq[int]() # 帰りがけ順
+    var orders = newSeq[seq[int]]()
+    proc dfs(src:int) =
+      used[src] = true
+      for dst in G.graph[src]:
+        if not used[dst] : dfs(dst)
+      postOrders &= src
+    proc rdfs(src,k:int) =
+      used[src] = true
+      orders[^1] &= src
+      for dst in G.rev[src]:
+        if not used[dst] : rdfs(dst,k)
+    for v in 0..<G.graph.len:
+      if not used[v] : dfs(v)
+    used = newSeq[bool](G.graph.len)
+    var order = 0
+    for i in (postOrders.len()-1).countdown(0):
+      if used[postOrders[i]] : continue
+      orders &= @[]
+      rdfs(postOrders[i],order)
+      orders[^1].reverse()
+      order += 1
+    return orders
+
+
 # 最大流/最小カット
 template useMaxFlow =
   # fordFullkerson : 最大流/最小カット O(FE) (F:最大流の流量)
   type Edge = tuple[dst,cap,rev:int]
-  type Flow = seq[seq[Edge]]
-  proc initFlow(maxSize:int):Flow = newSeqWith(maxSize,newSeq[Edge]())
-  proc add(F:var Flow,src,dst,cap:int) =
-    F[src] &= (dst,cap,F[dst].len)
-    F[dst] &= (src,0,F[src].len - 1)
-  proc fordFullkerson(F:var Flow,src,dst:int) : int =
+  type Graph = seq[seq[Edge]]
+  proc initFlow(maxSize:int):Graph = newSeqWith(maxSize,newSeq[Edge]())
+  proc add(G:var Graph,src,dst,cap:int) =
+    G[src] &= (dst,cap,G[dst].len)
+    G[dst] &= (src,0,G[src].len - 1)
+  proc fordFullkerson(G:var Graph,src,dst:int) : int =
     var used : seq[bool]
-    proc dfs(F:var Flow,src,dst,flow:int) : int =
+    proc dfs(G:var Graph,src,dst,flow:int) : int =
       if src == dst : return flow
       used[src] = true
-      for i,e in F[src]:
+      for i,e in G[src]:
         if used[e.dst] or e.cap <= 0 : continue
-        let d = F.dfs(e.dst,dst,flow.min(e.cap))
+        let d = G.dfs(e.dst,dst,flow.min(e.cap))
         if d <= 0 : continue
-        F[src][i].cap -= d
-        F[e.dst][e.rev].cap += d
+        G[src][i].cap -= d
+        G[e.dst][e.rev].cap += d
         return d
     while true:
-      used = newSeq[bool](F.len)
+      used = newSeq[bool](G.len)
       const INF = 1e10.int
-      let flow = F.dfs(src,dst,INF)
+      let flow = G.dfs(src,dst,INF)
       if flow == 0 : return
       result += flow
 
