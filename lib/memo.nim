@@ -123,6 +123,26 @@ template useRankingUnionFind =
       if self.rank[rx] == self.rank[ry]: self.rank[rx] += 1
     return true
 
+# マス目版のダイクストラ
+proc dijkestra(E:seq[seq[int]], sx,sy:int) :seq[seq[int]] =
+  type Field = tuple[x,y,v:int]
+  let (W,H) = (E.len,E[0].len)
+  const INF = int.high div 4
+  const dxdy :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0)]
+  var cost = newSeqWith(W,newSeqWith(H,INF))
+  var opens = newBinaryHeap[Field](proc(a,b:Field): int = a.v - b.v)
+  opens.push((sx,sy,0))
+  while opens.size() > 0:
+    let (x,y,v) = opens.pop()
+    if cost[x][y] != INF : continue
+    cost[x][y] = v
+    for d in dxdy:
+      let (nx,ny) = (d.x + x,d.y + y)
+      if nx < 0 or ny < 0 or nx >= W or ny >= H : continue
+      var n_v = v + E[nx][ny]
+      if cost[nx][ny] == INF :
+        opens.push((nx,ny,n_v))
+  return cost
 
 
 template plagmas() = discard
