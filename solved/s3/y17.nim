@@ -1,37 +1,37 @@
-import sequtils,strutils,strscans,algorithm,math,future,sets,queues,tables,macros
-macro unpack*(rhs: seq,cnt: static[int]): auto =
-  let t = genSym(); result = quote do:(let `t` = `rhs`;())
-  for i in 0..<cnt: result[0][1].add(quote do:`t`[`i`])
-template get*():string = stdin.readLine()
-template times*(n:int,body:untyped): untyped = (for _ in 0..<n: body)
-template `max=`*(x,y:typed):void = x = max(x,y)
-template `min=`*(x,y:typed):void = x = min(x,y)
-
+import sequtils
+template times*(n:int,body) = (for _ in 0..<n: body)
+template `min=`*(x,y) = x = min(x,y)
+proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
+proc scan(): int =
+  while true:
+    let k = getchar_unlocked()
+    if k < '0': return
+    result = 10 * result + k.ord - '0'.ord
 
 const INF = 1e10.int
-let
-  N = get().parseInt #~50
-  S = newSeqWith(N,get().parseInt) # 滞在コスト ~1000
-  M = get().parseInt # ~N^2/2
-  ABC = newSeqWith(M,get().split().map(parseInt)) # A->B にコスト C
+let n = scan()
+let S = newSeqWith(n,scan())
+let m = scan()
+var E = newSeqWith(n,newSeqWith(n,INF))
+m.times:
+  let src = scan()
+  let dst = scan()
+  let cost = scan()
+  E[src][dst] = cost
+  E[dst][src] = cost
 
-# ワーシャルフロイド => A->Bの距離がわかる
+# ワーシャルフロイド => A->Bの全ての距離がわかる
 # A,Bに滞在するとして 0->A->B->Nの最低コストが解
-var a2b = newSeqWith(N,newSeqWith(N,INF))
-for abc in ABC:
-  let (a,b,c) = abc.unpack(3)
-  a2b[a][b] = c
-  a2b[b][a] = c
-
-for k in 0..<N:
-  for i in 0..<N:
-    for j in 0..<N:
-      a2b[i][j] .min= a2b[i][k] + a2b[k][j]
+var ans = INF
+for k in 0..<n:
+  for i in 0..<n:
+    for j in 0..<n:
+      E[i][j] .min= E[i][k] + E[k][j]
 
 var res = INF
-for a in 1..<N-1:
-  for b in 1..<N-1:
+for a in 1..<n-1:
+  for b in 1..<n-1:
     if a == b : continue
-    res .min= a2b[0][a] + a2b[a][b] + a2b[b][N-1] + S[a] + S[b]
+    ans .min= E[0][a] + E[a][b] + E[b][n-1] + S[a] + S[b]
 
-echo res
+echo ans

@@ -56,13 +56,13 @@ template useTrimingGraph =
 
 # 最大流/最小カット
 template useMaxFlow =
-  # fordFullkerson : 最大流/最小カット O(FE) (F:最大流の流量)
   type Edge = tuple[dst,cap,rev:int]
   type Graph = seq[seq[Edge]]
   proc initFlow(maxSize:int):Graph = newSeqWith(maxSize,newSeq[Edge]())
   proc add(G:var Graph,src,dst,cap:int) =
     G[src] &= (dst,cap,G[dst].len)
     G[dst] &= (src,0,G[src].len - 1)
+  # fordFullkerson : 最大流/最小カット O(FE) (F:最大流の流量)
   proc fordFullkerson(G:var Graph,src,dst:int) : int =
     var used : seq[bool]
     proc dfs(G:var Graph,src,dst,flow:int) : int =
@@ -81,6 +81,45 @@ template useMaxFlow =
       let flow = G.dfs(src,dst,INF)
       if flow == 0 : return
       result += flow
+  # dinic : O(EV^2)
+  proc dinic(G:var Graph,src,dst:int) : int =
+    var level = newSeq[int](G.len)
+    var iter : seq[int]
+    # src からの最短距離を探索
+    proc bfs(G:var Graph,src:int) =
+      level = newSeqWith(G.len,-1)
+      var q = initQueue[int]()
+      level[src] = 0
+      q.enqueue(src)
+      while q.len > 0:
+        let v = q.dequeue()
+        for e in G[v]:
+          if e.cap <= 0 : continue
+          if level[e.dst] >= 0 : continue
+          level[e.dst] = level[v] + 1
+          q.enqueue(e.dst)
+    # 増加パスを探索
+    proc dfs(G:var Graph,src,dst,flow:int):int =
+      if src == dst : return flow
+      for i in iter[src]..<G[src].len:
+        let e = G[src][i]
+        if e.cap <= 0 : continue
+        if level[src] >= level[e.dst] : continue
+        let d = G.dfs(e.dst,dst,flow.min(e.cap))
+        if d <= 0 : continue
+        G[src][i].cap -= d
+        G[e.dst][e.rev].cap += d
+        return d
+      return 0
+    while true:
+      G.bfs(src)
+      if level[dst] < 0 : return
+      iter = newSeq[int](G.len)
+      while true:
+        let f = G.dfs(src,dst,1e10.int)
+        if f <= 0 : break
+        result += f
+
 
 # 二部グラフの最大マッチング
 template useBiparticeMatching =
@@ -146,10 +185,27 @@ template useShortestPath =
         for j in 0..<n:
           result[i][j] .min= result[i][k] + result[k][j]
 
+# 2-SAT (強連結成分)
+template useTwoSAT = #[
+  type TwoSAT = object
+    graph:Graph
+  proc initTwoSAT(maxSize:int) : TwoSAT = result.graph = initGraph(maxSize * 2)
+  proc `->`(x,y:(int,bool)) : tuple[src,dst:int] =
+    result.src = if x[1] : x[0] else: x[0] * 2
+    result.dst = if y[1] : y[0] else: y[0] * 2
+  proc add(SAT:var TwoSAT,E:tuple[src,dst:int]) = SAT.graph.add(E.src,E.dst)
+  proc solve(SAT:var TwoSAT) : bool =
+    # 同じ強連結成分内にxと!xがあれば不可能
+    let scc = SAT.graph.storonglyConnectedComponentDecomposition()
+    for nodes in scc:
+      let nodes = nodes.mapIt(if it mod 2 == 0 : it div 2 else: it).sorted(cmp)
+      for i in 1..<nodes.len:
+        if nodes[i] == nodes[i-1] : return false
+    return true ]# discard
+
 # ベルマンフォード O(EV) : 二点間の最短路(負の閉路でも動作)
 # 経路復元
 # 最小全域木(Prim)
-# 最大流 Dinic(O(EV^2)) / det
+# 最大流 : det
 # マッチング / 辺カバー / 安定集合 / 点カバー / 最小費用流
-# 強連結成分(SCC)分解 O(V+E) / DAG / 2-SAT
 # LCA

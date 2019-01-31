@@ -1,31 +1,29 @@
-import sequtils,strutils,strscans,algorithm,math,future,sets,queues,tables
-template get():string = stdin.readLine()
-template times(n:int,body:untyped): untyped = (for _ in 0..<n: body)
-template `max=`(x,y:typed):void = x = max(x,y)
+import sequtils,algorithm,sugar
 template `min=`(x,y:typed):void = x = min(x,y)
+proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
+proc scan(): int =
+  while true:
+    let k = getchar_unlocked()
+    if k < '0': return
+    result = 10 * result + k.ord - '0'.ord
 
 const INF = 1e14.int
-let
-  N = get().parseInt # towns
-  CMAX = get().parseInt # coins
-  PATH = get().parseInt # pathes
-  # s->t に コストy m時間 || 1 -> N に C円以内で最小の時間
-  S = get().split().map(parseInt) # 1 ~ N   start
-  T = get().split().map(parseInt) # s ~ N   terminate
-  C = get().split().map(parseInt) # 1..CMAX  cost
-  L = get().split().map(parseInt) # 1..1000 length
+type Edge = tuple[src,dst,cost,len:int]
 
-# N:50 c:300 => 15000
-# town,cost -> length
-var dp = newSeqWith(N+1,newSeqWith(CMAX+1,INF))
+let n = scan()
+let maxCost = scan()
+let v = scan()
+var E = newSeq[Edge](v)
+for i in 0..<v: E[i].src = scan()
+for i in 0..<v: E[i].dst = scan()
+for i in 0..<v: E[i].cost = scan()
+for i in 0..<v: E[i].len = scan()
+E.sort((x,y) => x.src - y.src)
+var dp = newSeqWith(n+1,newSeqWith(maxCost+1,INF))
 dp[1][0] = 0
-var STCL = toSeq(0..<PATH).mapIt((S[it],T[it],C[it],L[it]))
-STCL.sort((a,b) => a[0] - b[0])
-for stcl in STCL:
-  let (s,t,c,l) = stcl
-  for ci in 0..CMAX-c+1:
-    dp[t][ci+c].min= dp[s][ci] + l
-
-var res = dp[N].min()
-if res == INF: res = -1
-echo res
+for e in E:
+  for ci in 0..(maxCost-e.cost):
+    dp[e.dst][ci+e.cost] .min= dp[e.src][ci] + e.len
+let ans = dp[n].min()
+if ans == INF: echo -1
+else: echo ans
