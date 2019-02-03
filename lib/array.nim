@@ -1,6 +1,8 @@
 # 配列変換
 proc toArray(s:string) :seq[char]= toSeq(s.items)
 proc toCountSeq[T](x:seq[T]) : seq[tuple[k:T,v:int]] = toSeq(x.toCountTable().pairs)
+proc flatten[T](x:seq[seq[T]]): seq[T] = (result = @[];for ix in x: result &= ix)
+
 macro unpack*(arr: auto,cnt: static[int]): auto =
   let t = genSym(); result = quote do:(let `t` = `arr`;())
   for i in 0..<cnt: result[0][1].add(quote do:`t`[`i`])
@@ -24,6 +26,12 @@ proc argMin[T](arr:seq[T]):int =
     if a >= val: continue
     val = a
     result = i
+
+proc cmp(x,y:seq[int]):int = # 数の配列のソート用
+  for i in 0..<min(x.len,y.len):
+    if x[i] != y[i] : return x[i] - y[i]
+  return x.len - y.len
+
 
 # イテレーション
 template permutationIter[T](arr:var seq[T],body) =

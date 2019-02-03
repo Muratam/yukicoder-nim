@@ -217,7 +217,22 @@ template useMatrix =
     for x in 0..<result.w:
       for y in 0..<result.h:
         result[x,y] = arr[y][x]
-
+  proc `*`[T](a,b:Matrix[T]): Matrix[T] =
+    assert a.w == b.h
+    result = newMatrix[T](a.h,b.w)
+    for y in 0..<a.h:
+      for x in 0..<b.w:
+        var n : T
+        for k in 0..<a.w:
+          n += a[k,y] * b[x,k]
+        result[x,y] = n
+  proc `^`[T](m:Matrix[T],n:int) : Matrix[T] =
+    assert m.w == m.h
+    if n <= 0 : return identityMatrix[T](m.w)
+    if n == 1 : return m
+    let m2 = m^(n div 2)
+    if n mod 2 == 0 : return m2 * m2
+    return m2 * m2 * m
   proc `$`[T](m:Matrix[T]) : string =
     result = ""
     for y in 0..<m.h:
@@ -229,39 +244,20 @@ template useMatrix =
       if y != m.h - 1 : result &= "\n"
     result &= "\n"
 
-  proc `*`[T](a,b:Matrix[T]): Matrix[T] =
-    assert a.w == b.h
-    result = newMatrix[T](a.h,b.w)
-    for y in 0..<a.h:
-      for x in 0..<b.w:
-        var n : T
-        for k in 0..<a.w:
-          n += a[k,y] * b[x,k]
-        result[x,y] = n
-
   proc `*`[T](a:Matrix,b:seq[T]):seq[T] =
     assert a.w == b.len
     result = newSeq[T](b.len)
     for x in 0..<a.h:
+      var n : T
       for k in 0..<a.w:
         n += a[k,x] * b[k]
       result[x] = n
-
-  proc `^`[T](m:Matrix[T],n:int) : Matrix[T] =
-    assert m.w == m.h
-    if n <= 0 : return identityMatrix[T](m.w)
-    if n == 1 : return m
-    let m2 = m^(n div 2)
-    if n mod 2 == 0 : return m2 * m2
-    return m2 * m2 * m
-
   proc `+`[T](a,b:Matrix[T]): Matrix[T] =
     assert a.w == b.w and a.h == b.h
     result = newMatrix[T](a.w,a.h)
     for y in 0..<a.h:
       for x in 0..<b.w:
         result[x,y] = a[x,y] + b[x,y]
-
   proc transpose[T](a:Matrix[T]): Matrix[T] =
     result = newMatrix[T](a.h,a.w)
     for y in 0..<a.h:

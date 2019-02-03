@@ -128,7 +128,7 @@ template useBiparticeMatching =
   proc initBipartiteMatch(maxSize:int): BipartiteMatch = newSeqWith(maxSize,newSeq[int]())
   proc add(B:var BipartiteMatch,src,dst:int) = (B[dst] &= src;B[src] &= dst)
   proc bipartiteMatching(B:BipartiteMatch) : int =
-    var match = newSeqWith(B.len,-1)
+    var match = newSeqWith(B.len,-1) # マッチ結果がほしければこれを返却
     var used : seq[bool]
     proc dfs(src:int) : bool =
       # 交互にペアを結んでいく
@@ -143,7 +143,7 @@ template useBiparticeMatching =
       return false
     for src in 0..<B.len:
       if match[src] >= 0 : continue
-      used = newSeq[false](B.len)
+      used = newSeq[bool](B.len)
       if dfs(src) : result += 1
 
 # 最小全域木

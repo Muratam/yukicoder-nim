@@ -60,8 +60,10 @@ template useUnsafeOutput() =
     putchar_unlocked(c)
 
   proc printInt(a0:int) =
+    # if a0 < 0 : putchar_unlocked('-') # マイナスにも対応したければこれで可能
+    # var a0 = a0.abs
     template put(n:int) = putchar_unlocked("0123456789"[n])
-    proc getPrintIntNimCode(n,maxA:static[int32]):string =
+    proc getPrintIntNimCode(n,maxA:static[int64]):string =
       result = "if a0 < " & $maxA & ":\n"
       for i in 1..n: result &= "  let a" & $i & " = a" & $(i-1) & " div 10\n"
       result &= "  put(a" & $n & ")\n"
@@ -86,8 +88,6 @@ template useUnsafeOutput() =
     eval(getPrintIntNimCode(15,10000000000000000))
     eval(getPrintIntNimCode(16,100000000000000000))
     eval(getPrintIntNimCode(17,1000000000000000000))
-    eval(getPrintIntNimCode(18,10000000000000000000))
-    eval(getPrintIntNimCode(19,100000000000000000000))
 
 
 # 整数位置管理用
@@ -122,6 +122,11 @@ template useBitOperators() =
   #   firstSetBit :: countTrailingZeroBits + 1 (if 0 then 0)
   #   when unsigned :: rotateLeftBits rotateRightBits
   proc factorOf2(n:int):int = n and -n # 80:0101<0000> => 16:2^4
+  proc binaryToIntSeq(n:int):seq[int] =
+    result = @[]
+    for i in 0..64:
+      if (n and ^i) > 0: result &= i + 1
+      if n < ^(i+1) : return
   proc binary(x:int,reverse:bool=false):string = # 二進表示
     if x == 0 : return "0"
     result = ""

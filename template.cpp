@@ -9,20 +9,29 @@ using namespace std;
 #define FORR(i, a, b) for (int i = (b - 1); i >= (a); i--)
 #define ALL(a) begin(a), end(a)
 #define let const auto
+// int scan() {
+//   auto minus = false;
+//   int result = 0;
+//   while (true) {
+//     auto k = getchar_unlocked();
+//     if (k == '-')
+//       minus = true;
+//     else if (k < '0' || k > '9')
+//       break;
+//     else
+//       result = 10 * result + k - '0';
+//   }
+//   return result * (minus ? -1 : 1);
+// }
 int scan() {
-  auto minus = false;
   int result = 0;
   while (true) {
     auto k = getchar_unlocked();
-    if (k == '-')
-      minus = true;
-    else if (k < '0' || k > '9')
-      break;
-    else
-      result = 10 * result + k - '0';
+    if (k < '0' || k > '9') return result;
+    result = 10 * result + k - '0';
   }
-  return result * (minus ? -1 : 1);
 }
+
 signed main() {
   let n = scan();
   let m = scan();
