@@ -5,6 +5,18 @@ template useEncodeInt()=
   proc decodeX(i:int):int = i mod INF
   proc decodeY(i:int):int = i div INF
 
+template useAssignOperators() =
+  proc `+=`[T](x:var set[T],y:T) = x.incl(y)
+  proc `-=`[T](x:var set[T],y:T) = x.excl(y)
+  proc `+=`[T](x:var set[T],y:set[T]) = x = x.union(y)
+  proc `*=`[T](x:var set[T],y:set[T]) = x = x.intersection(y)
+  proc `-=`[T](x:var set[T],y:set[T]) = x = x.difference(y)
+  template `%=`*(x,y:typed) = x = x mod y
+  template `//=`*(x,y:typed) = x = x div y
+  template `gcd=`*(x,y:typed) = x = gcd(x,y)
+  template `lcm=`*(x,y:typed) = x = lcm(x,y)
+  converter toInt8(x:int) : int8 = x.toU8()
+
 proc toAlphabet(a:int) : string = # 26進数(A..Z,AA..ZZ,...)
   proc impl(a:int) : seq[char] =
     let c = a mod 26
@@ -14,18 +26,110 @@ proc toAlphabet(a:int) : string = # 26進数(A..Z,AA..ZZ,...)
     result &= s
   return cast[string](impl(a))
 
+template mathmatics = # 一度実装したが用途がかなり限定的な数学関数
+  proc rhoFactor(n:int):int = # ポラード・ロー素因数分解法,(O(n^1/4)),1~0.1%で失敗
+    proc f(x:int):int = (2 + x * x) mod n
+    var (x,y,d) = (2,2,1)
+    while d == 1:
+      x = f(x)
+      y = f(f(y))
+      d = (x-y).abs.gcd(n)
+    if d == n : return 0
+    else : return d
 
-template getNeighbor(body) =
-  for d in dxdy4:
-    let nx {.inject.} = x + d.x
-    let ny {.inject.} = y + d.y
-    if nx < 0 or ny < 0 or nx >= w or ny >= h : continue
-    body
+  # フィボナッチ数列の第n項
+  proc calcFib(n:int) : tuple[x:ModInt,y:ModInt] =
+    if n == 0 : return (0.toModInt(),1.toModInt())
+    let (fn,fn1) = calcFib(n div 2)
+    let fnx1 = fn1 - fn
+    let f2n = (fn1 + fnx1) * fn
+    let f2nx1 = fn * fn + fnx1 * fnx1
+    let f2n1 = f2n + f2nx1
+    if n mod 2 == 0 : return (f2n,f2n1)
+    else: return (f2n1,f2n1 + f2n)
 
-template bitDP =
-  for i in 0..<(^n):
-    for j in 0..<n:
-      if j and n == 0 : continue
+
+  template getFactorByProcess(n:int):seq[int] = # factorコマンドで素因数分解
+    import osproc
+    when defined(macosx):
+      const factor = "gfactor "
+    else :
+      const factor = "factor "
+    let p = execProcess(factor & $n ).strip().split()
+    p[1..p.len()-1].map(parseInt)
+
+
+
+  # 10桁精度で計算
+  template useFixed() =
+    proc scanFixed(): tuple[a,b:int64] =
+      var minus = false
+      var now = 0
+      var isA = true
+      var bcnt = 10_0000_00000
+      while true:
+        let k = getchar_unlocked()
+        if k == '-' : minus = true
+        elif k == '.':
+          if minus : now *= -1
+          result.a = now
+          now = 0
+          isA = false
+        elif k < '0':
+          if minus : now *= -1
+          if isA : result.a = now
+          else: result.b = now * bcnt
+          return
+        else:
+          now = 10 * now + k.ord - '0'.ord
+          if not isA: bcnt = bcnt div 10
+
+    proc printFixed(x:tuple[a,b:int64]) =
+      var a = x.a + x.b div 10_0000_00000
+      var b = x.b mod 10_0000_00000
+      if (a < 0) xor (b < 0) :
+        var minus = a <= 0
+        if minus :
+          stdout.write "-"
+          a *= -1
+          b *= -1
+        if b mod 10_0000_00000 != 0:
+          a -= 1
+          b += 10_0000_00000
+        if ($(b.abs)).len >= 11:
+          a += 1
+          b -= 10_0000_00000
+      let B = "0".repeat(10 - ($(b.abs)).len) & ($b.abs)
+      echo a,".",B
+
+
+template iteratingMemo = # 回し方のメモ
+  template getNeighbor(body) =
+    for d in dxdy4:
+      let nx {.inject.} = x + d.x
+      let ny {.inject.} = y + d.y
+      if nx < 0 or ny < 0 or nx >= w or ny >= h : continue
+      body
+
+  template bitDP =
+    for i in 0..<(^n):
+      for j in 0..<n:
+        if j and n == 0 : continue
+
+  template imos2() =
+    proc imos2Reduce(field:typed) =
+      for x in field.low + 1 .. field.high:
+        for y in field[x].low .. field[x].high:
+          field[x][y] += field[x-1][y]
+      for x in field.low .. field.high:
+        for y in field[x].low + 1 .. field[x].high:
+          field[x][y] += field[x][y-1]
+    proc imos2Regist(field:typed,x1,y1,x2,y2:int,val:typed) =
+      field[x1][y1] += val
+      field[x1][y2+1] -= val
+      field[x2+1][y1] -= val
+      field[x2+1][y2+1] += val
+
 
 proc evalPlusMinusExpression(S:string): tuple[ok:bool,val:int] = # 012+223-123+...
   if S[0] == '+'  or S[0] == '-'  : return (false,0)
@@ -83,33 +187,7 @@ proc printFloat(a,b:int) =
 
 
 
-template imos2() =
-  proc imos2Reduce(field:typed) =
-    for x in field.low + 1 .. field.high:
-      for y in field[x].low .. field[x].high:
-        field[x][y] += field[x-1][y]
-    for x in field.low .. field.high:
-      for y in field[x].low + 1 .. field[x].high:
-        field[x][y] += field[x][y-1]
-  proc imos2Regist(field:typed,x1,y1,x2,y2:int,val:typed) =
-    field[x1][y1] += val
-    field[x1][y2+1] -= val
-    field[x2+1][y1] -= val
-    field[x2+1][y2+1] += val
 
-# += -= *= | %=  //=  gcd= lcm=
-template useAssignOperators() =
-  proc `+=`[T](x:var set[T],y:T) = x.incl(y)
-  proc `-=`[T](x:var set[T],y:T) = x.excl(y)
-  proc `+=`[T](x:var set[T],y:set[T]) = x = x.union(y)
-  proc `*=`[T](x:var set[T],y:set[T]) = x = x.intersection(y)
-  proc `-=`[T](x:var set[T],y:set[T]) = x = x.difference(y)
-  template `%=`*(x,y:typed) = x = x mod y
-  template `//=`*(x,y:typed) = x = x div y
-  template `gcd=`*(x,y:typed) = x = gcd(x,y)
-  template `lcm=`*(x,y:typed) = x = lcm(x,y)
-  converter toInt8(x:int) : int8 = x.toU8()
-  # %=  //=  gcd= lcm=
 
 template useRankingUnionFind =
   type UnionFind[T] = ref object

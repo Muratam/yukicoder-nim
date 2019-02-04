@@ -1,5 +1,6 @@
 # 素数 / 因数列挙
 template usePrimeFactor() =
+  # 素数表生成
   proc getIsPrimes(n:int) :seq[bool] = # [0...n] O(n loglog n)
     result = newSeqWith(n+1,true)
     result[0] = false
@@ -8,40 +9,13 @@ template usePrimeFactor() =
       if not result[i]: continue
       for j in countup(i*2,n,i):
         result[j] = false
+  # 素数リスト生成
   proc getPrimes(n:int):seq[int] = # [2,3,5,...n]
     let isPrimes = getIsPrimes(n)
     result = @[]
     for i,p in isPrimes:
       if p : result &= i
-  proc getFactorsAllRange(n:int):seq[seq[int]] =
-    # 1 ~ n まで全ての素因数を列挙
-    result = newSeqWith(n+1,newSeq[int]())
-    for i in 2..n.float.sqrt.int :
-      if result[i].len != 0: continue
-      result[i] &= i
-      for j in countup(i*2,n,i):
-        var x = j
-        while x mod i == 0:
-          result[j] &= i
-          x = x div i
-  template getFactorByProcess(n:int):seq[int] =
-    import osproc
-    when defined(macosx):
-      const factor = "gfactor "
-    else :
-      const factor = "factor "
-    let p = execProcess(factor & $n ).strip().split()
-    p[1..p.len()-1].map(parseInt)
-
-  proc getAllFactors(n:int):seq[int] =
-    let factors = n.getFactors()
-    var xs = initIntSet()
-    xs.incl 1
-    for f in factors:
-      for x in toSeq(xs.items):
-        xs.incl(x * f)
-    return toSeq(xs.items).sorted(cmp)
-
+  # SFF で素因数分解
   proc getFactors(n:int):seq[int]=
     const INF = int.high div 4
     proc powerWhenTooBig(x,n:int,modulo:int = 0): int =
@@ -134,16 +108,26 @@ template usePrimeFactor() =
       else: result &= p.getFactors()
       if p == m: return
       m = m div p
-
-  proc rhoFactor(n:int):int = # (O(n/4)),1~0.1%で失敗
-    proc f(x:int):int = (2 + x * x) mod n
-    var (x,y,d) = (2,2,1)
-    while d == 1:
-      x = f(x)
-      y = f(f(y))
-      d = gcd(abs(x-y),n)
-    if d == n : return 0
-    else : return d
+  # 因数を全て列挙
+  proc getAllFactors(n:int):seq[int] =
+    let factors = n.getFactors()
+    var xs = initIntSet()
+    xs.incl 1
+    for f in factors:
+      for x in toSeq(xs.items):
+        xs.incl(x * f)
+    return toSeq(xs.items).sorted(cmp)
+  # 範囲内の全ての素因数を列挙
+  proc getFactorsAllRange(n:int):seq[seq[int]] =
+    result = newSeqWith(n+1,newSeq[int]())
+    for i in 2..n.float.sqrt.int :
+      if result[i].len != 0: continue
+      result[i] &= i
+      for j in countup(i*2,n,i):
+        var x = j
+        while x mod i == 0:
+          result[j] &= i
+          x = x div i
 
 # mod
 template useModulo() =
@@ -189,16 +173,6 @@ template useModulo() =
     for i in 2..y: fact = fact * i
     for i in 1..y: result = result * (n+1-i)
     result = result / fact
-  # フィボナッチ数列の第n項
-  proc calcFib(n:int) : tuple[x:ModInt,y:ModInt] =
-    if n == 0 : return (0.toModInt(),1.toModInt())
-    let (fn,fn1) = calcFib(n div 2)
-    let fnx1 = fn1 - fn
-    let f2n = (fn1 + fnx1) * fn
-    let f2nx1 = fn * fn + fnx1 * fnx1
-    let f2n1 = f2n + f2nx1
-    if n mod 2 == 0 : return (f2n,f2n1)
-    else: return (f2n1,f2n1 + f2n)
 
 # 行列
 template useMatrix =
@@ -270,10 +244,8 @@ template useMatrix =
       for x in 0..<b.w:
         result[x,y] = a[y,x]
 
-
-
-  # CSR 実装
-  # let M = newMatrix(@[@[1,2,3,0],@[0,0,0,1],@[2,0,0,2],@[0,0,0,1]])
+# 疎行列(CSR)
+template useSparseMatrix() =
   type SparseMatrix[T] = ref object
     w,h:int
     data: seq[T]
@@ -375,45 +347,3 @@ template statistics() =
       .mapIt((let e = X[it] * a + b - Y[it];e*e))
       .sum()
     return (a ,b,err)
-
-# 10桁精度で計算
-template useFixed() =
-  proc scanFixed(): tuple[a,b:int64] =
-    var minus = false
-    var now = 0
-    var isA = true
-    var bcnt = 10_0000_00000
-    while true:
-      let k = getchar_unlocked()
-      if k == '-' : minus = true
-      elif k == '.':
-        if minus : now *= -1
-        result.a = now
-        now = 0
-        isA = false
-      elif k < '0':
-        if minus : now *= -1
-        if isA : result.a = now
-        else: result.b = now * bcnt
-        return
-      else:
-        now = 10 * now + k.ord - '0'.ord
-        if not isA: bcnt = bcnt div 10
-
-  proc printFixed(x:tuple[a,b:int64]) =
-    var a = x.a + x.b div 10_0000_00000
-    var b = x.b mod 10_0000_00000
-    if (a < 0) xor (b < 0) :
-      var minus = a <= 0
-      if minus :
-        stdout.write "-"
-        a *= -1
-        b *= -1
-      if b mod 10_0000_00000 != 0:
-        a -= 1
-        b += 10_0000_00000
-      if ($(b.abs)).len >= 11:
-        a += 1
-        b -= 10_0000_00000
-    let B = "0".repeat(10 - ($(b.abs)).len) & ($b.abs)
-    echo a,".",B
