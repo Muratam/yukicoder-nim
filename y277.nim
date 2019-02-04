@@ -42,12 +42,11 @@ proc solve(i,rank:int):int =
   if E[i].len == 0:
     answers[i] = 0
     return 0
-  result = 1e10.int
+  result = rank
   for dst in E[i]:
     result .min= solve(dst,rank+1) + 1
-  for dst in E[i]:
-    discard solve(dst)
-  answers[i] = min(rank,result)
+  answers[i] = result
+
 discard solve(0,0)
 for i in 0..<n:
   answers[i].int32.printInt()
