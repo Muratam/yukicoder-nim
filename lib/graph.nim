@@ -209,7 +209,7 @@ template useBiparticeMatching =
       used = newSeq[bool](B.len)
       if dfs(src) : result += 1
 
-# 最小全域木 O(ElogE)
+# 最小全域木 O(ElogV)
 template useMinimumSpanningTree =
   # 最小全域木のコスト(max / sum)を返却
   #  0..<maxN, E:辺のリスト(コスト順に並び替えるため)
@@ -221,7 +221,8 @@ template useMinimumSpanningTree =
       uf.merge(e.src,e.dst)
       result .max= e.cost
       # if uf.same(0,maxN-1): break # 繋げたい点があれば
-
+  #
+  # Priority Queueで最小辺を更新していく(Prim)方法でも O(ElogV)
 # 最短経路 O(ElogE) / 負:O(EV) / 全:O(V^3)
 template useShortestPath =
   # ダイクストラ : O(ElogE) コストが負でないときの(startからの)最短路
@@ -239,7 +240,7 @@ template useShortestPath =
         opens.push((e.dst,cost + e.cost))
     return costs
   # ベルマンフォード O(EV) : 二点間の最短路(負の閉路でも動作) : 未完成
-  #
+  # より定数倍高速な SPFAも
   #
   # ワーシャルフロイド O(V^3) : 全ての頂点の間の最短路を見つける(負でも)
   # E:隣接行列(非連結時cost:=INF)
@@ -286,6 +287,6 @@ template useTwoSAT =
         if nodes[i] == nodes[i-1] : return false
     return true
 
-# 最小全域木(Prim)
-# 最大流 : det
-# マッチング / 辺カバー / 安定集合 / 点カバー / 最小費用流
+# 最小費用流
+# きたまさ法(N項間漸化式のk項目をO(logNK)) FFT(ΣABをNlogN)
+# メビウス変換（状態xの部分状態yを全列挙 / ゼータ変換（状態xを含む状態yを全列挙）
