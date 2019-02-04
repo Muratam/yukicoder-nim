@@ -145,7 +145,6 @@ template usePrimeFactor() =
     if d == n : return 0
     else : return d
 
-
 # mod
 template useModulo() =
   const MOD = 1000000007
@@ -200,10 +199,6 @@ template useModulo() =
     let f2n1 = f2n + f2nx1
     if n mod 2 == 0 : return (f2n,f2n1)
     else: return (f2n1,f2n1 + f2n)
-
-
-
-
 
 # 行列
 template useMatrix =
@@ -343,7 +338,46 @@ template useMatrix =
       result &= "]\n"
     result &= "\n"
 
-template useFixed() = # 10桁精度で計算
+# Modなし整数演算 (permutation / combination / power ...)
+template useNaturalMath() =
+  proc permutation(n,k:int):int = # nPk
+    result = 1
+    for i in (n-k+1)..n: result = result * i
+  proc combination(n,k:int):int = # nCk
+    result = 1
+    let x = k.max(n - k)
+    let y = k.min(n - k)
+    for i in 1..y: result = result * (n+1-i) div i
+  proc power(x,n:int): int =
+    if n <= 1: return if n == 1: x else: 1
+    let pow_2 = power(x,n div 2)
+    return pow_2 * pow_2 * (if n mod 2 == 1: x else: 1)
+  proc roundedDiv(a,b:int) : int = # a / b の四捨五入
+    let c = (a * 10) div b
+    if c mod 10 >= 5: return 1 + c div 10
+    return c div 10
+  proc sign(n:int):int = (if n < 0 : -1 else: 1)
+
+# 統計
+template statistics() =
+  # 線形回帰(最小二乗法) f(x) = ax + b
+  proc leastSquares(X,Y:seq[float]):tuple[a,b,err:float] =
+    assert X.len == Y.len
+    let n = X.len.float
+    let XY = toSeq(0..<X.len).mapIt(X[it] * Y[it]).sum()
+    let XX = X.mapIt(it*it).sum()
+    let XS = X.sum()
+    let YS = Y.sum()
+    let d = n * XX - XS * XS
+    let a = (n * XY - XS * YS) / d
+    let b = (XX * YS - XY * XS) / d
+    let err = toSeq(0..<X.len)
+      .mapIt((let e = X[it] * a + b - Y[it];e*e))
+      .sum()
+    return (a ,b,err)
+
+# 10桁精度で計算
+template useFixed() =
   proc scanFixed(): tuple[a,b:int64] =
     var minus = false
     var now = 0
@@ -383,43 +417,3 @@ template useFixed() = # 10桁精度で計算
         b -= 10_0000_00000
     let B = "0".repeat(10 - ($(b.abs)).len) & ($b.abs)
     echo a,".",B
-
-
-
-# 整数 の数学関数(剰余無しver)
-template useNaturalMath() =
-  proc permutation(n,k:int):int = # nPk
-    result = 1
-    for i in (n-k+1)..n: result = result * i
-  proc combination(n,k:int):int = # nCk
-    result = 1
-    let x = k.max(n - k)
-    let y = k.min(n - k)
-    for i in 1..y: result = result * (n+1-i) div i
-  proc power(x,n:int): int =
-    if n <= 1: return if n == 1: x else: 1
-    let pow_2 = power(x,n div 2)
-    return pow_2 * pow_2 * (if n mod 2 == 1: x else: 1)
-  proc roundedDiv(a,b:int) : int = # a / b の四捨五入
-    let c = (a * 10) div b
-    if c mod 10 >= 5: return 1 + c div 10
-    return c div 10
-  proc sign(n:int):int = (if n < 0 : -1 else: 1)
-
-# 統計
-template statistics() =
-  # 線形回帰(最小二乗法) f(x) = ax + b
-  proc leastSquares(X,Y:seq[float]):tuple[a,b,err:float] =
-    assert X.len == Y.len
-    let n = X.len.float
-    let XY = toSeq(0..<X.len).mapIt(X[it] * Y[it]).sum()
-    let XX = X.mapIt(it*it).sum()
-    let XS = X.sum()
-    let YS = Y.sum()
-    let d = n * XX - XS * XS
-    let a = (n * XY - XS * YS) / d
-    let b = (XX * YS - XY * XS) / d
-    let err = toSeq(0..<X.len)
-      .mapIt((let e = X[it] * a + b - Y[it];e*e))
-      .sum()
-    return (a ,b,err)

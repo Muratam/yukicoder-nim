@@ -190,19 +190,7 @@ template useUnionFind() = # 同一集合の判定/マージ が 実質 O(1)
     if self.parent[rx] == self.parent[ry] : self.parent[rx] -= 1
     self.parent[ry] = rx
     return true
-
-
-# Sparse Table は 初期化O(nlog(n)) / 探索 O(log(log(n)))
-# 多次元のBIT
-#            | ordered | operate | Type | init/new |   key   |
-# ------------------------------------------------------------
-#   intset   |         |         | bool |   init   |   int   |
-#    set     |         |  + - *  | bool |          |  int8   |
-#  hashset   |    o    |  + - *  | bool |   init   |    *    |
-# countTable |    o    |         | int  |   init   |    *    |
-#   table    |         |         |  *   |   new    |    *    |
-#  critbits  |         | prefix  |  *   |          | string  |
-
+# stack
 template useStack() = # consider using deques queues
   type Stack*[T] = ref object
     data: seq[T]
@@ -239,3 +227,14 @@ template useStack() = # consider using deques queues
       self.data.add(elem)
       self.size += 1
   proc `$`*[T](self: Stack[T]): string = $(self.data[..self.index])
+
+#            | ordered | operate | Type | init/new |   key   |
+# ------------------------------------------------------------
+#   intset   |         |         | bool |   init   |   int   |
+#    set     |         |  + - *  | bool |          |  int8   |
+#  hashset   |    o    |  + - *  | bool |   init   |    *    |
+# countTable |    o    |         | int  |   init   |    *    |
+#   table    |         |         |  *   |   new    |    *    |
+#  critbits  |         | prefix  |  *   |          | string  |
+# Sparse Table は 初期化O(nlog(n)) / 探索 O(log(log(n)))
+# 多次元のBIT

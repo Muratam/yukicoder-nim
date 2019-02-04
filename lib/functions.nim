@@ -1,5 +1,7 @@
-import sequtils,strutils,algorithm,math,sugar,macros
-# import sets,tables,intsets,queues,heapqueue,bitops
+import sequtils
+# import algorithm,math,times,bitops
+# import tables,intsets,sets,queues
+# import macros,strutils,sugar,heapqueue
 # import rationals,critbits,ropes,nre,pegs,complex,stats
 template times*(n:int,body) = (for _ in 0..<n: body)
 template `max=`*(x,y) = x = max(x,y)
@@ -97,20 +99,9 @@ template usePosition() =
   const dxdy8 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0),(1,1),(1,-1),(-1,-1),(-1,1)]
   type Pos = tuple[x,y:int]
   proc `+`(p,v:Pos):Pos = (p.x+v.x,p.y+v.y)
-  proc `-`(p,v:Pos):Pos = (p.x-v.x,p.y-v.y)
   proc `==`(p,v:Pos):bool = p.x == v.x and p.y == v.y
-  proc `*`(p,v:Pos):Pos = (p.x*v.x,p.y*v.y)
   proc dot(p,v:Pos):int = p.x * v.x + p.y * v.y
 
-
-# 10進数
-template useDecimal() =
-  proc toSeq(str:string):seq[char] = result = @[];(for s in str: result &= s)
-  proc splitAsDecimal(n:int):auto = ($n).toSeq().mapIt(it.ord- '0'.ord)
-  proc joinAsDecimal(n:seq[int]):int = n.mapIt($it).join("").parseInt()
-  proc enumerate[T](arr:seq[T]): seq[tuple[i:int,val:T]] =
-    result = @[]; for i,a in arr: result &= (i,a)
-  # proc `*`(str:string,t:int):string = str.repeat(t)
 # 二進表現
 template useBitOperators() =
   # @math :: nextPowerOfTwo,isPowerOfTwo

@@ -1,6 +1,6 @@
 import sequtils
 
-# トポロジカルソート / 親子の分離
+# トポロジカルソート O(E+V) / 木の分離
 template useTrimingGraph =
   # 隣接リスト([n->[m1,m2,m3], ... ])を トポロジカルソート
   proc topologicalSort(E:seq[seq[int]],deleteIsolated:bool = false) : seq[int] =
@@ -119,7 +119,7 @@ template useLCA =
       v = self.parent[k][v]
     return self.parent[0][u]
 
-# 最大流/最小カット
+# 最大流/最小カット O(FE) / O(EV^2)
 template useMaxFlow =
   type Edge = tuple[dst,cap,rev:int]
   type Graph = seq[seq[Edge]]
@@ -185,9 +185,8 @@ template useMaxFlow =
         if f <= 0 : break
         result += f
 
-# 二部グラフの最大マッチング
+# 二部グラフの最大マッチング O(E)
 template useBiparticeMatching =
-  # 二部グラフの最大マッチング O(E)
   type BipartiteMatch = seq[seq[int]]
   proc initBipartiteMatch(maxSize:int): BipartiteMatch = newSeqWith(maxSize,newSeq[int]())
   proc add(B:var BipartiteMatch,src,dst:int) = (B[dst] &= src;B[src] &= dst)
@@ -210,7 +209,7 @@ template useBiparticeMatching =
       used = newSeq[bool](B.len)
       if dfs(src) : result += 1
 
-# 最小全域木
+# 最小全域木 O(ElogE)
 template useMinimumSpanningTree =
   # 最小全域木のコスト(max / sum)を返却
   #  0..<maxN, E:辺のリスト(コスト順に並び替えるため)
@@ -223,9 +222,9 @@ template useMinimumSpanningTree =
       result .max= e.cost
       # if uf.same(0,maxN-1): break # 繋げたい点があれば
 
-# 最短経路
+# 最短経路 O(ElogE) / 負:O(EV) / 全:O(V^3)
 template useShortestPath =
-  # ダイクストラ : O(ElogV) コストが負でないときの(startからの)最短路
+  # ダイクストラ : O(ElogE) コストが負でないときの(startからの)最短路
   type Edge = tuple[dst,cost:int] # E:隣接リスト(端点とコストのtuple)
   proc dijkestra(E:seq[seq[Edge]], start:int) :seq[int] =
     var costs = newSeqWith(E.len,INF)
@@ -239,6 +238,9 @@ template useShortestPath =
         if costs[e.dst] != INF : continue
         opens.push((e.dst,cost + e.cost))
     return costs
+  # ベルマンフォード O(EV) : 二点間の最短路(負の閉路でも動作) : 未完成
+  #
+  #
   # ワーシャルフロイド O(V^3) : 全ての頂点の間の最短路を見つける(負でも)
   # E:隣接行列(非連結時cost:=INF)
   proc warshallFroyd(E:seq[seq[int]]) : seq[seq[int]] =
@@ -284,9 +286,6 @@ template useTwoSAT =
         if nodes[i] == nodes[i-1] : return false
     return true
 
-# ベルマンフォード O(EV) : 二点間の最短路(負の閉路でも動作)
-# 経路復元
 # 最小全域木(Prim)
 # 最大流 : det
 # マッチング / 辺カバー / 安定集合 / 点カバー / 最小費用流
-# LCA

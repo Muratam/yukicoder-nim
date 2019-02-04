@@ -15,6 +15,18 @@ proc toAlphabet(a:int) : string = # 26進数(A..Z,AA..ZZ,...)
   return cast[string](impl(a))
 
 
+template getNeighbor(body) =
+  for d in dxdy4:
+    let nx {.inject.} = x + d.x
+    let ny {.inject.} = y + d.y
+    if nx < 0 or ny < 0 or nx >= w or ny >= h : continue
+    body
+
+template bitDP =
+  for i in 0..<(^n):
+    for j in 0..<n:
+      if j and n == 0 : continue
+
 proc evalPlusMinusExpression(S:string): tuple[ok:bool,val:int] = # 012+223-123+...
   if S[0] == '+'  or S[0] == '-'  : return (false,0)
   if S[^1] == '+' or S[^1] == '-' : return (false,0)
