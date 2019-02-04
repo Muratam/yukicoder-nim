@@ -1,10 +1,11 @@
 import sequtils,algorithm,math
 template `max=`*(x,y) = x = max(x,y)
 
-template useUnionFind() =
-  type UnionFind[T] = object
+template useUnionFind() = # 同一集合の判定/マージ が 実質 O(1)
+  type UnionFind[T] = ref object
     parent : seq[T]
   proc initUnionFind[T](size:int) : UnionFind[T] =
+    new(result)
     result.parent = newSeqUninitialized[T](size)
     for i in 0.int32..<size.int32: result.parent[i] = i
   proc root[T](self:var UnionFind[T],x:T): T =

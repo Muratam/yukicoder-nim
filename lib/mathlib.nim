@@ -13,6 +13,17 @@ template usePrimeFactor() =
     result = @[]
     for i,p in isPrimes:
       if p : result &= i
+  proc getFactorsAllRange(n:int):seq[seq[int]] =
+    # 1 ~ n まで全ての素因数を列挙
+    result = newSeqWith(n+1,newSeq[int]())
+    for i in 2..n.float.sqrt.int :
+      if result[i].len != 0: continue
+      result[i] &= i
+      for j in countup(i*2,n,i):
+        var x = j
+        while x mod i == 0:
+          result[j] &= i
+          x = x div i
   template getFactorByProcess(n:int):seq[int] =
     import osproc
     when defined(macosx):

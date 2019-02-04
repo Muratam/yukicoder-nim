@@ -32,6 +32,7 @@ template useUnsafeInput() =
 #
 template useUnsafeOutput() =
   proc puts(str: untyped){.header: "<stdio.h>", varargs.}
+  proc puts(str: cstring){.header: "<stdio.h>", varargs.}
   proc printf(formatstr: cstring){.header: "<stdio.h>", varargs.}
   proc putchar_unlocked(c:char){. importc:"putchar_unlocked",header: "<stdio.h>" .}
   proc printInt(a0:int32) =
@@ -116,7 +117,7 @@ template useBitOperators() =
   # @bitops
   #   popcount :: 100101010 -> 4 (1 is 4)
   #   parityBits :: 1001010 -> 1 (1 is odd)
-  #   firstlog2 :: int -> int
+  #   fastlog2 :: int -> int
   #   countLeadingZeroBits :: <0000>10 -> 4
   #   countTrailingZeroBits :: 01<0000> -> 4 (if 0 then 140734606624512)
   #   firstSetBit :: countTrailingZeroBits + 1 (if 0 then 0)

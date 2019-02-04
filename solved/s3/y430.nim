@@ -8,22 +8,23 @@ proc scan(): int =
     if k < '0': break
     result = 10 * result + k.ord - '0'.ord
 
-template useRollingHash() =
-  type RollingHash = object
-    A,B: seq[int]
-    AP,BP: seq[int]
+template useRollingHash() = # 構築 O(|S|) / 部分文字列検索 O(1)
+  type RollingHash = ref object
     modA,modB : int
     baseA,baseB : int
+    A,B: seq[int]  # baseA 進数表示
+    AP,BP: seq[int] # pow(baseA,n)
   proc initRollingHash(
       S:string, baseA:int=17, baseB:int=19,
       modA:int=1_0000_0000_7.int, modB:int=1_0000_0000_9.int) : RollingHash =
+    new(result)
     result.baseA = baseA
     result.baseB = baseB
     result.modA = modA
     result.modB = modB
-    result.A = newSeq[int](S.len + 1) # baseA 進数表示した時の値
+    result.A = newSeq[int](S.len + 1)
     result.B = newSeq[int](S.len + 1)
-    result.AP = newSeq[int](S.len + 1) # base^n
+    result.AP = newSeq[int](S.len + 1)
     result.BP = newSeq[int](S.len + 1)
     result.AP[0] = 1
     result.BP[0] = 1

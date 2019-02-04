@@ -1,5 +1,4 @@
 import sequtils,strutils,algorithm
-import nimprof
 proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
 proc scan(): int =
   while true:
@@ -12,14 +11,16 @@ template `min=`*(x,y)= (x = min(x,y))
 
 const dxdy4 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0)]
 
-template useBinaryHeap() =
+template useBinaryHeap() = # 追加 / 最小値検索 / 最小値Pop O(log(N))
   type
-    BinaryHeap*[T] = object
+    BinaryHeap*[T] = ref object
       nodes: seq[T]
       compare: proc(x,y:T):int
       popchunk: bool
   proc newBinaryHeap*[T](compare:proc(x,y:T):int): BinaryHeap[T] =
-    BinaryHeap[T](nodes:newSeq[T](),compare:compare,popchunk:false)
+    new(result)
+    result.nodes = newSeq[T]()
+    result.compare = compare
   proc compareNode[T](h:BinaryHeap[T],i,j:int):int = h.compare(h.nodes[i],h.nodes[j])
   proc size*[T](h:BinaryHeap[T]):int = h.nodes.len() - h.popchunk.int
   proc items*[T](h:var BinaryHeap[T]):seq[T] =

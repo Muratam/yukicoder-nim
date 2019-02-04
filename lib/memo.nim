@@ -100,7 +100,7 @@ template useAssignOperators() =
   # %=  //=  gcd= lcm=
 
 template useRankingUnionFind =
-  type UnionFind[T] = object
+  type UnionFind[T] = ref object
     parent : seq[T]
     rank : seq[int16]
   proc root[T](self:var UnionFind[T],x:T): T =
@@ -108,6 +108,7 @@ template useRankingUnionFind =
     self.parent[x] = self.root(self.parent[x])
     return self.parent[x]
   proc initUnionFind[T](size:int) : UnionFind[T] =
+    new(result)
     result.parent = newSeqUninitialized[T](size)
     result.rank = newSeq[int16](size)
     for i in 0.int32..<size.int32: result.parent[i] = i

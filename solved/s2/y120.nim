@@ -39,14 +39,16 @@ proc printInt(a:int,last:char) =
   putchar_unlocked(last)
 
 
-template useBinaryHeap() =
+template useBinaryHeap() = # 追加 / 最小値検索 / 最小値Pop O(log(N))
   type
-    BinaryHeap*[T] = object
+    BinaryHeap*[T] = ref object
       nodes: seq[T]
       compare: proc(x,y:T):int
       popchunk: bool
   proc newBinaryHeap*[T](compare:proc(x,y:T):int): BinaryHeap[T] =
-    BinaryHeap[T](nodes:newSeq[T](),compare:compare,popchunk:false)
+    new(result)
+    result.nodes = newSeq[T]()
+    result.compare = compare
   proc compareNode[T](h:BinaryHeap[T],i,j:int):int = h.compare(h.nodes[i],h.nodes[j])
   proc size*[T](h:BinaryHeap[T]):int = h.nodes.len() - h.popchunk.int
   proc items*[T](h:var BinaryHeap[T]):seq[T] =
@@ -93,9 +95,7 @@ template useBinaryHeap() =
     h.nodes[0] = h.nodes[^1]
     h.nodes.setLen(h.nodes.len() - 1)
     h.shiftdown()
-
 useBinaryHeap()
-
 proc solve() : int =
   let n = scan()
   let L = newSeqWith(n,scan()).sorted(cmp)
