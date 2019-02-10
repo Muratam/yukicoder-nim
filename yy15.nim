@@ -7,6 +7,7 @@ template `max=`*(x,y) = x = max(x,y)
 template `min=`*(x,y) = x = min(x,y)
 # template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
 # proc `^`(n:int) : int{.inline.} = (1 shl n)
+
 proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" ,discardable.}
 proc scan(): int =
   while true:

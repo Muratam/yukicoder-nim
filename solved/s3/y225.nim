@@ -1,0 +1,1 @@
+import strutils;let p=stdin.readAll.split'\n';echo p[1].editDistance p[2]

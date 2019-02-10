@@ -1,6 +1,7 @@
 import sequtils,macros,algorithm,intsets
 proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
 template `^`(n:int) : int = (1 shl n)
+proc `in`(a,b:int) : bool {.inline.}= (((1 shl a) and (1 shl b)) == (1 shl a))
 proc scan(): int =
   while true:
     let k = getchar_unlocked()

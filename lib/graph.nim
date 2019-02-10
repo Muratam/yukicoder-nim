@@ -265,16 +265,16 @@ template useBiparticeMatching =
   type BipartiteMatch = seq[seq[int]]
   proc initBipartiteMatch(maxSize:int): BipartiteMatch = newSeqWith(maxSize,newSeq[int]())
   proc add(B:var BipartiteMatch,src,dst:int) = (B[dst].add(src);B[src].add(dst))
-  proc bipartiteMatching(B:BipartiteMatch) : int =
+  proc bipartiteMatching(B:var BipartiteMatch) : int =
     var match = newSeqWith(B.len,-1) # マッチ結果がほしければこれを返却
     var used : seq[bool]
-    proc dfs(src:int) : bool =
+    proc dfs(B:var BipartiteMatch,src:int) : bool =
       # 交互にペアを結んでいく
       used[src] = true
       for dst in B[src]:
         if match[dst] >= 0 :
           if used[match[dst]] : continue
-          if not dfs(match[dst]) : continue
+          if not B.dfs(match[dst]) : continue
         match[src] = dst
         match[dst] = src
         return true
@@ -282,7 +282,7 @@ template useBiparticeMatching =
     for src in 0..<B.len:
       if match[src] >= 0 : continue
       used = newSeq[bool](B.len)
-      if dfs(src) : result += 1
+      if B.dfs(src) : result += 1
 # 最小費用流 O(FElogV)
 template useMinCostFlow =
   type Edge = tuple[dst,cap,cost,rev:int]

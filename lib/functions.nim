@@ -7,13 +7,13 @@ template times*(n:int,body) = (for _ in 0..<n: body)
 template `max=`*(x,y) = x = max(x,y)
 template `min=`*(x,y) = x = min(x,y)
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
-template `^`(n:int) : int = (1 shl n)
-
+proc `^`(n:int) : int{.inline.} = (1 shl n)
 #
 template useUnsafeInput() =
+  setStdIoUnbuffered()
   proc gets(str: untyped){.header: "<stdio.h>", varargs.}
   proc scanf(formatstr: cstring){.header: "<stdio.h>", varargs.}
-  proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
+  proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>",discardable .}
   proc scan(): int =
     while true:
       var k = getchar_unlocked()
@@ -33,6 +33,7 @@ template useUnsafeInput() =
 
 #
 template useUnsafeOutput() =
+  setStdIoUnbuffered()
   proc puts(str: untyped){.header: "<stdio.h>", varargs.}
   proc puts(str: cstring){.header: "<stdio.h>", varargs.}
   proc printf(formatstr: cstring){.header: "<stdio.h>", varargs.}
@@ -113,19 +114,19 @@ template useBitOperators() =
   #   countTrailingZeroBits :: 01<0000> -> 4 (if 0 then 140734606624512)
   #   firstSetBit :: countTrailingZeroBits + 1 (if 0 then 0)
   #   when unsigned :: rotateLeftBits rotateRightBits
+  proc `in`(a,b:int) : bool {.inline.}= (((1 shl a) and (1 shl b)) == (1 shl a))
   proc factorOf2(n:int):int = n and -n # 80:0101<0000> => 16:2^4
   proc binaryToIntSeq(n:int):seq[int] =
     result = @[]
     for i in 0..64:
       if (n and ^i) > 0: result &= i + 1
       if n < ^(i+1) : return
-  proc binary(x:int,reverse:bool=false):string = # 二進表示
-    if x == 0 : return "0"
+  proc binary(x:int,fill:int=0):string = # 二進表示
+    if x == 0 : return "0".repeat(fill)
     result = ""
     var x = x
     while x > 0:
       result &= ('0'.ord + x mod 2).chr
       x = x div 2
-    if reverse : return
     for i in 0..<result.len div 2: swap(result[i],result[result.len-1-i])
-
+    return "0".repeat(0.max(fill - result.len)) & result

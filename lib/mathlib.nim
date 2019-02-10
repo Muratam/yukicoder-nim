@@ -241,8 +241,17 @@ template useMatrix =
   proc transpose[T](a:Matrix[T]): Matrix[T] =
     result = newMatrix[T](a.h,a.w)
     for y in 0..<a.h:
-      for x in 0..<b.w:
+      for x in 0..<a.w:
         result[x,y] = a[y,x]
+  template mapIt[T](M: Matrix[T],op): untyped =
+    type outType = type((var it{.inject.}: T;op))
+    var i = 0
+    var result = newMatrix[outType](M.w,M.h)
+    for y in 0..<M.h:
+      for x in 0..<M.w:
+        let it {.inject.} = M[x,y]
+        result[x,y] = op
+    result
 
 # 疎行列(CSR)
 template useSparseMatrix() =
@@ -309,6 +318,42 @@ template useSparseMatrix() =
         result &= $m.data[x] & "(" & $m.row[x] & ") "
       result &= "]\n"
     result &= "\n"
+
+# 行列の他の演算(ガウスの掃き出し法)
+template useMatrixUtils() =
+  proc gaussianElimination(A:Matrix[bool],x:seq[bool]):seq[bool] =
+    let n = x.len
+    template `^=`(x,y) = x = x xor y
+    assert n == A.w and n == A.h
+    result = x
+    var A = A
+    for i in 0..<n:
+      if not A[i,i]:
+        var ok = false
+        for j in (i+1)..<n:
+          if not A[i,j] : continue
+          for k in i..<n: swap(A[k,i],A[k,j])
+          swap(result[i],result[j])
+          ok = true
+          break
+        if not ok : continue
+      for j in (i+1)..<n:
+        if not A[i,j]: continue
+        for k in i..<n: A[k,j] ^= A[k,i]
+        result[j] ^= result[i]
+    for i in (n-1).countdown(0):
+      if A[i,i]:
+        for j in 0..<i:
+          if not A[i,j] : continue
+          A[i,j] = false
+          result[j] ^= result[i]
+      else:
+        result[i] = false
+        for j in 0..<i:
+          if not A[i,j] : continue
+          A[i,j] = false
+    for i in 0..<n:
+      if not A[i,i] and result[i]  : return @[]
 
 # Modなし整数演算 (permutation / combination / power ...)
 template useNaturalMath() =

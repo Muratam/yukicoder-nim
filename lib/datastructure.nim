@@ -24,14 +24,14 @@ template useSegmentTree() = # 区間[s,t)の最小(最大)値 / 更新 O(log(N))
     while i > 0:
       i = (i - 1) shr 1
       self.data[i] = self.cmp(self.data[i * 2 + 1],self.data[i * 2 + 2])
+  proc queryImpl[T](self:SegmentTree[T],a,b,k,l,r:int) : T =
+    if r <= a or b <= l : return self.infinity
+    if a <= l and r <= b : return self.data[k]
+    let vl = self.queryImpl(a,b,k*2+1,l,(l+r) shr 1)
+    let vr = self.queryImpl(a,b,k*2+2,(l+r) shr 1,r)
+    return self.cmp(vl,vr)
   proc `[]`[T](self:SegmentTree[T],slice:Slice[int]): T =
-    proc impl(a,b,k,l,r:int):T =
-      if r <= a or b <= l : return self.infinity
-      if a <= l and r <= b : return self.data[k]
-      let vl = impl(a,b,k*2+1,l,(l+r) shr 1)
-      let vr = impl(a,b,k*2+2,(l+r) shr 1,r)
-      return self.cmp(vl,vr)
-    return impl(slice.a,slice.b+1,0,0,self.n)
+    return self.queryImpl(slice.a,slice.b+1,0,0,self.n)
 
   proc `$`[T](self:SegmentTree[T]): string =
     var arrs : seq[seq[int]] = @[]

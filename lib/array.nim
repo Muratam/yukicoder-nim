@@ -39,6 +39,31 @@ template useFindIndex() =
       if a >= val: continue
       val = a
       result = i
+  proc deduplicated[T](arr: seq[T]): seq[T] = # Nim標準 の deduplicate はO(n^2)なので注意
+    result = @[]
+    for a in arr.sorted(cmp[T]):
+      if result.len > 0 and result[^1] == a : continue
+      result &= a
+  proc quickSort[T](a: var openarray[T], inl = 0, inr = -1) =
+    var r = if inr >= 0: inr else: a.high
+    var l = inl
+    let n = r - l + 1
+    if n < 2: return
+    let p = a[l + 3 * n div 4]
+    while l <= r:
+      if a[l] < p:
+        inc l
+        continue
+      if a[r] > p:
+        dec r
+        continue
+      if l <= r:
+        swap a[l], a[r]
+        inc l
+        dec r
+    quickSort(a, inl, r)
+    quickSort(a, l, inr)
+
 
 # chair / permutation / ペア順列
 template useIteration() =

@@ -1,6 +1,8 @@
 import sequtils
 template `min=`*(x,y) = x = min(x,y)
 template `^`(n:int) : int = (1 shl n)
+proc `in`(a,b:int) : bool {.inline.}= (((1 shl a) and (1 shl b)) == (1 shl a))
+
 proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
 proc scan(): int =
   while true:
@@ -29,7 +31,7 @@ for x in 0..(^n): dp[x] = INF
 proc solve() =
   for x in 0..<(^n - 1):
     for i in 0..<n:
-      if (x and ^i) > 0 : continue
+      if ^i in x : continue
       dp[x or ^i] .min= dp[x] + 0.max(M[i] - T[x] mod 1000)
       T[x or ^i] = T[x] + M[i]
 dp[0] = 0
