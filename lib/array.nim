@@ -3,7 +3,7 @@ import sequtils,macros
 # 10進数 <=> seq[int]
 template useDecimal() =
   proc toSeq(str:string):seq[char] = result = @[];(for s in str: result &= s)
-  proc splitAsDecimal(n:int):auto = ($n).toSeq().mapIt(it.ord- '0'.ord)
+  proc splitAsDecimal(n:int) : seq[int] = toSeq(($n).items).mapIt(it.ord - '0'.ord)
   proc joinAsDecimal(n:seq[int]):int = n.mapIt($it).join("").parseInt()
 
 # seq[T] <=> string countTable tuple seq[seq[T]]
