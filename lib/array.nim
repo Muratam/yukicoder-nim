@@ -3,8 +3,15 @@ import sequtils,macros
 # 10進数 <=> seq[int]
 template useDecimal() =
   proc toSeq(str:string):seq[char] = result = @[];(for s in str: result &= s)
-  proc splitAsDecimal(n:int) : seq[int] = toSeq(($n).items).mapIt(it.ord - '0'.ord)
-  proc joinAsDecimal(n:seq[int]):int = n.mapIt($it).join("").parseInt()
+  proc splitAsDecimal*(n:int) : seq[int] =
+    if n == 0 : return @[0]
+    result = @[]
+    var n = n
+    while n > 0:
+      result &= n mod 10
+      n = n div 10
+    return result.reversed()
+  proc joinAsDecimal*(A:seq[int]):int =(for a in A: result = result * 10 + a)
 
 # seq[T] <=> string countTable tuple seq[seq[T]]
 template useTranslating() =
