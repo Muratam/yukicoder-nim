@@ -160,8 +160,6 @@ template useShortestPath =
         if costs[e] != INF : continue
         opens.push((e,cost + 1))
     return costs
-
-
   # SPFA (ベルマンフォード) O(EV) : 二点間の最短路(負の閉路でも動作)
   type Edge = tuple[dst,cost:int] # E:隣接リスト(端点とコストのtuple)
   proc SPFA(E:seq[seq[Edge]],start:int): seq[int] =
@@ -186,7 +184,6 @@ template useShortestPath =
         C[e.dst] += 1
         P[e.dst] = true
         q.enqueue(e.dst)
-
   # ワーシャルフロイド O(V^3) : 全ての頂点の間の最短路を見つける(負でも)
   # E:隣接行列(非連結時cost:=INF)
   proc warshallFroyd(E:seq[seq[int]]) : seq[seq[int]] =
