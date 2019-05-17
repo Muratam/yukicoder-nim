@@ -36,6 +36,9 @@ template useUnsafeOutput() =
   setStdIoUnbuffered()
   proc puts(str: untyped){.header: "<stdio.h>", varargs.}
   proc puts(str: cstring){.header: "<stdio.h>", varargs.}
+  proc fputs(c: cstring, f: File) {.importc: "fputs", header: "<stdio.h>",tags: [WriteIOEffect].}
+  template put(c:untyped) = fputs(cstring(c),stdout)
+  proc funlockfile(f:File) {.importc: "funlockfile", header:"<stdio.h>" .}
   proc printf(formatstr: cstring){.header: "<stdio.h>", varargs.}
   proc putchar_unlocked(c:char){. importc:"putchar_unlocked",header: "<stdio.h>" .}
   proc printInt(a0:int32) =
