@@ -14,6 +14,4 @@ proc scan(): int =
 
 let n = scan()
 let k = scan()
-var S = stdin.readLine()
-S[k-1] = (S[k-1].ord + 'a'.ord - 'A'.ord).chr
-echo S
+echo n - k + 1

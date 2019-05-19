@@ -16,7 +16,7 @@ template useTrimingGraph =
     return answer
 
   # (親も子も同一視して)双方向になっている木を,0 番を根として子のノードだけ持つように変更する
-  proc deleteParent(E:seq[seq[int]]):seq[seq[int]] =
+  proc asTree(E:seq[seq[int]]):seq[seq[int]] =
     var answer = newSeqWith(E.len,newSeq[int]())
     proc impl(pre,now:int) =
       for dst in E[now]:

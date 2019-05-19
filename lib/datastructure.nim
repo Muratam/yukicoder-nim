@@ -8,7 +8,7 @@ template useSegmentTree() = # 区間[s,t)の最小(最大)値 / 更新 O(log(N))
     rawSize:int
     infinity: T
     cmp:proc(x,y:T):T
-  proc initSegmentTree[T](
+  proc newSegmentTree[T](
       size:int,
       infinity:T = T(1e10),
       cmp: proc (x,y:T):T = minimpl[T]) : SegmentTree[T] =
@@ -46,7 +46,7 @@ template useSegmentTree() = # 区間[s,t)の最小(最大)値 / 更新 O(log(N))
 template useBinaryIndexedTree() = # 部分和検索 / 更新 O(log(N))
   type BinaryIndexedTree[T] = ref object
     data: seq[T] # 引数以下の部分和(Fenwick Tree)
-  proc initBinaryIndexedTree[T](n:int):BinaryIndexedTree[T] =
+  proc newBinaryIndexedTree[T](n:int):BinaryIndexedTree[T] =
     new(result)
     result.data = newSeq[T](n)
   proc len[T](self:BinaryIndexedTree[T]): int = self.data.len()
@@ -147,7 +147,7 @@ template useRollingHash() = # 構築 O(|S|) / 部分文字列検索 O(1)
     baseA,baseB : int
     A,B: seq[int]  # baseA 進数表示
     AP,BP: seq[int] # pow(baseA,n)
-  proc initRollingHash(
+  proc newRollingHash(
       S:string, baseA:int=17, baseB:int=19,
       modA:int=1_0000_0000_7.int, modB:int=1_0000_0000_9.int) : RollingHash =
     new(result)
@@ -173,7 +173,7 @@ template useRollingHash() = # 構築 O(|S|) / 部分文字列検索 O(1)
 template useUnionFind() = # 同一集合の判定/マージ が 実質 O(1)
   type UnionFind[T] = ref object
     parent : seq[T]
-  proc initUnionFind[T](size:int) : UnionFind[T] =
+  proc newUnionFind[T](size:int) : UnionFind[T] =
     new(result)
     result.parent = newSeqUninitialized[T](size)
     for i in 0.int32..<size.int32: result.parent[i] = i

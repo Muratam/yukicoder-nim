@@ -12,8 +12,15 @@ proc scan(): int =
     if k < '0': return
     result = 10 * result + k.ord - '0'.ord
 
+let r = scan()
+let g = scan()
+let b = scan()
 let n = scan()
-let k = scan()
-var S = stdin.readLine()
-S[k-1] = (S[k-1].ord + 'a'.ord - 'A'.ord).chr
-echo S
+var ans = 0
+for ri in 0..(n div r):
+  for gi in 0..(n div g):
+    let bi = n - ri * r - gi * g
+    if bi < 0 : continue
+    if bi mod b != 0 : continue
+    ans += 1
+echo ans

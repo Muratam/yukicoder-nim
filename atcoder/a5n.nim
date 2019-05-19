@@ -12,38 +12,39 @@ proc scan(): int =
     if k < '0': return
     result = 10 * result + k.ord - '0'.ord
 
-let n = scan()
-let A = newSeqWith(n,scan())
-var cans = initTable[int,Table[int,int]]()
-var xsum = 0
-for i,a in A:
-  if i == n - 1 : break
-  xsum = xsum xor a
-  var ncans = initTable[int,Table[int,int]]()
-  proc assign(key,index,val:int) =
-    if key notin ncans: ncans[key] = initTable[int,int]()
-    if index in ncans[key] : ncans[key][index] += val
-    else : ncans[key][index] = val
-  assign(xsum,0,1)
-  for key in cans.keys():
-    for now in cans[key].keys():
-      let cnt = cans[key][now]
-      assign(key, now xor a,cnt)
-      if (now xor a) == key:
-        assign(key, 0,cnt)
-  cans = ncans
-  #echo cans
 
-let last = A[^1]
-var ans = 1
-for key in cans.keys():
-  for now in cans[key].keys():
-    let cnt = cans[key][now]
-    if (now xor last) == key:
-      ans += cnt
-      # echo "A:",key,":",now,":",cnt
-    # if last == key and now == 0:
-    #   ans += cnt
-    #   echo "B:",key,":",now,":",cnt
-    # if key != now : continue
-echo(ans mod 1000000007)
+type UnionFind[T] = ref object
+  parent : seq[T]
+proc initUnionFind[T](size:int) : UnionFind[T] =
+  new(result)
+  result.parent = newSeq[T](size)
+  for i in 0.int32..<size.int32: result.parent[i] = i
+proc root[T](self:var UnionFind[T],x:T): T =
+  if self.parent[x] == x: return x
+  self.parent[x] = self.root(self.parent[x])
+  return self.parent[x]
+proc same[T](self:var UnionFind[T],x,y:T) : bool = self.root(x) == self.root(y)
+proc merge[T](self:var UnionFind[T],sx,sy:T) : bool {.discardable.} =
+  var rx = self.root(sx)
+  var ry = self.root(sy)
+  if rx == ry : return false
+  if self.parent[ry] < self.parent[rx] : swap(rx,ry)
+  if self.parent[rx] == self.parent[ry] : self.parent[rx] -= 1
+  self.parent[ry] = rx
+  return true
+
+
+let n = scan()
+let m = scan()
+var F = initUnionFind[int](n)
+var ans = 0
+m.times:
+  let x = scan() - 1
+  let y = scan() - 1
+  let z = scan()
+  if F.same(x,y) : continue
+  F.merge(x,y)
+  # echo(x,"->",y)
+  ans += 1
+# echo ans
+echo n - ans
