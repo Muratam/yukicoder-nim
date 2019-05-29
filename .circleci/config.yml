@@ -1,9 +1,20 @@
 version: 2
 jobs:
-  build:
+  nim19:
     docker:
       - image: nimlang/nim
     steps:
       - checkout
       - run: "bash test.sh"
-
+  nim13:
+    docker:
+      - image: muratam/nim0.13.0
+    steps:
+      - checkout
+      - run: "bash test.sh"
+workflows:
+  version: 2
+  test_all:
+    jobs:
+      - nim19
+      - nim13

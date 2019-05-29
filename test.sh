@@ -1,11 +1,10 @@
 #! /bin/bash
-# set -e
 rmnimcache(){ [[ -d ./nimcache ]] && rm -rf ./nimcache; }
+allresult=0
 
 cd lib
 rmnimcache
 dirs=`ls -l | grep d | awk '{print $9}'`
-allresult=0
 for dir in $dirs; do
   echo "test : [" $dir "]"
   cd $dir
@@ -20,4 +19,5 @@ for dir in $dirs; do
   rmnimcache
   cd ..
 done
+
 exit $allresult
