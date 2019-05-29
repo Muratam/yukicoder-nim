@@ -5,6 +5,5 @@ jobs:
       - image: nimlang/nim
     steps:
       - checkout
-      - run: echo "hello world" # 「echo」コマンドを実行します
       - run: true
 
