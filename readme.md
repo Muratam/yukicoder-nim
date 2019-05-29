@@ -1,7 +1,9 @@
 
-# Nim for 競技プログラミング
+# Nimで競プロ！
 
 [![CircleCI](https://circleci.com/gh/Muratam/yukicoder-nim/tree/master.svg?style=svg)](https://circleci.com/gh/Muratam/yukicoder-nim/tree/master) (Nim 0.19 & Nim 0.13)
+
+ライブラリはご自由にお使いください
 
 ### lib/datastructure
 - セグメントツリー / BIT
