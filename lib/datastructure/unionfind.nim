@@ -32,9 +32,8 @@ proc counts[T](self:var UnionFind[T]):seq[int] =
 
 when isMainModule:
   import unittest
-  const testName = "unionfind"
   import sequtils
-  suite testName: test testName:
+  test "unionfind":
     var F = newUnionFind[int](100)
     proc forestCount():int = F.counts.filterIt(it > 0).len()
     check: F.count(0) == 1

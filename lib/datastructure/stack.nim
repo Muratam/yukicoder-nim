@@ -39,8 +39,7 @@ proc `$`*[T](self: Stack[T]): string = $(self.data[..self.index])
 # unit test
 when isMainModule:
   import unittest
-  const testName = "unionfind"
-  suite testName: test testName:
+  test "stack":
     var S = newStack[int]()
     check: S.isEmpty()
     S.push(2)

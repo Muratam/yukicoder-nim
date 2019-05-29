@@ -1,19 +1,25 @@
 # セグツリ 区間[s,t)の最小(最大)値 / 更新 O(log(N))
-proc minimpl[T](x,y:T): T = (if x <= y: x else: y)
-proc maximpl[T](x,y:T): T = (if x >= y: x else: y)
-type SegmentTree[T] = ref object
-  data:seq[T] # import math
-  n : int
-  rawSize:int
-  infinity: T
-  cmp:proc(x,y:T):T
-proc newSegmentTree[T](
-    size:int,
-    infinity:T = T(1e10),
-    cmp: proc (x,y:T):T = minimpl[T]) : SegmentTree[T] =
+import sequtils,math
+type
+  SegmentTree[T] = ref object
+    data:seq[T]
+    n : int
+    rawSize:int
+    infinity: T
+    cmp:proc(x,y:T):T
+  SegmentTreeType = enum SaveMin , SaveMax
+proc newSegmentTree[T](size:int,segType:SegmentTreeType) : SegmentTree[T] =
   new(result)
-  result.infinity = infinity
-  result.cmp = cmp
+  if segType == SaveMin: # 最小値
+    proc minimpl[T](x,y:T): T = (if x <= y: x else: y)
+    result.infinity = 1e12.T
+    result.cmp = minimpl
+  elif segType == SaveMax: # 最大値
+    proc maximpl[T](x,y:T): T = (if x >= y: x else: y)
+    result.infinity = -1e12.T
+    result.cmp = maximpl
+  else:
+    doAssert false
   result.n = size.nextPowerOfTwo()
   result.rawSize = size
   result.data = newSeqWith(result.n * 2,result.infinity)
@@ -36,8 +42,30 @@ proc `$`[T](self:SegmentTree[T]): string =
   var l = 0
   var r = 1
   while r <= self.data.len:
-    arrs &= self.data[l..<r]
+    arrs.add self.data[l..<r]
     l = l * 2 + 1
     r = r * 2 + 1
   return $arrs
-#
+
+when isMainModule:
+  import unittest
+  import math
+  test "segment tree":
+    block:
+      var S = newSegmentTree[int](100,SaveMax)
+      for i in 0..<100: S[i] = abs(i - 50)
+      check: S[0..<100] == 50
+      check: S[25..75] == 25
+      S[50] = 100
+      check: S[25..75] == 100
+      check: S[50..50] == 100
+      check: S[0..25] == 50
+    block:
+      var S = newSegmentTree[int](100,SaveMin)
+      for i in 0..<100: S[i] = abs(i - 50)
+      check: S[0..<100] == 0
+      check: S[25..75] == 0
+      S[50] = 100
+      check: S[25..75] == 1
+      check: S[50..50] == 100
+      check: S[0..25] == 25
