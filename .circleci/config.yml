@@ -5,5 +5,5 @@ jobs:
       - image: nimlang/nim
     steps:
       - checkout
-      - run: "false"
+      - run: "bash test.sh"
 
