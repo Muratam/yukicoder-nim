@@ -16,6 +16,7 @@ for dir in $dirs; do
     testresult=$?
     [[ $testresult != 0 ]] && allresult=$testresult
   done
+  rm `find . -maxdepth 1 -perm -111 -type f | tr "\n" " "`
   rmnimcache
   cd ..
 done
