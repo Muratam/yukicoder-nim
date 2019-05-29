@@ -190,6 +190,9 @@ template useUnionFind() = # 同一集合の判定/マージ が 実質 O(1)
     if self.parent[rx] == self.parent[ry] : self.parent[rx] -= 1
     self.parent[ry] = rx
     return true
+  proc count[T](self:var UnionFind[T],x:T):int = # 各木の要素数
+    for p in self.parent:
+      if p == self.parent[x]: result += 1
 # stack
 template useStack() = # consider using deques queues
   type Stack*[T] = ref object
