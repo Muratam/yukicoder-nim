@@ -5,5 +5,5 @@ jobs:
       - image: nimlang/nim
     steps:
       - checkout
-      - run: true
+      - run: "true"
 
