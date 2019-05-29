@@ -5,6 +5,8 @@ type
     nodes: seq[T]
     compare: proc(x,y:T):int
     popchunk: bool
+
+proc revcmp[T](x,y:T):int = cmp[T](y,x)
 proc newBinaryHeap*[T](compare:proc(x,y:T):int): BinaryHeap[T] =
   new(result)
   result.nodes = newSeq[T]()
@@ -55,3 +57,28 @@ proc popimpl[T](h:var BinaryHeap[T]):T =
   h.nodes[0] = h.nodes[^1]
   h.nodes.setLen(h.nodes.len() - 1)
   h.shiftdown()
+
+
+when isMainModule:
+  import unittest
+  test "binary heap":
+    block: # 最小値
+      var pq = newBinaryHeap[int](cmp)
+      pq.push(30)
+      pq.push(10)
+      pq.push(20)
+      check: pq.pop() == 10
+      check: pq.pop() == 20
+      pq.push(0)
+      check: pq.pop() == 0
+      check: pq.pop() == 30
+    block: # 最大値
+      var pq = newBinaryHeap[int](revcmp)
+      pq.push(30)
+      pq.push(10)
+      pq.push(20)
+      check: pq.pop() == 30
+      check: pq.pop() == 20
+      pq.push(0)
+      check: pq.pop() == 10
+      check: pq.pop() == 0
