@@ -160,6 +160,6 @@ template useTwoSAT =
         if nodes[i] == nodes[i-1] : return false
     return true
 
-useMaxFlow()
-useBiparticeMatching()
-useMinCostFlow()
+block: useMaxFlow()
+block: useBiparticeMatching()
+block: useMinCostFlow()
