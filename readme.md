@@ -14,7 +14,7 @@
   - 算術(順列,組み合わせ,累乗,四捨五入)
   - 基数(2進数,10進数,ビット演算)
   - カウント(counttable(0.13でのバグ無しver),deduplicate)
-- lib/graph.nim
+- lib/graph
   - Normalize(強連結成分分解 O(V+E), 重軽分解)
   - Tree(入力を木に,LCA(最小共通祖先 構築:O(n),探索:O(log(n)) (深さに依存しない)))
   - DAG(トポロジカルソート)
@@ -34,7 +34,5 @@
 - Nim 0.13: https://qiita.com/sessions/items/561f8a3aa6eba6d4d7a9
 
 # TODO
-- std::vector
-- std::set
-とかも使えるようにしたい
-- lib/graph のテストを充実させる
+- std::vector や std::set とかも使えるようにしたい
+- lib/graph は問題によって正しさを証明したい
