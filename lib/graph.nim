@@ -1,40 +1,4 @@
 import sequtils
-# トポロジカルソート O(E+V) / 木の分離
-template useTrimingGraph =
-  # 隣接リスト([n->[m1,m2,m3], ... ])を トポロジカルソート
-  proc topologicalSort(E:seq[seq[int]],deleteIsolated:bool = false) : seq[int] =
-    var visited = newSeq[int](E.len)
-    var answer = newSeq[int]()
-    proc visit(src:int) =
-      visited[src] += 1
-      if visited[src] > 1: return
-      for dst in E[src]: visit(dst)
-      answer.add(src) # 葉から順に追加される
-    for src in 0..<E.len: visit(src)
-    if deleteIsolated: # 孤立点の除去
-      return answer.filterIt(visited[it] > 1 or E[it].len > 0)
-    return answer
-
-  # (親も子も同一視して)双方向になっている木を,0 番を根として子のノードだけ持つように変更する
-  proc asTree(E:seq[seq[int]]):seq[seq[int]] =
-    var answer = newSeqWith(E.len,newSeq[int]())
-    proc impl(pre,now:int) =
-      for dst in E[now]:
-        if dst == pre : continue
-        answer[now].add(dst)
-        impl(now,dst)
-    impl(-1,0)
-    return answer
-  # (親も子も同一視して)双方向になっている木を,0 番を根として親のノードだけにする
-  proc getParentList(E:seq[seq[int]]):seq[int] =
-    var answer = newSeqWith(E.len,-1)
-    proc impl(pre,now:int) =
-      for dst in E[now]:
-        if dst == pre : continue
-        answer[dst] = now
-        impl(now,dst)
-    impl(-1,0)
-    return answer
 # SCC:強連結成分分解 O(V+E)
 template useSCC =
   type Graph = ref object

@@ -103,33 +103,4 @@ template usePosition() =
   const dxdy8 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0),(1,1),(1,-1),(-1,-1),(-1,1)]
   type Pos = tuple[x,y:int]
   proc `+`(p,v:Pos):Pos = (p.x+v.x,p.y+v.y)
-  proc `==`(p,v:Pos):bool = p.x == v.x and p.y == v.y
   proc dot(p,v:Pos):int = p.x * v.x + p.y * v.y
-
-# 二進表現
-template useBitOperators() =
-  # @math :: nextPowerOfTwo,isPowerOfTwo
-  # @bitops
-  #   popcount :: 100101010 -> 4 (1 is 4)
-  #   parityBits :: 1001010 -> 1 (1 is odd)
-  #   fastlog2 :: int -> int
-  #   countLeadingZeroBits :: <0000>10 -> 4
-  #   countTrailingZeroBits :: 01<0000> -> 4 (if 0 then 140734606624512)
-  #   firstSetBit :: countTrailingZeroBits + 1 (if 0 then 0)
-  #   when unsigned :: rotateLeftBits rotateRightBits
-  proc `in`(a,b:int) : bool {.inline.}= (((1 shl a) and (1 shl b)) == (1 shl a))
-  proc factorOf2(n:int):int = n and -n # 80:0101<0000> => 16:2^4
-  proc binaryToIntSeq(n:int):seq[int] =
-    result = @[]
-    for i in 0..64:
-      if (n and ^i) > 0: result &= i + 1
-      if n < ^(i+1) : return
-  proc binary(x:int,fill:int=0):string = # 二進表示
-    if x == 0 : return "0".repeat(fill)
-    result = ""
-    var x = x
-    while x > 0:
-      result &= ('0'.ord + x mod 2).chr
-      x = x div 2
-    for i in 0..<result.len div 2: swap(result[i],result[result.len-1-i])
-    return "0".repeat(0.max(fill - result.len)) & result

@@ -1,24 +1,8 @@
 import sequtils,macros
 
-# 10進数 <=> seq[int]
-template useDecimal() =
-  proc toSeq(str:string):seq[char] = result = @[];(for s in str: result &= s)
-  proc splitAsDecimal*(n:int) : seq[int] =
-    if n == 0 : return @[0]
-    result = @[]
-    var n = n
-    while n > 0:
-      result &= n mod 10
-      n = n div 10
-    return result.reversed()
-  proc joinAsDecimal*(A:seq[int]):int =(for a in A: result = result * 10 + a)
-
 # seq[T] <=> string countTable tuple seq[seq[T]]
 template useTranslating() =
-  # string -> seq[char]
-  proc toArray(s:string) :seq[char]= toSeq(s.items)
-  # count table
-  proc toCountSeq[T](x:seq[T]) : seq[tuple[k:T,v:int]] = toSeq(x.toCountTable().pairs)
+  proc toSeq(str:string):seq[char] = result = @[];(for s in str: result &= s)
   # seq[seq[T]] -> seq[T]
   proc flatten[T](x:seq[seq[T]]): seq[T] = (result = @[];for ix in x: result &= ix)
   # seq[T] -> (T,T,T...)
@@ -46,11 +30,7 @@ template useFindIndex() =
       if a >= val: continue
       val = a
       result = i
-  proc deduplicated[T](arr: seq[T]): seq[T] = # Nim標準 の deduplicate はO(n^2)なので注意
-    result = @[]
-    for a in arr.sorted(cmp[T]):
-      if result.len > 0 and result[^1] == a : continue
-      result &= a
+
   proc quickSort[T](a: var openarray[T], inl = 0, inr = -1) =
     var r = if inr >= 0: inr else: a.high
     var l = inl
@@ -94,31 +74,9 @@ template useIteration() =
 
 # cmp[seq[int]] / count...
 template useOtherArrays() =
-  proc cmp(x,y:seq[int]):int = # 数の配列のソート用
-    for i in 0..<min(x.len,y.len):
-      if x[i] != y[i] : return x[i] - y[i]
-    return x.len - y.len
   proc `*`(str:string,t:int):string = str.repeat(t)
-  proc enumerate[T](arr:seq[T]): seq[tuple[i:int,val:T]] =
-    result = @[]; for i,a in arr: result &= (i,a)
   proc overWrite[T](dst,src:seq[T],index:int) : seq[T] =
     result = dst
     for i,s in src:
       if index+i >= dst.len : result &= s
       else: result[index+i] = s
-  proc countContinuity[T](arr:seq[T]) : seq[tuple[key:T,cnt:int]] =
-    if arr.len == 0 : return @[]
-    result = @[]
-    var pre = arr[0]
-    var cnt = 0
-    for a in arr:
-      if a == pre: cnt += 1
-      else:
-        result &= (pre,cnt)
-        cnt = 1
-        pre = a
-    result &= (pre,cnt)
-  proc getNeignborDiff[T](arr:seq[T]) : seq[T] =
-    if arr.len == 0 : return @[]
-    result = newSeq[T](arr.len()-1)
-    for i in 1..<arr.len(): result[i-1] = arr[i] - arr[i-1]

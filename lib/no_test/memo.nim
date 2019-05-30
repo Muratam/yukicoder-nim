@@ -1,3 +1,8 @@
+
+# - std::{ { intset , set(for int8), hashset}  | countTable | table | critbits}
+# - Sparse Table は 初期化O(nlog(n)) , 探索 O(log(log(n)))
+# - 多次元のBIT
+
 # いつか実装したことのある関数をメモしておく
 # 線形回帰(最小二乗法) f(x) = ax + b
 proc leastSquares(X,Y:seq[float]):tuple[a,b,err:float] =
