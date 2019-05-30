@@ -1,4 +1,6 @@
 import sequtils
+import "../datastructure/binaryheap"
+const INF = 1e10.int
 # 最短経路 O(ElogE) / 負有り:O(EV) / 全:O(V^3)
 # ダイクストラ : O(ElogE) コストが負でないときの(startからの)最短路
 type Edge = tuple[dst,cost:int] # E:隣接リスト(端点とコストのtuple)
@@ -14,6 +16,8 @@ proc dijkestra(E:seq[seq[Edge]], start:int) :seq[int] =
       if costs[e.dst] != INF : continue
       opens.push((e.dst,cost + e.cost))
   return costs
+
+
 # ダイクストラ (cost == 1版)
 proc dijkestra(E:seq[seq[int]], start:int) :seq[int] =
   type Edge = tuple[dst,cost:int] # E:隣接リスト(端点とコストのtuple)
@@ -29,8 +33,14 @@ proc dijkestra(E:seq[seq[int]], start:int) :seq[int] =
       if costs[e] != INF : continue
       opens.push((e,cost + 1))
   return costs
+
+
+
+
 # SPFA (ベルマンフォード) O(EV) : 二点間の最短路(負の閉路でも動作)
-type Edge = tuple[dst,cost:int] # E:隣接リスト(端点とコストのtuple)
+when NimMajor == 0 and NimMinor >= 19: import queues
+else: import "../datastructure/queue"
+# type Edge = tuple[dst,cost:int] # E:隣接リスト(端点とコストのtuple)
 proc SPFA(E:seq[seq[Edge]],start:int): seq[int] =
   # import queues
   # 負の閉路検出が可能な単一始点最短路 : O(EV)
@@ -53,6 +63,8 @@ proc SPFA(E:seq[seq[Edge]],start:int): seq[int] =
       C[e.dst] += 1
       P[e.dst] = true
       q.enqueue(e.dst)
+
+
 # ワーシャルフロイド O(V^3) : 全ての頂点の間の最短路を見つける(負でも)
 # E:隣接行列(非連結時cost:=INF)
 proc warshallFroyd(E:seq[seq[int]]) : seq[seq[int]] =
@@ -61,4 +73,4 @@ proc warshallFroyd(E:seq[seq[int]]) : seq[seq[int]] =
   for k in 0..<n:
     for i in 0..<n:
       for j in 0..<n:
-        result[i][j] .min= result[i][k] + result[k][j]
+        result[i][j] = result[i][j].min(result[i][k] + result[k][j])

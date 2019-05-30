@@ -10,6 +10,12 @@ proc asTree(E:seq[seq[int]]):seq[seq[int]] =
   impl(-1,0)
   return answer
 
+
+when NimMajor == 0 and NimMinor >= 18: import bitops
+else:
+  proc countLeadingZeroBits(x: culonglong): cint {.importc: "__builtin_clzll", cdecl.}
+  proc fastLog2(x:int):cint = 63 - countLeadingZeroBits(x.culonglong)
+
 import math
 # 最小共通祖先 構築:O(n),探索:O(log(n)) (深さに依存しない)
 type LowestCommonAncestor = ref object
@@ -20,7 +26,6 @@ type LowestCommonAncestor = ref object
 proc initLowestCommonAnsestor(E:seq[seq[int]],root:int = 0) : LowestCommonAncestor =
   new(result)
   # E:隣接リスト,root:根の番号,(0~E.len-1と仮定)
-  # (import bitops)
   # 予め木を整形(= E[i]で親と子の区別を行う)する必要はない
   let n = E.len
   let nlog2 = E.len.fastLog2() + 1
@@ -52,3 +57,13 @@ proc find(self:LowestCommonAncestor,u,v:int):int =
     u = self.parent[k][u]
     v = self.parent[k][v]
   return self.parent[0][u]
+
+when isMainModule:
+  import unittest
+  test "tree":
+    let E = @[@[1,2],@[0,3],@[0],@[1]]
+    check: E.asTree == @[@[1, 2], @[3], @[], @[]]
+    let lca = E.initLowestCommonAnsestor()
+    check: lca.find(1,3) == 1
+    check: lca.find(0,3) == 0
+    check: lca.find(1,2) == 0

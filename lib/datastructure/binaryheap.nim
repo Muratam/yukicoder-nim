@@ -19,15 +19,6 @@ proc items*[T](h:var BinaryHeap[T]):seq[T] =
 proc top*[T](h:var BinaryHeap[T]): T =
   if h.popchunk : discard h.popimpl()
   return h.nodes[0]
-proc push*[T](h:var BinaryHeap[T],node:T):void =
-  if h.popchunk :
-    h.nodes[0] = node
-    h.shiftdown()
-  else: h.pushimpl(node)
-proc pop*[T](h:var BinaryHeap[T]):T =
-  if h.popchunk: discard h.popimpl()
-  h.popchunk = true
-  return h.nodes[0]
 
 proc shiftdown[T](h:var BinaryHeap[T]): void =
   h.popchunk = false
@@ -58,6 +49,15 @@ proc popimpl[T](h:var BinaryHeap[T]):T =
   h.nodes.setLen(h.nodes.len() - 1)
   h.shiftdown()
 
+proc push*[T](h:var BinaryHeap[T],node:T):void =
+  if h.popchunk :
+    h.nodes[0] = node
+    h.shiftdown()
+  else: h.pushimpl(node)
+proc pop*[T](h:var BinaryHeap[T]):T =
+  if h.popchunk: discard h.popimpl()
+  h.popchunk = true
+  return h.nodes[0]
 
 when isMainModule:
   import unittest

@@ -3,17 +3,17 @@
 # 0..<n までの要素を管理する
 type UnionFind[T] = ref object
   parent : seq[T]
-proc newUnionFind[T](size:int) : UnionFind[T] =
+proc newUnionFind*[T](size:int) : UnionFind[T] =
   new(result)
   when NimMajor == 0 and NimMinor <= 18: result.parent = newSeq[T](size)
   else: result.parent = newSeqUninitialized[T](size)
   for i in 0.int32..<size.int32: result.parent[i] = i
-proc root[T](self:var UnionFind[T],x:T): T =
+proc root*[T](self:var UnionFind[T],x:T): T =
   if self.parent[x] == x: return x
   self.parent[x] = self.root(self.parent[x])
   return self.parent[x]
-proc same[T](self:var UnionFind[T],x,y:T) : bool = self.root(x) == self.root(y)
-proc merge[T](self:var UnionFind[T],sx,sy:T) : bool {.discardable.} =
+proc same*[T](self:var UnionFind[T],x,y:T) : bool = self.root(x) == self.root(y)
+proc merge*[T](self:var UnionFind[T],sx,sy:T) : bool {.discardable.} =
   var rx = self.root(sx)
   var ry = self.root(sy)
   if rx == ry : return false
@@ -21,11 +21,11 @@ proc merge[T](self:var UnionFind[T],sx,sy:T) : bool {.discardable.} =
   if self.parent[rx] == self.parent[ry] : self.parent[rx] -= 1
   self.parent[ry] = rx
   return true
-proc count[T](self:var UnionFind[T],x:T):int = # 木毎の要素数(最初は全て1)
+proc count*[T](self:var UnionFind[T],x:T):int = # 木毎の要素数(最初は全て1)
   let root = self.root(x)
   for p in self.parent:
     if self.root(p) == root: result += 1
-proc counts[T](self:var UnionFind[T]):seq[int] =
+proc counts*[T](self:var UnionFind[T]):seq[int] =
   result = newSeq[int](self.parent.len)
   for p in self.parent: result[self.root(p)] += 1
 

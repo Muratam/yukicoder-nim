@@ -1,3 +1,9 @@
+import "../datastructure/unionfind"
+import "../datastructure/binaryheap"
+import sequtils
+when NimMajor == 0 and NimMinor >= 19: import queues
+else: import "../datastructure/queue"
+
 # 最大流/最小カット O(FE) / O(EV^2)
 template useMaxFlow =
   type Edge = tuple[dst,cap,rev:int]
@@ -92,12 +98,12 @@ template useMinCostFlow =
   proc add(G:var seq[seq[Edge]],src,dst,cap,cost:int) =
     G[src].add((dst,cap,cost,G[dst].len))
     G[dst].add((src,0,-cost,G[src].len - 1))
-  proc minCostFlow(E:var seq[seq[Edge]],start,goal,flow:int): int = # O(FElogV)
+  proc minCostFlow(E:var seq[seq[Edge]],start,goal,flowbase:int): int = # O(FElogV)
     # start -> goal へ flow 流した時の最小費用流
     # 最短経路を求め,最短経路に目一杯流す
     # 注意 : ダイクストラなので負の閉路があった場合は不可能
     const INF = 1e10.int
-    var flow = flow
+    var flow = flowbase
     var prev = newSeq[tuple[src,index:int]](E.len) # 直前の辺
     var H = newSeq[int](E.len) # ポテンシャル
     proc dijkestra(E:var seq[seq[Edge]]): seq[int] =
@@ -153,3 +159,7 @@ template useTwoSAT =
       for i in 1..<nodes.len:
         if nodes[i] == nodes[i-1] : return false
     return true
+
+useMaxFlow()
+useBiparticeMatching()
+useMinCostFlow()

@@ -2,6 +2,16 @@
 # - std::{ { intset , set(for int8), hashset}  | countTable | table | critbits}
 # - Sparse Table は 初期化O(nlog(n)) , 探索 O(log(log(n)))
 # - 多次元のBIT
+proc getNeignborDiff[T](arr:seq[T]) : seq[T] =
+  if arr.len == 0 : return @[]
+  result = newSeq[T](arr.len()-1)
+  for i in 1..<arr.len(): result[i-1] = arr[i] - arr[i-1]
+proc enumerate[T](arr:seq[T]): seq[tuple[i:int,val:T]] =
+  result = @[]; for i,a in arr: result.add((i,a))
+proc cmp(x,y:seq[int]):int = # 数の配列のソート用
+  for i in 0..<min(x.len,y.len):
+    if x[i] != y[i] : return x[i] - y[i]
+  return x.len - y.len
 
 # いつか実装したことのある関数をメモしておく
 # 線形回帰(最小二乗法) f(x) = ax + b

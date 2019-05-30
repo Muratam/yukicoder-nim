@@ -1,3 +1,4 @@
+import sequtils
 # DAGの隣接リスト([n->[m1,m2,m3], ... ])を トポロジカルソート
 proc topologicalSort(E:seq[seq[int]],deleteIsolated:bool = false) : seq[int] =
   var visited = newSeq[int](E.len)
@@ -11,3 +12,10 @@ proc topologicalSort(E:seq[seq[int]],deleteIsolated:bool = false) : seq[int] =
   if deleteIsolated: # 孤立点の除去
     return answer.filterIt(visited[it] > 1 or E[it].len > 0)
   return answer
+
+
+when isMainModule:
+  import unittest
+  test "DAG":
+    let F = @[@[1,2,3],@[6,2],@[4],@[5,1,2],@[],@[],@[]]
+    check: F.topologicalSort() == @[6, 4, 2, 1, 5, 3, 0]

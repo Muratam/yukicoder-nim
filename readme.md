@@ -12,15 +12,15 @@
   - ModInt(nCk,累乗,除算)
   - 素数(SFF,素数表,素数リスト)
   - 算術(順列,組み合わせ,累乗,四捨五入)
-  - 基数(2進数,10進数)
-  - カウント()
+  - 基数(2進数,10進数,ビット演算)
+  - カウント(counttable(0.13でのバグ無しver),deduplicate)
 - lib/graph.nim
   - Normalize(強連結成分分解 O(V+E), 重軽分解)
   - Tree(入力を木に,LCA(最小共通祖先 構築:O(n),探索:O(log(n)) (深さに依存しない)))
   - DAG(トポロジカルソート)
   - MST(最小全域木 O(ElogV))
   - ShortestPath( O(ElogE) | 負有り:O(EV) | 全:O(V^3))
-  - Flow()
+  - Flow(最小費用流 O(FElogV) | 最大流/最小カット O(FE) / O(EV^2) | 二部グラフの最大マッチング O(E))
 - lib/functions.nim (いつもの IO , Pos4)
 - lib/no_test (未テスト段階)
   - sparsematrix.nim : 疎行列
@@ -30,11 +30,11 @@
     - ガウスの掃き出し法(only for bool)
     - フィボナッチ数列の第N項
 
-- no_test:
-  - lib/graph*
-  - lib/mathlib/radix.nim
-  - lib/mathlib/count.nim
-  - lib/functions.nim
-
 # MEMO
 - Nim 0.13: https://qiita.com/sessions/items/561f8a3aa6eba6d4d7a9
+
+# TODO
+- std::vector
+- std::set
+とかも使えるようにしたい
+- lib/graph のテストを充実させる

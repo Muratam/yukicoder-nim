@@ -56,12 +56,3 @@ template useHeavyLightDecomposition() =
       chains : seq[Chain]
       mapTo : seq[Node] # raw index -> chain
       mapFrom: seq[seq[int]] # chain -> raw index
-
-
-when isMainModule:
-  import unittest
-  test "normalize":
-    let E = @[@[1,2],@[0,3],@[0],@[1]]
-    check: E.asTree == @[@[1, 2], @[3], @[], @[]]
-    let F = @[@[1,2,3],@[6,2],@[4],@[5,1,2],@[],@[],@[]]
-    check: F.topologicalSort() == @[6, 4, 2, 1, 5, 3, 0]
