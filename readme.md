@@ -15,7 +15,12 @@
   - 基数(2進数,10進数)
   - カウント()
 - lib/graph.nim
-  - 正規化(トポロジカルソート,入力を木に)
+  - Normalize(強連結成分分解 O(V+E), 重軽分解)
+  - Tree(入力を木に,LCA(最小共通祖先 構築:O(n),探索:O(log(n)) (深さに依存しない)))
+  - DAG(トポロジカルソート)
+  - MST(最小全域木 O(ElogV))
+  - ShortestPath( O(ElogE) | 負有り:O(EV) | 全:O(V^3))
+  - Flow()
 - lib/functions.nim (いつもの IO , Pos4)
 - lib/no_test (未テスト段階)
   - sparsematrix.nim : 疎行列
@@ -30,7 +35,6 @@
   - lib/mathlib/radix.nim
   - lib/mathlib/count.nim
   - lib/functions.nim
-  - lib/no_test/*
 
 # MEMO
 - Nim 0.13: https://qiita.com/sessions/items/561f8a3aa6eba6d4d7a9
