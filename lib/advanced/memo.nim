@@ -1,4 +1,55 @@
 # いつか実装したことのある関数をメモしておく
+# 線形回帰(最小二乗法) f(x) = ax + b
+proc leastSquares(X,Y:seq[float]):tuple[a,b,err:float] =
+  assert X.len == Y.len
+  let n = X.len.float
+  let XY = toSeq(0..<X.len).mapIt(X[it] * Y[it]).sum()
+  let XX = X.mapIt(it*it).sum()
+  let XS = X.sum()
+  let YS = Y.sum()
+  let d = n * XX - XS * XS
+  let a = (n * XY - XS * YS) / d
+  let b = (XX * YS - XY * XS) / d
+  let err = toSeq(0..<X.len)
+    .mapIt((let e = X[it] * a + b - Y[it];e*e))
+    .sum()
+  return (a ,b,err)
+
+# ガウスの掃き出し法 (only for bool)
+proc gaussianElimination(A:Matrix[bool],x:seq[bool]):seq[bool] =
+  let n = x.len
+  template `^=`(x,y) = x = x xor y
+  assert n == A.w and n == A.h
+  result = x
+  var A = A
+  for i in 0..<n:
+    if not A[i,i]:
+      var ok = false
+      for j in (i+1)..<n:
+        if not A[i,j] : continue
+        for k in i..<n: swap(A[k,i],A[k,j])
+        swap(result[i],result[j])
+        ok = true
+        break
+      if not ok : continue
+    for j in (i+1)..<n:
+      if not A[i,j]: continue
+      for k in i..<n: A[k,j] ^= A[k,i]
+      result[j] ^= result[i]
+  for i in (n-1).countdown(0):
+    if A[i,i]:
+      for j in 0..<i:
+        if not A[i,j] : continue
+        A[i,j] = false
+        result[j] ^= result[i]
+    else:
+      result[i] = false
+      for j in 0..<i:
+        if not A[i,j] : continue
+        A[i,j] = false
+  for i in 0..<n:
+    if not A[i,i] and result[i]  : return @[]
+
 template useEncodeInt()=
   const INF = 10000
   proc encode(x,y:int):int = x * INF + y
