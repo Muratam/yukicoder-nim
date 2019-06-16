@@ -94,6 +94,7 @@ when isMainModule:
     check:A.lowerBound(5) == binarySearch(0..<A.len,proc(x:int):bool=A[x]>=5)
     check:abs(binarySearch(0.0..10.0,proc(x:float):bool = x * x < 3.14159265358979) - 1.772453850904867)<1e-10
     check:abs(binarySearch(-10.0..0.0,proc(x:float):bool = x * x > 3.14159265358979) + 1.772453850905548)<1e-10
+  test "termarysearch":
     check:termarySearch(-10..100,proc(x:int):int= x * x + 20,SearchMin) == 0
     check:termarySearch(5..10,proc(x:int):int= x * x + 20,SearchMin) == 5
     check:termarySearch(-10.. -5,proc(x:int):int= x * x + 20,SearchMin) == -5
@@ -110,3 +111,6 @@ when isMainModule:
     check:abs(termarySearch(-1.5..0.5,proc(x:float):float= -x * x + 20,SearchMin)+1.5) < 1e-8
     check:termarySearch(-3..8,proc(x:int):int= x * x + 20,SearchMax) == 8
     check:termarySearch(-8..3,proc(x:int):int= x * x + 20,SearchMax) == -8
+    # 最大値が複数ある時,どれになるかは不明であることに注意
+    let A = @[1,2,3,4,5,5,5,5,2,0]
+    check:termarySearch(0..<A.len,proc(x:int):int= A[x],SearchMax) notin [4,7]
