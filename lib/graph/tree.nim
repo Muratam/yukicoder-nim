@@ -23,7 +23,7 @@ type LowestCommonAncestor = ref object
   parent : seq[seq[int]] # 2^k 回親をたどった時のノード
   n:int
   nlog2 : int
-proc initLowestCommonAnsestor(E:seq[seq[int]],root:int = 0) : LowestCommonAncestor =
+proc newLowestCommonAnsestor(E:seq[seq[int]],root:int = 0) : LowestCommonAncestor =
   new(result)
   # E:隣接リスト,root:根の番号,(0~E.len-1と仮定)
   # 予め木を整形(= E[i]で親と子の区別を行う)する必要はない
@@ -63,7 +63,7 @@ when isMainModule:
   test "tree":
     let E = @[@[1,2],@[0,3],@[0],@[1]]
     check: E.asTree == @[@[1, 2], @[3], @[], @[]]
-    let lca = E.initLowestCommonAnsestor()
+    let lca = E.newLowestCommonAnsestor()
     check: lca.find(1,3) == 1
     check: lca.find(0,3) == 0
     check: lca.find(1,2) == 0
