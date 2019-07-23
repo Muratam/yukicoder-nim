@@ -11,14 +11,10 @@ proc scan(): int =
     if k < '0' or k > '9': return
     result = 10 * result + k.ord - '0'.ord
 
-let l = scan()
-let r = scan()
-if r - l > 2100:
-  echo 0
-  quit 0
-
-var ans = 10000
-for i in l..r:
-  for j in (i+1)..r:
-    ans .min= (i * j) mod 2019
-echo ans
+let n = scan()
+let A = newSeqWith(n,scan())
+let maxA = A.max()
+let nextA = A.sorted(cmp)[A.len-2]
+for a in A:
+  if a == maxA: echo nextA
+  else: echo maxA

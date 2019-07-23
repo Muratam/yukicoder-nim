@@ -11,7 +11,5 @@ proc scan(): int =
     if k < '0' or k > '9': return
     result = 10 * result + k.ord - '0'.ord
 
-let n = scan()
-let a = scan()
-let b = scan()
-echo min(n * a,b)
+let r = scan()
+echo 3 * r * r
