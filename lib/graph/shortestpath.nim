@@ -8,7 +8,7 @@ proc dijkestra(E:seq[seq[Edge]], start:int) :seq[int] =
   var costs = newSeqWith(E.len,INF)
   var opens = newBinaryHeap[Edge](proc(a,b:Edge): int = a.cost - b.cost)
   opens.push((start,0))
-  while opens.size() > 0:
+  while opens.len() > 0:
     let (src,cost) = opens.pop()
     if costs[src] != INF : continue
     costs[src] = cost
@@ -25,7 +25,7 @@ proc dijkestra(E:seq[seq[int]], start:int) :seq[int] =
   var costs = newSeqWith(E.len,INF)
   var opens = newBinaryHeap[Edge](proc(a,b:Edge): int = a.cost - b.cost)
   opens.push((start,0))
-  while opens.size() > 0:
+  while opens.len() > 0:
     let (src,cost) = opens.pop()
     if costs[src] != INF : continue
     costs[src] = cost

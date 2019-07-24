@@ -33,8 +33,8 @@ proc `>=`*[T](self:CMultiSet[T],x:T) : seq[T] =
   var (a,b) = (self.lower_bound(x),self.`end`())
   result = @[]; while a != b :result .add *a; ++a
 proc toMultiSet*[T](arr:seq[T]): CMultiSet[T] = (result = initMultiSet[T]();for a in arr: result.add(a))
-proc toSeq*[T](self:CMultiSet[T]):seq[T] = self.mapIt(it)
-proc `$`*[T](self:CMultiSet[T]): string = $self.toSeq()
+proc toSeq[T](self:CMultiSet[T]):seq[T] = self.mapIt(it)
+proc `$`*[T](self:CMultiSet[T]): string = $self.mapIt(it)
 
 
 when isMainModule:

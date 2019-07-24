@@ -19,7 +19,7 @@ proc LIS[T](arr:seq[T]) : seq[T] =
     S.insert a
   return S.mapIt(it)
 
-import math,tables
+import math,tables,algorithm
 # Nim 0.13 の toCountTable はバグがあるので注意
 proc toCountTable*[A](keys: openArray[A]): CountTable[A] =
   result = initCountTable[A](nextPowerOfTwo(keys.len * 3 div 2 + 4))

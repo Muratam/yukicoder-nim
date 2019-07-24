@@ -113,7 +113,7 @@ template useMinCostFlow =
         proc(x,y:P):int = (if x.len != y.len : x.len - y.len else: x.src - y.src))
       pq.push((0,start))
       result[start] = 0
-      while pq.size > 0:
+      while pq.len > 0:
         let p = pq.pop()
         if result[p.src] < p.len : continue
         for i,e in E[p.src]:

@@ -33,8 +33,8 @@ proc `>=`*[T](self:CSet[T],x:T) : seq[T] =
   var (a,b) = (self.lower_bound(x),self.`end`())
   result = @[]; while a != b :result .add *a; ++a
 proc toSet*[T](arr:seq[T]): CSet[T] = (result = initSet[T]();for a in arr: result.add(a))
-proc toSeq*[T](self:CSet[T]):seq[T] = self.mapIt(it)
-proc `$`*[T](self:CSet[T]): string = $self.toSeq()
+proc toSeq[T](self:CSet[T]):seq[T] = self.mapIt(it)
+proc `$`*[T](self:CSet[T]): string = $self.mapIt(it)
 
 when isMainModule:
   import unittest,sequtils
