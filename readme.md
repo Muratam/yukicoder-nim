@@ -10,12 +10,13 @@
   - std::{set,multiset} (min / max / >= がO(log(N)))
   - std::vector / std::priority_queue : 互換性のため
 - lib/mathlib
-  - 行列(転置,乗算,累乗,加算,単位行列)
-  - ModInt(nCk,累乗,除算)
-  - 素数(SFF,素数表,素数リスト)
-  - 算術(順列,組み合わせ,累乗,四捨五入)
-  - 基数(2進数,10進数,ビット演算)
-  - カウント(counttable(0.13でのバグ無しver),deduplicate)
+  - matrix : 行列(転置,乗算,累乗,加算,単位行列)
+  - modint : ModInt (nCk,累乗,除算)
+  - prime : 素数(SFF,素数表,素数リスト)
+  - search : 二分探索 / 三分探索
+  - arith : 算術(順列,組み合わせ,累乗,四捨五入)
+  - radix : 基数(2進数,10進数,ビット演算)
+  - sequence : LIS(最長増加部分列) / counttable(0.13でのバグ無しver) / deduplicate
 - lib/graph
   - Normalize(強連結成分分解 O(V+E), 重軽分解)
   - Tree(入力を木に,LCA(最小共通祖先 構築:O(n),探索:O(log(n)) (深さに依存しない)))

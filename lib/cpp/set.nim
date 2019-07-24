@@ -1,12 +1,6 @@
-const allowMulti = false
-when not allowMulti:
-  type CSet {.importcpp: "std::set", header: "<set>".} [T] = object
-  type CSetIter {.importcpp: "std::set<'0>::iterator", header: "<set>".} [T] = object
-  proc cInitSet(T: typedesc): CSet[T] {.importcpp: "std::set<'*1>()", nodecl.}
-else:
-  type CSet {.importcpp: "std::multiset", header: "<set>".} [T] = object
-  type CSetIter {.importcpp: "std::multiset<'0>::iterator", header: "<set>".} [T] = object
-  proc cInitSet(T: typedesc): CSet[T] {.importcpp: "std::multiset<'*1>()", nodecl.}
+type CSet {.importcpp: "std::set", header: "<set>".} [T] = object
+type CSetIter {.importcpp: "std::set<'0>::iterator", header: "<set>".} [T] = object
+proc cInitSet(T: typedesc): CSet[T] {.importcpp: "std::set<'*1>()", nodecl.}
 proc initSet*[T](): CSet[T] = cInitSet(T)
 proc insert*[T](self: var CSet[T],x:T) {.importcpp: "#.insert(@)", nodecl.}
 proc empty*[T](self: CSet[T]):bool {.importcpp: "#.empty()", nodecl.}
@@ -42,7 +36,6 @@ proc toSet*[T](arr:seq[T]): CSet[T] = (result = initSet[T]();for a in arr: resul
 proc toSeq*[T](self:CSet[T]):seq[T] = self.mapIt(it)
 proc `$`*[T](self:CSet[T]): string = $self.toSeq()
 
-
 when isMainModule:
   import unittest,sequtils
   test "C++ set":
@@ -50,14 +43,9 @@ when isMainModule:
     check: 8 notin s
     check: s.min() == 1
     check: s.max() == 9
-    when allowMulti:
-      check: s.len == 11
-      check: s > 4 == @[5, 5, 5, 6, 9]
-      check: s >= 4 == @[4, 5, 5, 5, 6, 9]
-    else:
-      check: s.len == 7
-      check: s > 4 == @[5, 6, 9]
-      check: s >= 4 == @[4, 5, 6, 9]
+    check: s.len == 7
+    check: s > 4 == @[5, 6, 9]
+    check: s >= 4 == @[4, 5, 6, 9]
     s.erase(s.max())
     check: s.max() == 6
     for _ in 0..<10: s.erase(1)

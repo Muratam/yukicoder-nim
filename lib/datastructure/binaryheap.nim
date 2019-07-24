@@ -12,7 +12,7 @@ proc newBinaryHeap*[T](compare:proc(x,y:T):int): BinaryHeap[T] =
   result.nodes = newSeq[T]()
   result.compare = compare
 proc compareNode[T](h:BinaryHeap[T],i,j:int):int = h.compare(h.nodes[i],h.nodes[j])
-proc size*[T](h:BinaryHeap[T]):int = h.nodes.len() - h.popchunk.int
+proc len*[T](h:BinaryHeap[T]):int = h.nodes.len() - h.popchunk.int
 proc items*[T](h:var BinaryHeap[T]):seq[T] =
   if h.popchunk : discard h.popimpl()
   return h.nodes
