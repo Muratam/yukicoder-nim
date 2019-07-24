@@ -37,5 +37,4 @@
 - Nim 0.13: https://qiita.com/sessions/items/561f8a3aa6eba6d4d7a9
 
 # TODO
-- std::vector や std::set とかも使えるようにしたい
 - lib/graph は問題によって正しさを証明したい
