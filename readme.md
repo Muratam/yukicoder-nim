@@ -35,6 +35,9 @@
 
 # MEMO
 - Nim 0.13: https://qiita.com/sessions/items/561f8a3aa6eba6d4d7a9
+- with C++: https://qiita.com/sessions/items/96c57a4dad9246d2cd59
+- introduction : https://chy72.hatenablog.com/entry/2017/12/16/214708
+- AtCoder Beginners Selection : https://chy72.hatenablog.com/entry/2019/07/10/212911
 
 # TODO
 - lib/graph は問題によって正しさを証明したい
