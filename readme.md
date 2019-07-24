@@ -1,12 +1,14 @@
 
 # Nimで競プロ！
 
-[![CircleCI](https://circleci.com/gh/Muratam/yukicoder-nim/tree/master.svg?style=svg)](https://circleci.com/gh/Muratam/yukicoder-nim/tree/master) (Nim 0.19 & Nim 0.13)
+[![CircleCI](https://circleci.com/gh/Muratam/yukicoder-nim/tree/master.svg?style=svg)](https://circleci.com/gh/Muratam/yukicoder-nim/tree/master) (Nim 0.20 & Nim 0.13)
 
 ライブラリはご自由にお使いください
-
 - lib/datastructure
   - セグメントツリー , BIT , BinaryHeap , UnionFind , Stack , Deque , ロリハ , スライド最小値
+- lib/cpp
+  - std::{set,multiset} (min / max / >= がO(log(N)))
+  - std::vector / std::priority_queue : 互換性のため
 - lib/mathlib
   - 行列(転置,乗算,累乗,加算,単位行列)
   - ModInt(nCk,累乗,除算)
