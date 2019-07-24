@@ -42,33 +42,6 @@ proc toSet*[T](arr:seq[T]): CSet[T] = (result = initSet[T]();for a in arr: resul
 proc toSeq*[T](self:CSet[T]):seq[T] = self.mapIt(it)
 proc `$`*[T](self:CSet[T]): string = $self.toSeq()
 
-when not allowMulti:
-  import tables
-  # key:int が順序付きのMap
-  # WARN: 不完全
-  type Map[T] = object
-    indice : CSet[int]
-    table : Table[int,T]
-  proc initMap*[T]() : Map[T] = Map[T](indice:initSet[int](),table:initTable[int,T]())
-  proc empty*[T](self: Map[T]):bool = self.indice.empty()
-  proc len*[T](self: Map[T]):int = self.indice.len()
-  proc clear*[T](self:var Map[T]) = (self.indice.clear(); self.table.clear())
-  proc erase*[T](self: var Map[T],x:T) = (self.indice.erase(x);self.table.del(x))
-  proc `[]=`*[T](self: var Map[T],k:int,v:T) =
-    self.indice.add k
-    self.table[k] = v
-  import sequtils # nim alias
-  proc `[]`*[T](self:var Map[T],k:int): T = self.table[k]
-  proc minKey*[T](self:Map[T]):T = *self.indice.begin()
-  proc maxKey*[T](self:Map[T]):T = (var e = self.indice.`end`();--e; *e)
-  proc contains*[T](self:Map[T],x:T):bool = self.indice.find(x) != self.indice.`end`()
-  proc `>`*[T](self:Map[T],x:T) : seq[(int,T)] =
-    var (a,b) = (self.indice.upper_bound(x),self.indice.`end`())
-    result = @[]; while a != b :result .add((*a,self.table[*a])); ++a
-  proc `>=`*[T](self:Map[T],x:T) : seq[(int,T)] =
-    var (a,b) = (self.lower_bound(x),self.`end`())
-    result = @[]; while a != b :result .add((*a,self.table[*a])); ++a
-  proc `$`*[T](self:Map[T]): string = $self.table
 
 when isMainModule:
   import unittest,sequtils
@@ -89,9 +62,3 @@ when isMainModule:
     check: s.max() == 6
     for _ in 0..<10: s.erase(1)
     check: s.min() == 2
-  # test "C++ set to map":
-  #   if not  allowMulti:
-  #     var s = initMap[string]()
-  #     for i in [3,1,4,1,5,9,2,6,5,3,5]:
-  #       s[i] = $i
-  #     echo s
