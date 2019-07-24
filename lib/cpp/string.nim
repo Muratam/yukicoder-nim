@@ -1,3 +1,5 @@
+# TODO: string
+#[
 import macros
 {.experimental: "dotOperators".}
 type
@@ -24,3 +26,4 @@ when isMainModule:
     echo str.c_str()
     str[0] = 'x'
     echo str.c_str()
+]#

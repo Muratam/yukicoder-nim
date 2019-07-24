@@ -1,4 +1,5 @@
 #[
+# TODO: nim tuple -> C++ tuple
 # custom class
 import ./priority_queue
 type CTuple {.importcpp: "std::tuple", header: "<tuple>".} [A,B,C] = object
