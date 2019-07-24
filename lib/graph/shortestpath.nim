@@ -38,7 +38,7 @@ proc dijkestra(E:seq[seq[int]], start:int) :seq[int] =
 
 
 # SPFA (ベルマンフォード) O(EV) : 二点間の最短路(負の閉路でも動作)
-when NimMajor == 0 and NimMinor >= 19: import queues
+when NimMajor == 0 and NimMinor == 19: import queues
 else: import "../datastructure/queue"
 # type Edge = tuple[dst,cost:int] # E:隣接リスト(端点とコストのtuple)
 proc SPFA(E:seq[seq[Edge]],start:int): seq[int] =
