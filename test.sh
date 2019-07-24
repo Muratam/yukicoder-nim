@@ -12,7 +12,7 @@ for dir in $dirs; do
   rmnimcache
   nims=`ls *.nim`
   for nim in $nims; do
-    nim c -r --hints:off --verbosity:0 --nimcache:./nimcache "--warning[SmallLshouldNotBeUsed]:off" $nim
+    nim cpp -r --hints:off --verbosity:0 --nimcache:./nimcache "--warning[SmallLshouldNotBeUsed]:off" $nim
     testresult=$?
     [[ $testresult != 0 ]] && allresult=$testresult
   done
