@@ -2,7 +2,7 @@ import sequtils,macros
 
 # seq[T] <=> string countTable tuple seq[seq[T]]
 template useTranslating() =
-  proc toSeq(str:string):seq[char] = result = @[];(for s in str: result &= s)
+  proc toSeq(str:string):seq[char] = @str
   # seq[seq[T]] -> seq[T]
   proc flatten[T](x:seq[seq[T]]): seq[T] = (result = @[];for ix in x: result &= ix)
   # seq[T] -> (T,T,T...)

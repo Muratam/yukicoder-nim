@@ -2,34 +2,123 @@ import sequtils,math,tables
 template times*(n:int,body) = (for _ in 0..<n: body)
 template `max=`*(x,y) = x = max(x,y)
 template `min=`*(x,y) = x = min(x,y)
-proc puts(str: cstring){.header: "<stdio.h>", varargs.}
+proc toCountSeq[T](x:seq[T]) : seq[int] = toSeq(x.toCountTable().values)
 
-proc getFactorNumsAllRange(n:int):seq[seq[int]] =
-  # 1 ~ n まで全ての素因数を列挙
-  result = newSeqWith(n+1,newSeq[int]())
-  for i in 2..n.float.sqrt.int :
-    if result[i].len != 0: continue
-    result[i] &= 1
-    for j in countup(i*2,n,i):
-      var t = 0
-      var x = j
-      while x mod i == 0:
-        t += 1
-        x = x div i
-      result[j] &= t #mod 3
-  for i in n.float.sqrt.int..n:
-    if result[i].len == 0 : result[i] = @[1]
-const factors = getFactorNumsAllRange(10010)#.mapIt(it.foldl(a xor b,0))
-echo factors
-# proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
-# proc scan(): int =
-#   while true:
-#     let k = getchar_unlocked()
-#     if k < '0': return
-#     result = 10 * result + k.ord - '0'.ord
+proc getFactors(n:int):seq[int]=
+  const INF = int.high div 4
+  proc powerWhenTooBig(x,n:int,modulo:int = 0): int =
+    proc mul(x,n,modulo:int):int =
+      if n == 0: return 0
+      if n == 1: return x
+      result = mul(x,n div 2,modulo) mod modulo
+      result = (result * 2) mod modulo
+      result = (result + x * (n mod 2 == 1).int) mod modulo
+      if n == 0: return 1
+    if n == 1: return x
+    let
+      pow_2 = powerWhenTooBig(x,n div 2,modulo)
+      odd = if n mod 2 == 1: x else: 1
+    if modulo > 0:
+      const maybig = int.high.float.sqrt.int div 2
+      if pow_2 > maybig or odd > maybig:
+        result = mul(pow_2,pow_2,modulo)
+        result = mul(result,odd,modulo)
+      else:
+        result = (pow_2 * pow_2) mod modulo
+        result = (result * odd) mod modulo
+    else:
+      return pow_2 * pow_2 * odd
+  proc millerRabinIsPrime(n:int):bool = # O(log n)
+    proc ctz(n:int):int{.importC: "__builtin_ctzll", noDecl .} # 01<0000> -> 4
+    proc power(x,n:int,modulo:int = 0): int =
+      if n == 0: return 1
+      if n == 1: return x
+      let pow_2 = power(x,n div 2,modulo)
+      result = pow_2 * pow_2 * (if n mod 2 == 1: x else: 1)
+      if modulo > 0: result = result mod modulo
+    if n <= 1 : return false
+    if n == 2 or n == 3 or n == 5: return true
+    if n mod 2 == 0: return false
+    let
+      s = ctz(n - 1)
+      d = (n - 1) div (1 shl s)
+    var a_list = @[2, 7, 61]
+    if n >= 4_759_123_141 and n < 341_550_071_728_321:
+      a_list = @[2, 3, 5, 7, 11, 13, 17]
+    if n in a_list : return true
+    for a in a_list:
+      if powerWhenTooBig(a,d,n) == 1 : continue
+      let notPrime = toSeq(0..<s).allIt(powerWhenTooBig(a,d*(1 shl it),n) != n-1)
+      if notPrime : return false
+    return true
+  proc squareFormFactor(n:int):int =
+    if millerRabinIsPrime(n) : return n
+    proc check(k:int):int =
+      proc √(x:int):int = x.float.sqrt.int
+      if n <= 1 : return n
+      if n mod 2 == 0 : return 2
+      if √(n) * √(n) == n : return √(n)
+      let ncb = n.float.cbrt.int
+      if ncb * ncb * ncb == n : return ncb
+      var P1 = √(k * n)
+      var Q2 = 1
+      var Q1 = k * n - P1 * P1
+      while √(Q1) * √(Q1) != Q1:
+        let b = (√(k * n) + P1 ) div Q1
+        let ppP = P1
+        let pP = b * Q1 - P1
+        let ppQ = Q2
+        P1 = pP
+        Q2 = Q1
+        Q1 = ppQ + b * (ppP - pP)
+      block:
+        if Q1 == 0 : return check(k + 1)
+        let
+          b = (√(k * n) - P1 ) div Q1
+          P0 = b * √(Q1) + P1
+          Q0 = √(Q1)
+          QX = (k*n - P0 * P0) div Q0
+        P1 = P0
+        Q1 = QX
+        Q2 = Q0
+      while true:
+        let b = (√(k * n) + P1 ) div Q1
+        let ppP = P1
+        let pP = b * Q1 - P1
+        let ppQ = Q2
+        let pQ = Q1
+        let q = ppQ + b * (ppP - pP)
+        P1 = pP
+        Q2 = Q1
+        Q1 = q
+        if ppP == pP or q == pQ: break
+      let f = gcd(n,P1)
+      if f != 1 and f != n : return f
+      else: return check(k+1)
+    return check(1)
+  if n == 1 : return @[1]
+  if n == 0 : return @[0]
+  result = @[]
+  var m = n
+  while true:
+    let p = m.squareFormFactor()
+    if p.millerRabinIsPrime(): result &= p
+    else: result &= p.getFactors()
+    if p == m: return
+    m = m div p
 
-# let n = scan()
-# var ans = 0
-# n.times: ans = ans xor factors[scan()]
-# if ans != 0 : puts "Alice"
-# else: puts "Bob"
+
+
+proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
+proc scan(): int =
+  while true:
+    let k = getchar_unlocked()
+    if k < '0': return
+    result = 10 * result + k.ord - '0'.ord
+
+
+let n = scan()
+let N = newSeqWith(n,scan())
+10000.times:
+  let M = N.mapIt(it.getFactors())
+  echo M[0][0]

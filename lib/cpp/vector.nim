@@ -17,7 +17,7 @@ proc len*[T](self:CVector[T]):int = self.size()
 iterator items*[T](self:CVector[T]): T = (for i in 0..<self.len: yield self[i])
 proc toVector*[T](arr:seq[T]): CVector[T] = (result = initVector[T](arr.len);for i,a in arr: result[i] = a)
 proc toSeq*[T](self:CVector[T]):seq[T] = self.mapIt(it)
-proc `$`*[T](self:CVector[T]): string = $self.toSeq()
+proc `$`*[T](self:CVector[T]): string = $self.mapIt(it)
 
 when isMainModule:
   import unittest

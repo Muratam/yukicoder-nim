@@ -15,8 +15,8 @@ proc getPrimes(n:int):seq[int] = # [2,3,5,...n]
   for i,p in isPrimes:
     if p : result .add i
 # SFF で素因数分解
+
 proc getFactors(n:int):seq[int]=
-  const INF = int.high div 4
   proc powerWhenTooBig(x,n:int,modulo:int = 0): int =
     proc mul(x,n,modulo:int):int =
       if n == 0: return 0
@@ -59,7 +59,7 @@ proc getFactors(n:int):seq[int]=
     if n in a_list : return true
     for a in a_list:
       if powerWhenTooBig(a,d,n) == 1 : continue
-      let notPrime = toSeq(0..s-1).allIt(powerWhenTooBig(a,d*(1 shl it),n) != n-1)
+      let notPrime = (0..<s).allIt(powerWhenTooBig(a,d*(1 shl it),n) != n-1)
       if notPrime : return false
     return true
   proc squareFormFactor(n:int):int =
@@ -71,29 +71,39 @@ proc getFactors(n:int):seq[int]=
       if √(n) * √(n) == n : return √(n)
       let ncb = n.float.cbrt.int
       if ncb * ncb * ncb == n : return ncb
-      var P,Q = newSeq[int]()
+      var P1 = √(k * n)
+      var Q2 = 1
+      var Q1 = k * n - P1 * P1
+      while √(Q1) * √(Q1) != Q1:
+        let b = (√(k * n) + P1 ) div Q1
+        let ppP = P1
+        let pP = b * Q1 - P1
+        let ppQ = Q2
+        P1 = pP
+        Q2 = Q1
+        Q1 = ppQ + b * (ppP - pP)
       block:
-        P .add √(k * n)
-        Q .add 1
-        Q .add k * n - P[0]*P[0]
-      while √(Q[^1]) * √(Q[^1]) != Q[^1]:
-        let b = (√(k * n) + P[^1] ) div Q[^1]
-        P .add b * Q[^1] - P[^1]
-        Q .add Q[^2] + b * (P[^2] - P[^1])
-      block:
-        if Q[^1] == 0 : return check(k + 1)
+        if Q1 == 0 : return check(k + 1)
         let
-          b = (√(k * n) - P[^1] ) div Q[^1]
-          P0 = b * √(Q[^1]) + P[^1]
-          Q0 = √(Q[^1])
-          Q1 = (k*n - P0*P0) div Q0
-        (P,Q) = (@[P0], @[ Q0, Q1 ])
+          b = (√(k * n) - P1 ) div Q1
+          P0 = b * √(Q1) + P1
+          Q0 = √(Q1)
+          QX = (k*n - P0 * P0) div Q0
+        P1 = P0
+        Q1 = QX
+        Q2 = Q0
       while true:
-        let b = (√(k * n) + P[^1] ) div Q[^1]
-        P .add b * Q[^1] - P[^1]
-        Q .add Q[^2] + b * (P[^2] - P[^1])
-        if P[^1] == P[^2] or Q[^1] == Q[^2]: break
-      let f = gcd(n,P[^1])
+        let b = (√(k * n) + P1 ) div Q1
+        let ppP = P1
+        let pP = b * Q1 - P1
+        let ppQ = Q2
+        let pQ = Q1
+        let q = ppQ + b * (ppP - pP)
+        P1 = pP
+        Q2 = Q1
+        Q1 = q
+        if ppP == pP or q == pQ: break
+      let f = gcd(n,P1)
       if f != 1 and f != n : return f
       else: return check(k+1)
     return check(1)
@@ -107,6 +117,7 @@ proc getFactors(n:int):seq[int]=
     else: result .add p.getFactors()
     if p == m: return
     m = m div p
+
 # 因数を全て列挙
 import intsets,algorithm
 proc getAllFactors(n:int):seq[int] =
