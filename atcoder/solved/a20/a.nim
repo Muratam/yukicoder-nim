@@ -11,5 +11,13 @@ proc scan(): int =
     if k < '0' or k > '9': return
     result = 10 * result + k.ord - '0'.ord
 
-let r = scan()
-echo 3 * r * r
+let m = scan()
+let d = scan()
+var ans = 0
+for mi in 1..m:
+  for di in 1..d:
+    let di1 = di mod 10
+    let di2 = di div 10
+    if di1 >= 2 and di2 >= 2 and di1 * di2 == mi:
+      ans += 1
+echo ans

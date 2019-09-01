@@ -19,9 +19,11 @@ new_file = ver + ".nim"
 
 if sys.argv[3] in ["dl", "download", "d"]:
     call(["rm", "-rf", "test"])
-    ojmain(args=["dl", "https://atcoder.jp/contests/abc" +
-                 num+"/tasks/abc"+num+"_"+ver])
-    call(["./" + sys.argv[0], num, ver, "test"])
+    ojmain(args=["dl", "https://atcoder.jp/contests/abs/tasks/practice_1"])
+    call("echo", "1")
+    # ojmain(args=["dl", "https://atcoder.jp/contests/abc" +
+    #              num+"/tasks/abc"+num+"_"+ver])
+    # call(["./" + sys.argv[0], num, ver, "test"])
 
 if sys.argv[3] in ["test", "t", "tr"]:
     pre_code = ["nim", "c", "--hints:off", "--verbosity:0"]

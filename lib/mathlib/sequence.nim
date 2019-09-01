@@ -56,6 +56,19 @@ proc countContinuity[T](arr:seq[T]) : seq[tuple[key:T,cnt:int]] =
       pre = a
   result.add( (pre,cnt))
 
+proc argmin[T](arr:seq[T]): int =
+  let minVal = arr.min()
+  for i,a in arr:
+    if a == minVal: return i
+proc argmax[T](arr:seq[T]): int =
+  let minVal = arr.max()
+  for i,a in arr:
+    if a == minVal: return i
+
+
+iterator reversedIterator[T](arr:openArray[T]) : T =
+  for i in (arr.len - 1).countdown(0): yield arr[i]
+
 
 when isMainModule:
   import unittest

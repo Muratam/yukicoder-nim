@@ -13,9 +13,24 @@ proc topologicalSort(E:seq[seq[int]],deleteIsolated:bool = false) : seq[int] =
     return answer.filterIt(visited[it] > 1 or E[it].len > 0)
   return answer
 
+# DAGかどうかを判別(= 閉路が存在するか)
+proc isNotDAG(E:seq[seq[int]]) : bool =
+  var X = newSeq[int](E.len)
+  proc visit(src:int) : bool =
+    if X[src] != 0: return X[src] == 1
+    X[src] = 1
+    for dst in E[src]:
+      if visit(dst) : return true
+    X[src] = 2
+  for src in 0..<E.len:
+    if X[src] != 0 : continue
+    if visit(src): return true
+
 
 when isMainModule:
   import unittest
   test "DAG":
     let F = @[@[1,2,3],@[6,2],@[4],@[5,1,2],@[],@[],@[]]
     check: F.topologicalSort() == @[6, 4, 2, 1, 5, 3, 0]
+    check: not F.isNotDAG()
+    check: @[@[1],@[2],@[0]].isNotDAG()

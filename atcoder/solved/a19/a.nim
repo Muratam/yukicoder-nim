@@ -4,9 +4,15 @@ import sets,tables,intsets,queues
 template times*(n:int,body) = (for _ in 0..<n: body)
 template `max=`*(x,y) = x = max(x,y)
 template `min=`*(x,y) = x = min(x,y)
+# proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" ,discardable.}
+# proc scan(): int =
+#   while true:
+#     let k = getchar_unlocked()
+#     if k < '0' or k > '9': return
+#     result = 10 * result + k.ord - '0'.ord
+
 proc scanf(formatstr: cstring){.header: "<stdio.h>", varargs.}
 proc scan(): int = scanf("%lld\n",addr result)
-
-let n = scan() - 1
-let d = scan()
-echo(1 + (n div (2 * d + 1)))
+let a = scan()
+let b = scan()
+echo max(a+b,a-b,a*b)

@@ -12,9 +12,4 @@ proc scan(): int =
     result = 10 * result + k.ord - '0'.ord
 
 let n = scan()
-let A = newSeqWith(n,scan())
-let maxA = A.max()
-let nextA = A.sorted(cmp)[A.len-2]
-for a in A:
-  if a == maxA: echo nextA
-  else: echo maxA
+echo n * (n-1) div 2
