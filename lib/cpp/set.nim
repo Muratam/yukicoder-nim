@@ -7,6 +7,7 @@ proc empty*[T](self: CSet[T]):bool {.importcpp: "#.empty()", nodecl.}
 proc size*[T](self: CSet[T]):int {.importcpp: "#.size()", nodecl.}
 proc clear*[T](self:var CSet[T]) {.importcpp: "#.clear()", nodecl.}
 proc erase*[T](self: var CSet[T],x:T) {.importcpp: "#.erase(@)", nodecl.}
+proc erase*[T](self: var CSet[T],x:CSetIter[T]) {.importcpp: "#.erase(@)", nodecl.}
 proc find*[T](self: CSet[T],x:T): CSetIter[T] {.importcpp: "#.find(#)", nodecl.}
 proc lower_bound*[T](self: CSet[T],x:T): CSetIter[T] {.importcpp: "#.lower_bound(#)", nodecl.}
 proc upper_bound*[T](self: CSet[T],x:T): CSetIter[T] {.importcpp: "#.upper_bound(#)", nodecl.}
@@ -15,8 +16,10 @@ proc `end`*[T](self:CSet[T]):CSetIter[T]{.importcpp: "#.end()", nodecl.}
 proc `*`*[T](self: CSetIter[T]):T{.importcpp: "*#", nodecl.}
 proc `++`*[T](self:var CSetIter[T]){.importcpp: "++#", nodecl.}
 proc `--`*[T](self:var CSetIter[T]){.importcpp: "--#", nodecl.}
-proc `==`*[T](x,y:CSetIter[T]):bool{.importcpp: "#==#", nodecl.}
-proc `==`*[T](x,y:CSet[T]):bool{.importcpp: "#==#", nodecl.}
+proc eqRawImpl[T](x,y:CSetIter[T]):bool{.importcpp: "#==#", nodecl.}
+proc eqRawImpl[T](x,y:CSet[T]):bool{.importcpp: "#==#", nodecl.}
+proc `==`*[T](x,y:CSetIter[T]):bool = not(not(x.eqRawImpl y)) # a != b を !a == b とNimコンパイラが変換するので、
+proc `==`*[T](x,y:CSet[T]):bool = not(not(x.eqRawImpl y))     # コンパイルに失敗する可能性を防ぐための処置
 import sequtils # nim alias
 proc add*[T](self:var CSet[T],x:T) = self.insert(x)
 proc len*[T](self:CSet[T]):int = self.size()

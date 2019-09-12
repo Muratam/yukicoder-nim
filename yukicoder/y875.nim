@@ -1,4 +1,12 @@
-# セグツリ 区間[s,t)の最小(最大)値 / 更新 O(log(N))
+import sequtils,sugar,strformat,strutils
+template times*(n:int,body) = (for _ in 0..<n: body)
+proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" ,discardable.}
+proc scan(): int =
+  while true:
+    let k = getchar_unlocked()
+    if k < '0': return
+    result = 10 * result + k.ord - '0'.ord
+
 import sequtils,math
 type
   SegmentTree[T] = ref object
@@ -37,16 +45,7 @@ proc queryImpl[T](self:SegmentTree[T],a,b,k,l,r:int) : T =
   return self.cmp(vl,vr)
 proc `[]`[T](self:SegmentTree[T],slice:Slice[int]): T =
   return self.queryImpl(slice.a,slice.b+1,0,0,self.n)
-proc `$`[T](self:SegmentTree[T]): string =
-  var arrs : seq[seq[int]] = @[]
-  var l = 0
-  var r = 1
-  while r <= self.data.len:
-    arrs.add self.data[l..<r]
-    l = l * 2 + 1
-    r = r * 2 + 1
-  return $arrs
-
+proc `[]`[T](self:SegmentTree[T],i:int): T = self[i..i]
 proc findIndexImpl[T](self:SegmentTree[T],a,b,k,l,r:int,d:int = 0) : int =
   if r <= a or b <= l : return -1
   if a <= l and r <= b : return k
@@ -64,29 +63,22 @@ proc findIndex[T](self:SegmentTree[T],slice:Slice[int]): int =
     else: index = l + 1
   return index - (self.n - 1)
 
+proc `$`[T](self:SegmentTree[T]): string =
+  var arrs : seq[seq[int]] = @[]
+  var l = 0
+  var r = 1
+  while r <= self.data.len:
+    arrs.add self.data[l..<r]
+    l = l * 2 + 1
+    r = r * 2 + 1
+  return $arrs
 
 
-when isMainModule:
-  import unittest
-  import math
-  test "segment tree":
-    block:
-      var S = newSegmentTree[int](100,SaveMax)
-      for i in 0..<100: S[i] = abs(i - 50)
-      check: S[0..<100] == 50
-      check: S[25..75] == 25
-      check: S.findIndex(0..<100) == 0
-      S[50] = 100
-      check: S[25..75] == 100
-      check: S[50..50] == 100
-      check: S[0..25] == 50
-      check: S.findIndex(0..<100) == 50
-    block:
-      var S = newSegmentTree[int](100,SaveMin)
-      for i in 0..<100: S[i] = abs(i - 50)
-      check: S[0..<100] == 0
-      check: S[25..75] == 0
-      S[50] = 100
-      check: S[25..75] == 1
-      check: S[50..50] == 100
-      check: S[0..25] == 25
+let n = scan()
+let q = scan()
+var S = newSegmentTree[int](n,SaveMin)
+for i in 0..<n: S[i] = scan()
+q.times:
+  let (x,l,r) = (scan(),scan()-1,scan()-1)
+  if x == 1: (S[l],S[r]) = (S[r],S[l])
+  else: echo S.findIndex(l..r) + 1

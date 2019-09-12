@@ -18,6 +18,15 @@ proc roundedDiv(a,b:int) : int = # a / b の四捨五入
   return c div 10
 proc sign(n:int):int = (if n < 0 : -1 else: 1)
 
+# 小数点以下p桁で a / b
+proc arbitraryPrecisionDiv(a,b,p:int):string =
+  result = $(a div b) & "."
+  var a = a
+  for _ in 0..<p:
+    a = a mod b
+    a *= 10
+    result .add $(a div b)
+
 
 template randomForNim013() =
   # nim 0.13 にはランダムが無いのでコンパイルが通るやつを置いておく

@@ -12,9 +12,9 @@ proc `^`(n:int) : int{.inline.} = (1 shl n)
 template useUnsafeInput() =
   setStdIoUnbuffered()
   proc gets(str: untyped){.header: "<stdio.h>", varargs.}
-  proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>",discardable .}
   proc scanf(formatstr: cstring){.header: "<stdio.h>", varargs.}
   proc scan(): int = scanf("%lld\n",addr result)
+  proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>",discardable .}
   proc scan(): int =
     while true:
       var k = getchar_unlocked()
