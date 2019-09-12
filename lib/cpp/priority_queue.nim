@@ -7,8 +7,8 @@ proc empty*[T](self: CPriorityQueue[T]):bool {.importcpp: "#.empty()", nodecl.}
 proc push*[T](self:var CPriorityQueue[T],x:T) {.importcpp: "#.push(@)", nodecl.}
 proc popImpl[T](self:var CPriorityQueue[T]) {.importcpp: "#.pop()", nodecl.}
 proc pop*[T](self:var CPriorityQueue[T]) : T = (result = self.top();self.popImpl())
-proc equalRawImpl[T](x,y:CPriorityQueue[T]):bool{.importcpp: "#==#", nodecl.}
-proc `==`*[T](x,y:CPriorityQueue[T]):bool=x.equalRawImpl y
+# https://github.com/nim-lang/Nim/issues/12184
+proc `==`*[T](x,y:CPriorityQueue[T]):bool{.importcpp: "(#==#)", nodecl.}
 import sequtils # for nim alias
 proc len*[T](self:CPriorityQueue[T]):int = self.size()
 proc add*[T](self:var CPriorityQueue[T],x:T) = self.push(x)

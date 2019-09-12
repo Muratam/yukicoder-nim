@@ -16,10 +16,9 @@ proc `end`*[T](self:CMultiSet[T]):CMultiSetIter[T]{.importcpp: "#.end()", nodecl
 proc `*`*[T](self: CMultiSetIter[T]):T{.importcpp: "*#", nodecl.}
 proc `++`*[T](self:var CMultiSetIter[T]){.importcpp: "++#", nodecl.}
 proc `--`*[T](self:var CMultiSetIter[T]){.importcpp: "--#", nodecl.}
-proc eqRawImpl[T](x,y:CMultiSetIter[T]):bool{.importcpp: "#==#", nodecl.}
-proc eqRawImpl[T](x,y:CMultiSet[T]):bool{.importcpp: "#==#", nodecl.}
-proc `==`*[T](x,y:CMultiSetIter[T]):bool = not(not(x.eqRawImpl y)) # a != b を !a == b とNimコンパイラが変換するので、
-proc `==`*[T](x,y:CMultiSet[T]):bool = not(not(x.eqRawImpl y))     # コンパイルに失敗する可能性を防ぐための処置
+# https://github.com/nim-lang/Nim/issues/12184
+proc `==`*[T](x,y:CMultiSetIter[T]):bool{.importcpp: "(#==#)", nodecl.}
+proc `==`*[T](x,y:CMultiSet[T]):bool{.importcpp: "(#==#)", nodecl.}
 import sequtils # nim alias
 proc add*[T](self:var CMultiSet[T],x:T) = self.insert(x)
 proc len*[T](self:CMultiSet[T]):int = self.size()
@@ -54,3 +53,4 @@ when isMainModule:
     check: s.max() == 6
     for _ in 0..<10: s.erase(1)
     check: s.min() == 2
+    check: s == s

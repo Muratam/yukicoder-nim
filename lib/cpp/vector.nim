@@ -7,8 +7,8 @@ proc empty*[T](self: CVector[T]):bool {.importcpp: "#.empty()", nodecl.}
 proc push_back*[T](self:var CVector[T],x:T) {.importcpp: "#.push_back(@)", nodecl.}
 proc `[]`*[T](self: CVector[T],key:int): T {.importcpp: "#[#]", nodecl.}
 proc `[]=`*[T](self:var CVector[T],key:int,val:T) {.importcpp: "#[#] = #", nodecl.}
-proc equalRawImpl[T](x,y:CVector[T]):bool{.importcpp: "#==#", nodecl.}
-proc `==`*[T](x,y:CVector[T]):bool = x.equalRawImpl y
+# https://github.com/nim-lang/Nim/issues/12184
+proc `==`*[T](x,y:CVector[T]):bool{.importcpp: "(#==#)", nodecl.}
 proc `<`*[T](x,y:CVector[T]):bool{.importcpp: "#<#", nodecl.}
 proc clear*[T](self:var CVector[T]) {.importcpp: "#.clear()", nodecl.}
 proc pop_back*[T](self:var CVector[T]) {.importcpp: "#.pop_back()", nodecl.}

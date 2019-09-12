@@ -16,10 +16,9 @@ proc `end`*[T](self:CSet[T]):CSetIter[T]{.importcpp: "#.end()", nodecl.}
 proc `*`*[T](self: CSetIter[T]):T{.importcpp: "*#", nodecl.}
 proc `++`*[T](self:var CSetIter[T]){.importcpp: "++#", nodecl.}
 proc `--`*[T](self:var CSetIter[T]){.importcpp: "--#", nodecl.}
-proc eqRawImpl[T](x,y:CSetIter[T]):bool{.importcpp: "#==#", nodecl.}
-proc eqRawImpl[T](x,y:CSet[T]):bool{.importcpp: "#==#", nodecl.}
-proc `==`*[T](x,y:CSetIter[T]):bool = not(not(x.eqRawImpl y)) # a != b を !a == b とNimコンパイラが変換するので、
-proc `==`*[T](x,y:CSet[T]):bool = not(not(x.eqRawImpl y))     # コンパイルに失敗する可能性を防ぐための処置
+# https://github.com/nim-lang/Nim/issues/12184
+proc `==`*[T](x,y:CSetIter[T]):bool{.importcpp: "(#==#)", nodecl.}
+proc `==`*[T](x,y:CSet[T]):bool{.importcpp: "(#==#)", nodecl.}
 import sequtils # nim alias
 proc add*[T](self:var CSet[T],x:T) = self.insert(x)
 proc len*[T](self:CSet[T]):int = self.size()
@@ -53,3 +52,10 @@ when isMainModule:
     check: s.max() == 6
     for _ in 0..<10: s.erase(1)
     check: s.min() == 2
+    block: # https://github.com/nim-lang/Nim/issues/12184
+      var (S1,S2) = (cInitSet(int),cInitSet(int))
+      S1.insert 1
+      if S1 == S2:
+        check: false
+      else:
+        check: true
