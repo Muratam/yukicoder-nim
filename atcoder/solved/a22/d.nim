@@ -1,5 +1,16 @@
-# PriorytyQueue
-# 追加 / 最小値検索 / 最小値Pop O(log(N))
+import sequtils,strutils,algorithm,math,macros
+import sets,tables,intsets,queues
+# heapqueue,bitops,strformat,sugar cannot use
+template times*(n:int,body) = (for _ in 0..<n: body)
+template `max=`*(x,y) = x = max(x,y)
+template `min=`*(x,y) = x = min(x,y)
+proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" ,discardable.}
+proc scan(): int =
+  while true:
+    let k = getchar_unlocked()
+    if k < '0' or k > '9': return
+    result = 10 * result + k.ord - '0'.ord
+
 type
   BinaryHeap*[T] = ref object
     nodes: seq[T]
@@ -14,8 +25,6 @@ proc newBinaryHeap*[T](compare:proc(x,y:T):int): BinaryHeap[T] =
 proc compareNode[T](h:BinaryHeap[T],i,j:int):int = h.compare(h.nodes[i],h.nodes[j])
 proc len*[T](h:BinaryHeap[T]):int = h.nodes.len() - h.popchunk.int
 proc items*[T](h:var BinaryHeap[T]):seq[T] =
-  # 生データ(nodes)のサイズはbinaryHeapに含まれているデータのサイズと等しいため、
-  # 最終的な全ての要素に対して順番に関係なく操作をするときは nodes をそのまま使ったほうが速い
   if h.popchunk : discard h.popimpl()
   return h.nodes
 proc top*[T](h:var BinaryHeap[T]): T =
@@ -60,29 +69,18 @@ proc pop*[T](h:var BinaryHeap[T]):T =
   if h.popchunk: discard h.popimpl()
   h.popchunk = true
   return h.nodes[0]
+
 proc `$`*[T](h:var BinaryHeap[T]): string = $h.items.sorted(h.compare)
 
-
-when isMainModule:
-  import unittest
-  test "binary heap":
-    block: # 最小値
-      var pq = newBinaryHeap[int](cmp)
-      pq.push(30)
-      pq.push(10)
-      pq.push(20)
-      check: pq.pop() == 10
-      check: pq.pop() == 20
-      pq.push(0)
-      check: pq.pop() == 0
-      check: pq.pop() == 30
-    block: # 最大値
-      var pq = newBinaryHeap[int](revcmp)
-      pq.push(30)
-      pq.push(10)
-      pq.push(20)
-      check: pq.pop() == 30
-      check: pq.pop() == 20
-      pq.push(0)
-      check: pq.pop() == 10
-      check: pq.pop() == 0
+let n = scan()
+let m = scan()
+var bh = newBinaryHeap[int](revcmp)
+n.times: bh.push(scan())
+m.times:
+  let most = bh.pop()
+  bh.push(most div 2)
+var sum = 0
+for n in bh.nodes:
+  sum += n
+echo sum
+echo bh

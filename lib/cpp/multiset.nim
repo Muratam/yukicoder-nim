@@ -25,6 +25,7 @@ proc len*[T](self:CMultiSet[T]):int = self.size()
 proc min*[T](self:CMultiSet[T]):T = *self.begin()
 proc max*[T](self:CMultiSet[T]):T = (var e = self.`end`();--e; *e)
 proc contains*[T](self:CMultiSet[T],x:T):bool = self.find(x) != self.`end`()
+proc eraseAll*[T](self:var CMultiSet[T],x:T) = (while x in self: self.erase(x))
 iterator items*[T](self:CMultiSet[T]) : T =
   var (a,b) = (self.begin(),self.`end`())
   while a != b : yield *a; ++a
