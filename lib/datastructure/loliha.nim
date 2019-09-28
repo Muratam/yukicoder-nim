@@ -7,7 +7,7 @@ type LoliHa = ref object
 proc modMasked(a:int) : int =
   const mask61 = (1 shl 61) - 1
   var a = a
-  if a < 0: a = (a + mask61 * 7) and mask61
+  while a < 0: a += mask61
   a = (a and mask61) + (a shr 61)
   if a > mask61 : a -= mask61
   return a

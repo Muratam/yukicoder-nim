@@ -1,13 +1,11 @@
-import sequtils,strutils,algorithm,math,macros
-import sets,tables,intsets,queues,times
-template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
-template `max=`*(x,y) = x = max(x,y)
-template `min=`*(x,y) = x = min(x,y)
-proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" ,discardable.}
+import sequtils,algorithm
+template times*(n:int,body) = (for _ in 0..<n: body)
+
+proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
 proc scan(): int =
   while true:
     let k = getchar_unlocked()
-    if k < '0' or k > '9': return
+    if k < '0': break
     result = 10 * result + k.ord - '0'.ord
 
 # 軽量版 の ロリハ
@@ -49,19 +47,17 @@ proc hash(self:LoliHa,slice:Slice[int]): int =
   let r = slice.b + 1
   return (self.AP[r-l].mulMasked(self.A[l]) - self.A[r]).modMasked()
 
-
-discard scan()
 let S = stdin.readLine()
-var LH = newLoliHa(S)
-for length in (S.len div 2).countdown(1):
-  var pos = initTable[int,int]()
-  for i in 0..S.len-length:
-    var h = LH.hash(i..<i+length)
-    if h in pos:
-      let pre = pos[h]
-      if i - pre >= length:
-        echo length
-        quit 0
-    else:
-      pos[h] = i
-echo 0
+let m = scan()
+let LH = S.newLoliHa()
+var H = newSeqWith(11,newSeq[int]())
+for i in 1..10:
+  for j in 0..S.len-i:
+    H[i] &= LH.hash(j..<j+i)
+for i in 1..10: H[i].sort(cmp)
+var ans = 0
+m.times:
+  let S2 = stdin.readLine()
+  let h = S2.newLoliHa().hash(0..<S2.len)
+  ans += H[S2.len].upperBound(h) - H[S2.len].lowerBound(h)
+echo ans
