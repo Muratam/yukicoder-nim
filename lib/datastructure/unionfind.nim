@@ -5,7 +5,7 @@ type UnionFind[T] = ref object
   parent : seq[T]
 proc newUnionFind*[T](size:int) : UnionFind[T] =
   new(result)
-  when NimMajor == 0 and NimMinor <= 18: result.parent = newSeq[T](size)
+  when NimMajor * 100 + NimMinor <= 18: result.parent = newSeq[T](size)
   else: result.parent = newSeqUninitialized[T](size)
   for i in 0.int32..<size.int32: result.parent[i] = i
 proc root*[T](self:var UnionFind[T],x:T): T =

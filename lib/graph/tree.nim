@@ -10,14 +10,29 @@ proc asTree(E:seq[seq[int]]):seq[seq[int]] =
   impl(-1,0)
   return answer
 
+# 木を平滑化してその区間を返す。
+# そこを根とする部分木(自身を含む)がその区間に対応する。
+proc eulerTour(E:seq[seq[int]]):tuple[toured:seq[Slice[int]],rev:seq[int]] =
+  var i = 0
+  # .a は Treeのindex -> 区間のindex
+  var toured = newSeq[Slice[int]](E.len)
+  # 区間のindex -> Treeのindex
+  var rev = newSeq[int](E.len)
+  proc dfs(src:int) =
+    let l = i
+    i += 1
+    for dst in E[src]: dfs(dst)
+    toured[src] = l..<i
+    rev[l] = src
+  dfs(0)
+  return (toured,rev)
 
-when NimMajor == 0 and NimMinor >= 18: import bitops
+# 最小共通祖先 構築:O(n),探索:O(log(n)) (深さに依存しない)
+when NimMajor * 100 + NimMinor >= 18:import bitops
 else:
   proc countLeadingZeroBits(x: culonglong): cint {.importc: "__builtin_clzll", cdecl.}
   proc fastLog2(x:int):cint = 63 - countLeadingZeroBits(x.culonglong)
-
 import math
-# 最小共通祖先 構築:O(n),探索:O(log(n)) (深さに依存しない)
 type LowestCommonAncestor = ref object
   depth : seq[int]
   parent : seq[seq[int]] # 2^k 回親をたどった時のノード
@@ -63,6 +78,8 @@ when isMainModule:
   test "tree":
     let E = @[@[1,2],@[0,3],@[0],@[1]]
     check: E.asTree == @[@[1, 2], @[3], @[], @[]]
+    check: E.asTree.eulerTour().toured == @[(0..<4),(1..<3),(3..<4),(2..<3)]
+    check: E.asTree.eulerTour().rev == @[0,1,3,2]
     let lca = E.newLowestCommonAnsestor()
     check: lca.find(1,3) == 1
     check: lca.find(0,3) == 0

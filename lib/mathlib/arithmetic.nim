@@ -27,6 +27,19 @@ proc arbitraryPrecisionDiv(a,b,p:int):string =
     a *= 10
     result .add $(a div b)
 
+proc sternBrocotTree(maxNum:int): seq[tuple[u,d:int]] =
+  # http://mathworld.wolfram.com/Stern-BrocotTree.html
+  # 小さい順に既約分数を列挙する. 1/maxNum から maxNum/1 まで
+  var tree = newSeq[tuple[u,d:int]]()
+  proc impl(au,ad,bu,bd:int) =
+    let mu = au + bu
+    let md = ad + bd
+    if mu > maxNum or md > maxNum : return
+    impl(au,ad,mu,md)
+    tree.add((mu,md))
+    impl(mu,md,bu,bd)
+  impl(0,1,1,0)
+  return tree
 
 template randomForNim013() =
   # nim 0.13 にはランダムが無いのでコンパイルが通るやつを置いておく
@@ -63,3 +76,4 @@ when isMainModule:
     check:9.power(6) == 531441
     check:9.roundedDiv(2) == 5
     check: -1.sign() == -1
+    check: sternBrocotTree(3) == @[(1,3),(1,2),(2,3),(1,1),(3,2),(2,1),(3,1)]

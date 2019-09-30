@@ -11,20 +11,23 @@
   - std::vector / std::priority_queue : 互換性のため
 - lib/mathlib
   - matrix : 行列(転置,乗算,累乗,加算,単位行列)
-  - modint : ModInt (nCk,累乗,除算)
+  - modint : ModInt (nCk,累乗,除算,カタラン数)
   - prime : 素数(SFF,素数表,素数リスト)
   - search : 二分探索 / 三分探索
   - arith : 算術(順列,組み合わせ,累乗,四捨五入)
   - radix : 基数(2進数,10進数,ビット演算)
-  - sequence : LIS(最長増加部分列) / counttable(0.13でのバグ無しver) / deduplicate
+  - sequence : LIS(最長増加部分列) / counttable・deduplicate(0.13でのバグ無しver)
 - lib/graph
   - Normalize(強連結成分分解 O(V+E), 重軽分解)
-  - Tree(入力を木に,LCA(最小共通祖先 構築:O(n),探索:O(log(n)) (深さに依存しない)))
+  - Tree(入力を木に,オイラーツアー,LCA(最小共通祖先 構築:O(n),探索:O(log(n)) (深さに依存しない)))
   - DAG(トポロジカルソート)
   - MST(最小全域木 O(ElogV))
   - ShortestPath( O(ElogE) | 負有り:O(EV) | 全:O(V^3))
   - Flow(最小費用流 O(FElogV) | 最大流/最小カット O(FE) / O(EV^2) | 二部グラフの最大マッチング O(E))
-- lib/functions.nim (いつもの IO , Pos4)
+- lib/geometry
+  - geometry(二次元幾何(複素数))
+  - pos(二次元座標,dxdy4,dxdy8,Pos)
+- lib/functions.nim (いつもの + IO)
 - lib/no_test (未テスト段階)
   - sparsematrix.nim : 疎行列
   - geometry.nim : 幾何

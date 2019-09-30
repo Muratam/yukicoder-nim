@@ -1,4 +1,5 @@
 # 引数以下の部分和(Fenwick Tree)
+# 区間に加算 が O(logN)
 type BinaryIndexedTree[T] = ref object
   data: seq[T]
 proc newBinaryIndexedTree[T](n:int):BinaryIndexedTree[T] =

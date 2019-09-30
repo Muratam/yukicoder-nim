@@ -62,9 +62,8 @@ for i in 1..n:
   G.add(pre,i-1)
   req[i-1] = pre
 var ans = 0.0
-let scc = G.storonglyConnectedComponentDecomposition()
 var cleared = newSeq[bool](n)
-for nodes in scc:
+for nodes in G.storonglyConnectedComponentDecomposition():
   # 一番簡単なものから順にサイクル
   let firstNode = nodes.mapIt(S[it]).argMin()
   for i in 0..<nodes.len:

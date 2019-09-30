@@ -1,7 +1,6 @@
-import "../datastructure/unionfind"
 import "../datastructure/binaryheap"
 import sequtils
-when NimMajor == 0 and NimMinor == 19: import queues
+when NimMajor * 100 + NimMinor < 19:import queues
 else: import "../datastructure/queue"
 
 # 最大流/最小カット O(FE) / O(EV^2)

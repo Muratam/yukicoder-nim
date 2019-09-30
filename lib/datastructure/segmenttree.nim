@@ -29,14 +29,16 @@ proc `[]=`[T](self:var SegmentTree[T],i:int,val:T) =
   while i > 0:
     i = (i - 1) shr 1
     self.data[i] = self.cmp(self.data[i * 2 + 1],self.data[i * 2 + 2])
-proc queryImpl[T](self:SegmentTree[T],a,b,k,l,r:int) : T =
-  if r <= a or b <= l : return self.infinity
-  if a <= l and r <= b : return self.data[k]
-  let vl = self.queryImpl(a,b,k*2+1,l,(l+r) shr 1)
-  let vr = self.queryImpl(a,b,k*2+2,(l+r) shr 1,r)
+proc queryImpl[T](self:SegmentTree[T],target,now:Slice[int],k:int) : T =
+  if now.b <= target.a or target.b <= now.a : return self.infinity
+  if target.a <= now.a and now.b <= target.b : return self.data[k]
+  let next = (now.a + now.b) shr 1
+  let vl = self.queryImpl(target, now.a..next, k*2+1)
+  let vr = self.queryImpl(target, next..now.b, k*2+2)
   return self.cmp(vl,vr)
 proc `[]`[T](self:SegmentTree[T],slice:Slice[int]): T =
-  return self.queryImpl(slice.a,slice.b+1,0,0,self.n)
+  return self.queryImpl(slice.a..slice.b+1,0..self.n,0)
+
 proc `$`[T](self:SegmentTree[T]): string =
   var arrs : seq[seq[int]] = @[]
   var l = 0
@@ -47,17 +49,18 @@ proc `$`[T](self:SegmentTree[T]): string =
     r = r * 2 + 1
   return $arrs
 
-proc findIndexImpl[T](self:SegmentTree[T],a,b,k,l,r:int,d:int = 0) : int =
-  if r <= a or b <= l : return -1
-  if a <= l and r <= b : return k
-  let vl = self.findIndexImpl(a,b,k*2+1,l,(l+r) shr 1,d+1)
-  let vr = self.findIndexImpl(a,b,k*2+2,(l+r) shr 1,r,d+1)
+proc findIndexImpl[T](self:SegmentTree[T],target,now:Slice[int],k,d:int = 0) : int =
+  if now.b <= target.a or target.b <= now.a : return -1
+  if target.a <= now.a and now.b <= target.b : return k
+  let next = (now.a + now.b) shr 1
+  let vl = self.findIndexImpl(target,now.a..next,k*2+1,d+1)
+  let vr = self.findIndexImpl(target,next..now.b,k*2+2,d+1)
   if vl == -1: return vr
   if vr == -1: return vl
   if self.data[vl] == self.cmp(self.data[vl],self.data[vr]): return vl
   else: return vr
 proc findIndex[T](self:SegmentTree[T],slice:Slice[int]): int =
-  var index = self.findIndexImpl(slice.a,slice.b+1,0,0,self.n)
+  var index = self.findIndexImpl(slice.a..slice.b+1,0..self.n,0)
   while index < self.n - 1:
     let l = index * 2 + 1
     if self.data[l] == self.data[index] : index = l

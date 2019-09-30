@@ -96,12 +96,3 @@ template useUnsafeOutput() =
     eval(getPrintIntNimCode(15,10000000000000000))
     eval(getPrintIntNimCode(16,100000000000000000))
     eval(getPrintIntNimCode(17,1000000000000000000))
-
-
-# 整数位置管理用
-template usePosition() =
-  const dxdy4 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0)]
-  const dxdy8 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0),(1,1),(1,-1),(-1,-1),(-1,1)]
-  type Pos = tuple[x,y:int]
-  proc `+`(p,v:Pos):Pos = (p.x+v.x,p.y+v.y)
-  proc dot(p,v:Pos):int = p.x * v.x + p.y * v.y

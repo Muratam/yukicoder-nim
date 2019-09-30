@@ -19,6 +19,19 @@ proc LIS[T](arr:seq[T]) : seq[T] =
     S.insert a
   return S.mapIt(it)
 
+
+import algorithm
+# 重複を取り除く(O(NlogN))
+# Nim0.13 の deduplicate はO(n^2)なので注意
+proc deduplicated[T](arr: seq[T]): seq[T] =
+  result = @[]
+  for a in arr.sorted(cmp[T]):
+    if result.len > 0 and result[^1] == a : continue
+    result.add a
+
+
+
+
 import math,tables,algorithm
 # Nim 0.13 の toCountTable はバグがあるので注意
 proc toCountTable*[A](keys: openArray[A]): CountTable[A] =
@@ -28,16 +41,6 @@ proc toCountTable*[A](keys: openArray[A]): CountTable[A] =
 proc toCountSeq[T](x:seq[T]) : seq[tuple[k:T,v:int]] =
   let ct = x.toCountTable()
   return toSeq(ct.pairs)
-
-import algorithm
-# 重複を取り除く(O(logN))
-# Nim0.13 の deduplicate はO(n^2)なので注意
-proc deduplicated[T](arr: seq[T]): seq[T] =
-  result = @[]
-  for a in arr.sorted(cmp[T]):
-    if result.len > 0 and result[^1] == a : continue
-    result.add a
-
 
 import sequtils
 proc toArray(s:string) :seq[char]= s.mapIt(it) # string -> seq[char]
@@ -66,13 +69,9 @@ proc argmax[T](arr:seq[T]): int =
     if a == minVal: return i
 
 
-iterator reversedIterator[T](arr:openArray[T]) : T =
-  for i in (arr.len - 1).countdown(0): yield arr[i]
-
-
 when isMainModule:
   import unittest
-  test "count":
+  test "sequence":
     let arr = "iikannji".toArray()
     check: arr == @['i', 'i', 'k', 'a', 'n', 'n', 'j', 'i']
     check: arr.toCountSeq() == @[('a', 1), ('i', 3), ('j', 1), ('k', 1), ('n', 2)]

@@ -39,7 +39,7 @@ proc binary(x:int,fill:int=0):string = # 二進表示
   for i in 0..<result.len div 2: swap(result[i],result[result.len-1-i])
   return "0".repeat(0.max(fill - result.len)) & result
 
-when NimMajor == 0 and NimMinor >= 18:
+when NimMajor * 100 + NimMinor >= 18:
   import bitops
 else:
   proc popcount(x: culonglong): cint {.importc: "__builtin_popcountll", cdecl.}
