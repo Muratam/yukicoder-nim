@@ -15,7 +15,6 @@ proc getPrimes(n:int):seq[int] = # [2,3,5,...n]
   for i,p in isPrimes:
     if p : result .add i
 # SFF で素因数分解
-
 proc getFactors(n:int):seq[int]=
   proc powerWhenTooBig(x,n:int,modulo:int = 0): int =
     proc mul(x,n,modulo:int):int =
@@ -143,6 +142,10 @@ proc getFactorsInRange(n:int):seq[seq[int]] =
     var sum = 1
     for x in result[i] : sum *= x
     if sum != i : result[i] .add i div sum
+
+# オイラーのφ関数
+# 1..n のうち n と互いに素なものの個数
+# https://ei1333.github.io/luzhiled/snippets/math/euler-phi.html
 
 when isMainModule:
   import unittest

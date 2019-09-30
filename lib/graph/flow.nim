@@ -67,6 +67,10 @@ template useMaxFlow =
         let f = G.dfs(src,dst,1e10.int)
         if f <= 0 : break
         result += f
+  # Push-Relabel : O(√E v^2) . 爆速
+  # https://ei1333.github.io/luzhiled/snippets/graph/push-relabel.html
+  # 最小流量制限付き最大流(流量の下限も決まってるときのflow)
+  # https://ei1333.github.io/luzhiled/snippets/graph/maxflow-lower-bound.html
 # 二部グラフの最大マッチング O(E)
 template useBiparticeMatching =
   type BipartiteMatch = seq[seq[int]]

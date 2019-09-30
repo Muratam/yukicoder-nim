@@ -1,6 +1,7 @@
 # スライド最小値
 # 固定サイズの最小値を O(1)
-import sequtils,deques
+import "../datastructure/deques"
+import sequtils
 proc slideMin[T](arr:seq[T],width:int,paddingLast:bool = false) : seq[T] =
   let size = if paddingLast : arr.len else: arr.len-width+1
   result = newSeqWith(size,-1)
@@ -19,9 +20,7 @@ proc slideMin[T](arr:seq[T],width:int,paddingLast:bool = false) : seq[T] =
     result[i] = arr[deq.peekFirst()]
     if deq.peekFirst() == i: deq.popFirst()
 
-
 when isMainModule:
-  import sequtils
   import unittest
   test "slide min":
     let arr = toSeq(0..10).mapIt(it mod 3 + it * it mod 5 + it)

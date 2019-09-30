@@ -1,6 +1,15 @@
-# BinaryHeap : 追加 / 最小値検索 / 最小値Pop O(log(N)) / (mergeもしたければ skewheap)
-# https://github.com/nim-lang/Nim/blob/version-1-0/lib/pure/collections/heapqueue.nim#L58
-# pop を１回遅らせる実装の方が速いが(var が付いて)使いにくいのでこちら
+import sequtils,algorithm
+template times*(n:int,body) = (for _ in 0..<n: body)
+template `max=`*(x,y) = x = max(x,y)
+template `min=`*(x,y) = x = min(x,y)
+
+proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
+proc scan(): int =
+  while true:
+    let k = getchar_unlocked()
+    if k < '0': break
+    result = 10 * result + k.ord - '0'.ord
+
 import algorithm
 type BinaryHeap*[T] = ref object
   data*: seq[T]
@@ -65,27 +74,28 @@ proc newBinaryHeap*[T](cmp:proc(x,y:T):int) : BinaryHeap[T]=
   result.data = @[]
   result.cmp = cmp
 
-when isMainModule:
-  import unittest
-  test "binary heap":
-    block: # 最小値
-      var pq = newBinaryHeap[int](cmp)
-      pq.push(30)
-      pq.push(10)
-      pq.push(20)
-      check: pq.pop() == 10
-      check: pq.top() == 20
-      check: pq.pop() == 20
-      pq.push(0)
-      check: pq.pop() == 0
-      check: pq.pop() == 30
-    block: # 最大値
-      var pq = newBinaryHeap[int](revcmp)
-      pq.push(30)
-      pq.push(10)
-      pq.push(20)
-      check: pq.pop() == 30
-      check: pq.pop() == 20
-      pq.push(0)
-      check: pq.pop() == 10
-      check: pq.pop() == 0
+var q = newBinaryHeap[int](revcmp)
+
+proc solve() : int =
+  let n = scan()
+  var L = newSeq[int](n)
+  for i in 0..<n: L[i] = scan()
+  L.sort(cmp)
+  var R = @[1]
+  for i in 1..<n:
+    if L[i-1] == L[i] : R[^1] += 1
+    else: R .add 1
+  if R.len < 3: return 0
+  q.clear()
+  for r in R: q.push(r)
+  while true:
+    let a = q.pop() - 1
+    let b = q.pop() - 1
+    let c = q.pop() - 1
+    if a < 0 or b < 0 or c < 0 : return
+    result += 1
+    q.push(b)
+    q.push(c)
+    q.push(a)
+
+scan().times: echo solve()

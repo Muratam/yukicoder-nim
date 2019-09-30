@@ -29,6 +29,8 @@ proc counts*[T](self:var UnionFind[T]):seq[int] =
   result = newSeq[int](self.parent.len)
   for p in self.parent: result[self.root(p)] += 1
 
+# https://ei1333.github.io/luzhiled/snippets/structure/union-find.html
+# UnionFindの拡張 : undo可能 / 重み付き / 2部グラフの頂点彩色
 
 when isMainModule:
   import unittest

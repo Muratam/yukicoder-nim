@@ -44,6 +44,18 @@ proc newMaxSegmentTree2D*[T](w,h:int) : SegmentTree2D[T] =
   # 最大値のセグツリ
   proc maximpl[T](x,y:T): T = (if x >= y: x else: y)
   result = newSegmentTree2D[T](w,h,-1e12.T,maximpl[T])
+proc newMinSegmentTree2D*[T](w,h:int) : SegmentTree2D[T] =
+  # 最小値のセグツリ
+  proc minimpl[T](x,y:T): T = (if x <= y: x else: y)
+  result = newSegmentTree2D[T](w,h,1e12.T,minimpl[T])
+
+proc newCumulativeSum2D*[T](w,h:int) : SegmentTree2D[T] =
+  # 累積和のセグツリ.
+  # 範囲取得クエリが M かつ 1箇所更新クエリが N ある時に重宝.
+  # 範囲取得クエリが 1 かつ  範囲更新クエリが 1 なら 普通の累積和 (https://ei1333.github.io/luzhiled/snippets/dp/cumulative-sum-2d.html)
+  # 範囲取得クエリが 1 かつ  範囲更新クエリが N なら 2次いもす O(N+WH) の方が速い
+  proc plusimpl[T](x,y:T): T = x + y
+  result = newSegmentTree2D[T](w,h,0.T,plusimpl[T])
 
 
 when isMainModule:

@@ -66,10 +66,28 @@ proc termarySearch[T,S](slice:Slice[T],f:proc(x:T):S,searchType:static[SearchTyp
 
 
 
+import algorithm
+# 条件を満たす最大のindex(満たすものがなければarr.lenになる)
+proc `<=`[T](a:T,arr:seq[T]): int =
+  return arr.lowerBound(a)
+proc `<`[T](a:T,arr:seq[T]): int =
+  # == upperBound だが,Nim0.13.0には無いので
+  let i = a <= arr
+  if i >= arr.len or a < arr[i]: return i
+  return (a + 1) <= arr
+# 条件を満たす最小のindex(無い時は-1)
+proc `>`[T](a:T,arr:seq[T]): int =
+  return arr.lowerBound(a) - 1
+proc `>=`[T](a:T,arr:seq[T]): int =
+  let i = a > arr
+  if i + 1 < arr.len and a >= arr[i+1]:return i + 1
+  return i
+
 
 
 when isMainModule:
   import unittest
+  import sequtils
   test "binarysearch":
     check:binarySearch(7..20,proc(x:int):bool = x * x > 48) == 7
     check:binarySearch(7..9,proc(x:int):bool = x * x > 49) == 8
@@ -114,3 +132,8 @@ when isMainModule:
     # 最大値が複数ある時,どれになるかは不明であることに注意
     let A = @[1,2,3,4,5,5,5,5,2,0]
     check:termarySearch(0..<A.len,proc(x:int):int= A[x],SearchMax) notin [4,7]
+  test "<= > < >=":
+    check: @[1,2,3,4,5,10].mapIt(it <= @[2,4,6,8]) == @[0, 0, 1, 1, 2, 4]
+    check: @[1,2,3,4,5,10].mapIt(it < @[2,4,6,8]) == @[0, 1, 1, 2, 2, 4]
+    check: @[1,2,3,4,5,10].mapIt(it > @[2,4,6,8]) == @[-1, -1, 0, 0, 1, 3]
+    check: @[1,2,3,4,5,10].mapIt(it >= @[2,4,6,8]) == @[-1, 0, 0, 1, 1, 3]
