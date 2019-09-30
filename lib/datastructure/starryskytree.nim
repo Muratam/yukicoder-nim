@@ -1,45 +1,86 @@
 # 区間に値を均等に足す・区間の最大値を求める が O(log N)
+import sequtils,math
 type StarrySkyTree[T] = ref object
+  n : int
   data:seq[T]
   lazy:seq[T]
-  n : int
-proc newStarrySkyTree[T](size:int) : StarrySkyTree[T] =
+  infinity:T
+  cmp:proc(x,y:T):T
+
+proc newStarrySkyTree[T](size:int,infinity:T) : StarrySkyTree[T] =
   new(result)
-  result.n = size
-  result.data = newSeq[T](size)
-  result.lazy = newSeq[T](size)
-proc add[T](self:StarrySkyTree[T],slice:Slice[int],val:T) =
-  discard
+  result.n = size.nextPowerOfTwo()
+  result.data = newSeqWith(result.n*2,0)
+  result.lazy = newSeqWith(result.n*2,0)
+  result.infinity = infinity
 
-proc min[T](self:StarrySkyTree[T],slice:Slice[int]): T =
-  discard
+proc plusImpl[T](self:var StarrySkyTree[T],target,now:Slice[int],i:int,val:T) =
+  if now.b <= target.a or target.b <= now.a : return
+  if target.a <= now.a and now.b <= target.b :
+    self.lazy[i] += val
+    return
+  let next = (now.a + now.b) shr 1
+  let left = (i-self.n) * 2
+  let right = left + 1
+  self.plusImpl(target, now.a..next, left ,val)
+  self.plusImpl(target, next..now.b, right ,val)
+  self.data[i] = self.cmp(self.data[left] + self.lazy[left],self.data[right] + self.lazy[right])
+proc plus[T](self:var StarrySkyTree[T],slice:Slice[int],val:T) =
+  self.plusImpl(slice.a..slice.b+1,0..self.n,2*self.n-2,val)
 
-#[
-struct StarrySky {
-static const int MAX_DEPTH = 18;
-static const int STsize = 1 << MAX_DEPTH;
-Data data[STsize];
-Data lazy[STsize]; int n;
-StarrySky(void) : n(STsize / 2) {
-  REP(i,STsize) data[i] = lazy[i] = 0;
-}
-void add(int fr, int to, Data val) { upd_sub(fr, to, 2*n-2, 0, n, val); }
-Data minimum(int fr, int to) { return min_sub(fr, to, 2*n-2, 0, n); }
-private:
-  void upd_sub(int fr, int to, int node, int la, int ra, Data val) {
-    if (ra<=fr || to<=la) return;
-    if (fr<=la && ra<=to) { lazy[node] += val; return; } intleft=(node-n)*2,right=left+1;
-    upd_sub(fr, to, left, la, (la+ra)/2, val);
-    upd_sub(fr, to, right, (la+ra)/2, ra, val);
-    data[node] = min(data[left] + lazy[left], data[right] + lazy[right]);
-  }
-  Data min_sub(int fr, int to, int node, int la, int ra) {
-    if (ra<=fr || to<=la) return 0x7FFFFFFF;
-    if (fr<=la && ra<=to) return data[node] + lazy[node];
-    Data vl = min_sub(fr, to, (node-n)*2+0, la, (la+ra)/2); 52
-    Data vr = min_sub(fr, to, (node-n)*2+1, (la+ra)/2, ra);
-    return lazy[node] + min(vl, vr);
-  }
-};
+proc searchImpl[T](self:StarrySkyTree[T],target,now:Slice[int],i:int) : T =
+  if now.b <= target.a or target.b <= now.a : return self.infinity
+  if target.a <= now.a and now.b <= target.b : return self.data[i] + self.lazy[i]
+  let next = (now.a + now.b) shr 1
+  let left = (i-self.n)*2
+  let right = (i-self.n)*2+1
+  let vl = self.searchImpl(target, now.a..next, left)
+  let vr = self.searchImpl(target, next..now.b, right)
+  return self.lazy[i] + self.cmp(vl,vr)
 
-]#
+proc `[]`[T](self:StarrySkyTree[T],slice:Slice[int]): T =
+  return self.searchImpl(slice.a..slice.b+1,0..self.n,2*self.n-2)
+
+proc newMaxStarrySkyTree[T](size:int) : StarrySkyTree[T] =
+  # 最大値のセグツリ
+  result = newStarrySkyTree[T](size,-1e12.T)
+  proc maximpl[T](x,y:T): T = (if x >= y: x else: y)
+  result.cmp = maximpl[T]
+proc newMinStarrySkyTree[T](size:int) : StarrySkyTree[T] =
+  # 最小値のセグツリ
+  result = newStarrySkyTree[T](size,1e12.T)
+  proc minimpl[T](x,y:T): T = (if x <= y: x else: y)
+  result.cmp = minimpl[T]
+
+
+
+when isMainModule:
+  import unittest
+  import math
+  test "starry sky tree":
+    block:
+      var S = newMinStarrySkyTree[int](10)
+      S.plus(0..<5 , 10)
+      for i,v in @[10, 10, 10, 10, 10, 0, 0, 0, 0, 0]: check: S[i..i] == v
+      check: S[0..<10] == 0
+      S.plus(4..<10 , 5)
+      for i,v in @[10, 10, 10, 10, 15, 5, 5, 5, 5, 5]: check: S[i..i] == v
+      check: S[0..<10] == 5
+      S.plus(1..<6 , -1)
+      for i,v in @[10, 9, 9, 9, 14, 4, 5, 5, 5, 5]: check: S[i..i] == v
+      check: S[0..<10] == 4
+      check: S[0..<5] == 9
+      check: S[5..<10] == 4
+    block:
+      var S = newMaxStarrySkyTree[int](10)
+      S.plus(0..<5 , 10)
+      for i,v in @[10, 10, 10, 10, 10, 0, 0, 0, 0, 0]: check: S[i..i] == v
+      check: S[0..<10] == 10
+      S.plus(4..<10 , 5)
+      for i,v in @[10, 10, 10, 10, 15, 5, 5, 5, 5, 5]: check: S[i..i] == v
+      check: S[0..<10] == 15
+      S.plus(1..<6 , -1)
+      for i,v in @[10, 9, 9, 9, 14, 4, 5, 5, 5, 5]: check: S[i..i] == v
+      check: S[0..<10] == 14
+      check: S[0..<5] == 14
+      check: S[5..<10] == 5
