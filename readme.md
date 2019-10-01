@@ -17,24 +17,28 @@
   - prime : 素数(SFF,素数表,素数リスト)
   - arith : 算術(順列,組み合わせ,累乗,四捨五入)
   - radix : 基数(2進数,10進数,ビット演算)
-  - count : 数え上げ(nCk,カタラン数,第2種スターリング数,ベル数,sternBrocotTree(有理数列挙))
+  - count : 数え上げ(nCk,カタラン数,第2種スターリング数,x:ベル数,sternBrocotTree(有理数列挙))
   - random : 乱数(Nim0.13用,時間制限まで乱択)
 - lib/sequence
   - search : 二分探索 / 三分探索 / lowerBoundの `< <= > >=` 表記
-  - rollinghash(loliha) : ロリハ(通常/軽量)
-  - Z-Algorithm : 最長共通接頭辞 O(S)
-  - SA-IS : 接尾辞配列(SA-IS) O(S)
   - LIS : 最長増加部分列
   - slidemin : スライド最小値
   - sequence : arg{min,max} / deduplicate
   - iteration : 順列 / ペア順列 / 階段 / bitDP
+  - 文字列
+    - rollinghash(loliha) : ロリハ(通常/軽量)
+    - Z-Algorithm : 最長共通接頭辞 O(S)
+    - SA-IS : 接尾辞配列(SA-IS) O(S)
+    - PrefixTree : トライ木
 - lib/graph
-  - Normalize(強連結成分分解 O(V+E), 重軽分解)
   - Tree(入力を木に,オイラーツアー,LCA(最小共通祖先 構築:O(n),探索:O(log(n)) (深さに依存しない)))
-  - DAG(トポロジカルソート)
-  - MST(最小全域木 O(ElogV))
-  - ShortestPath( O(ElogE) | 負有り:O(EV) | 全:O(V^3))
+  - DAG(トポロジカルソート,DAG判定, SCC(強連結成分分解) O(V+E))
+  - MST(最小{無向,x:有向}全域木 O(ElogV))
+  - ShortestPath( 最短経路 : O(ElogE) | 負有り:O(EV) | 全:O(V^3))
   - Flow(最小費用流 O(FElogV) | 最大流/最小カット O(FE) / O(EV^2) | 二部グラフの最大マッチング O(E))
+  - Link(LowLink(橋/関節点),x:二重{頂点,辺}連結成分分解,x:一筆書き)
+  - AdjMatrix(隣接行列: 補グラフ/変換/最大クリーク(最大独立集合)/(最小)彩色数)
+  - Testgraph(テストケース)
 - lib/geometry
   - geometry(二次元幾何(複素数))
   - pos(二次元座標,dxdy4,dxdy8,Pos)

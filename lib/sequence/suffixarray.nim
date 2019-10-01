@@ -1,5 +1,8 @@
 # SA-IS :: O(N) で Suffix Array を構築
 # 文字列検索は O(MlogN) でできる.
+# 「追加の更新が発生するprefix検索」はTrie木を使うしかないが,
+#   prefix検索だけなら,予め "^hoge^hogera^hogege" みたいな文字列を作りSAすればよい。
+# SA-IS は ほぼこれ https://blog.knshnb.com/posts/sa-is/
 import sequtils,algorithm
 type SuffixArray = ref object
   S : string
@@ -131,8 +134,10 @@ proc findAll(self:SuffixArray,target:string):seq[int] = toSeq(self.find(target))
 proc findOne(self:SuffixArray,target:string): int =
   for i in self.find(target): return i
   return -1
+# その単語の出現個数
 proc getCount(self:SuffixArray,target:string): int =
   for _ in self.find(target): result += 1
+# デバッグ用: 末尾まで読んでヒットした文字列を復元
 proc getSuffixString(S:string,index:int) : string = S[index..^1]
 proc getSuffixString(self:SuffixArray,index:int) : string = self.S[self.SA[index]..^1]
 proc getAllSuffixString(self:SuffixArray):seq[string] =
@@ -159,3 +164,5 @@ when isMainModule:
       check: banana.getAllSuffixString() == @["","a","ana","anana","banana","na","nana"]
       check: banana.findAll("an") == @[1,3]
       check: banana.findAll("an").mapIt(bananaStr.getSuffixString(it)) == @["anana","ana"]
+      check: banana.findOne("an") == 3
+      check: banana.getCount("an") == 2

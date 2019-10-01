@@ -10,6 +10,7 @@ proc combination(n,k:int) : ModInt =
   result = result / fact
 
 # カタラン数
+# ()の正しい並び替えの組み合わせ
 proc catalanNumber(n:int) : ModInt = combination(n*2,n) / (n + 1).toModInt()
 
 # 第2種スターリング数

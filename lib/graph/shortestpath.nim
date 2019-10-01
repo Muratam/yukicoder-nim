@@ -17,7 +17,6 @@ proc dijkestra(E:seq[seq[Edge]], start:int) :seq[int] =
       opens.push((e.dst,cost + e.cost))
   return costs
 
-
 # ダイクストラ (cost == 1版)
 proc dijkestra(E:seq[seq[int]], start:int) :seq[int] =
   type Edge = tuple[dst,cost:int] # E:隣接リスト(端点とコストのtuple)
@@ -33,8 +32,6 @@ proc dijkestra(E:seq[seq[int]], start:int) :seq[int] =
       if costs[e] != INF : continue
       opens.push((e,cost + 1))
   return costs
-
-
 
 
 # SPFA (ベルマンフォード) O(EV) : 二点間の最短路(負の閉路でも動作)
