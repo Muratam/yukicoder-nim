@@ -22,8 +22,8 @@
 - lib/sequence
   - search : 二分探索 / 三分探索 / lowerBoundの `< <= > >=` 表記
   - rollinghash(loliha) : ロリハ(通常/軽量)
-  - zalgorithm : 最長共通接頭辞
-  - SA-IS : 接尾辞配列(SuffixArray)
+  - Z-Algorithm : 最長共通接頭辞
+  - SuffixArray : 接尾辞配列(SuffixArray)
   - LIS : 最長増加部分列
   - slidemin : スライド最小値
   - sequence : arg{min,max} / deduplicate
