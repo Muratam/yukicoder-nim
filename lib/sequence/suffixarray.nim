@@ -1,4 +1,4 @@
-# Suffix Array :: O(N) で Suffix Array を構築
+# SA-IS :: O(N) で Suffix Array を構築
 # 文字列検索は O(MlogN) でできる.
 import sequtils,algorithm
 type SuffixArray = ref object
