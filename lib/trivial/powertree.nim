@@ -65,36 +65,7 @@ proc `in`*(n:int,self:PowerTree) : bool =
       now = now.right
   return true
 
-# 全ての要素を昇順に列挙.
-iterator items*(self:PowerTree) : int =
-  var now = self.root
-  var nowIndex = 0
-  while true:
-    if now.count > 0:
-      if self.multi:
-        for _ in 0..<now.count: yield nowIndex
-      else: yield nowIndex
-    proc goNext(lAllow,rAllow:bool) : bool =
-      if rAllow and now.right != nil:
-        nowIndex += 1
-        now = now.right
-        return true
-      elif lAllow and now.left != nil:
-        nowIndex += (1 shl (BTN_MAX - now.rank))
-        now = now.left
-        return true
-      else: # 戻っていく
-        if now.parent == nil: return false
-        let isRight = now == now.parent.right
-        now = now.parent
-        if isRight: nowIndex -= 1
-        else: nowIndex -= (1 shl (BTN_MAX - now.rank))
-        return goNext(isRight,false)
-    if not goNext(true,true): break
-proc min*(self:PowerTree) : int =
-  assert self.len > 0
-  for x in self: return x
-# n以上のものを全て昇順に列挙.
+# 範囲内のものを全て昇順に列挙.
 iterator range*(self:PowerTree,x:Slice[int]) : int =
   var now = self.root
   var nowIndex = 0
@@ -122,8 +93,13 @@ iterator range*(self:PowerTree,x:Slice[int]) : int =
         else: nowIndex -= (1 shl (BTN_MAX - now.rank))
         return goNext(isRight,false)
     if not goNext(true,true): break
-
-
+# 全ての要素を昇順に列挙.
+iterator items*(self:PowerTree) : int =
+  for x in self.range(0..int.high): yield x
+# 最小値
+proc min*(self:PowerTree,x:Slice[int] = 0..int.high) : int =
+  for x in self.range(x): return x
+  return -1
 # 全ての要素を逆順に列挙
 iterator revitems*(self:PowerTree) : int =
   var now = self.root
