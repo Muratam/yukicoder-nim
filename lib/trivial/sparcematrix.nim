@@ -1,5 +1,5 @@
 # 疎行列(CSR) ####################################################
-import sequtils
+import sequtils,matrix
 type SparseMatrix[T] = ref object
   w,h:int
   data: seq[T]
@@ -63,3 +63,9 @@ proc `$`[T](m:SparseMatrix[T]):string =
       result .add $m.data[x] & "(" & $m.row[x] & ") "
     result .add "]\n"
   result .add "\n"
+
+when isMainModule:
+  import unittest
+  test "sparseMatrix":
+    var m = newSparseMatrix[int](2,2)
+    echo m * m

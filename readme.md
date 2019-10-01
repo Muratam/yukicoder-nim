@@ -22,9 +22,12 @@
 - lib/sequence
   - search : 二分探索 / 三分探索 / lowerBoundの `< <= > >=` 表記
   - rollinghash(loliha) : ロリハ(通常/軽量)
+  - zalgorithm : 最長共通接頭辞
+  - SA-IS : 接尾辞配列(SuffixArray)
   - LIS : 最長増加部分列
   - slidemin : スライド最小値
-  - sequence : arg{min,max} / countContinuity / Nim0.13でも動作する{counttable,deduplicate} / ラグランジュ補間
+  - sequence : arg{min,max} / deduplicate
+  - iteration : 順列 / ペア順列 / 階段 / bitDP
 - lib/graph
   - Normalize(強連結成分分解 O(V+E), 重軽分解)
   - Tree(入力を木に,オイラーツアー,LCA(最小共通祖先 構築:O(n),探索:O(log(n)) (深さに依存しない)))
@@ -36,13 +39,10 @@
   - geometry(二次元幾何(複素数))
   - pos(二次元座標,dxdy4,dxdy8,Pos)
 - lib/functions.nim (いつもの + IO)
-- lib/no_test (未テスト段階)
-  - sparsematrix.nim : 疎行列
-  - geometry.nim : 幾何
-  - array.nim : 配列
-  - memo.nim
-    - ガウスの掃き出し法(only for bool)
-    - フィボナッチ数列の第N項
+- lib/trivial : 使いみちのないもの. テストが無いので動作未保証.
+  - sparsematrix : 疎行列
+  - math : フィボナッチ数列の第N項 / 線形回帰(最小二乗法)
+  - sequence : countContinuity / toCountTable / toTuple / cmp ...
 
 # MEMO
 - Nim 0.13: https://qiita.com/sessions/items/561f8a3aa6eba6d4d7a9

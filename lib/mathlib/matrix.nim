@@ -1,19 +1,19 @@
 # 行列 #################################################
-type Matrix[T] = ref object
-  w,h:int
-  data: seq[T]
-proc `[]`[T](m:Matrix[T],x,y:int):T = m.data[x + y * m.w]
-proc `[]`[T](m:var Matrix[T],x,y:int):var T = m.data[x + y * m.w]
-proc `[]=`[T](m:var Matrix[T],x,y:int,val:T) = m.data[x + y * m.w] = val
-proc newMatrix[T](w,h:int):Matrix[T] =
+type Matrix*[T] = ref object
+  w*,h*:int
+  data*: seq[T]
+proc `[]`*[T](m:Matrix[T],x,y:int):T = m.data[x + y * m.w]
+proc `[]`*[T](m:var Matrix[T],x,y:int):var T = m.data[x + y * m.w]
+proc `[]=`*[T](m:var Matrix[T],x,y:int,val:T) = m.data[x + y * m.w] = val
+proc newMatrix*[T](w,h:int):Matrix[T] =
   new(result)
   result.w = w
   result.h = h
   result.data = newSeq[T](w * h)
-proc identityMatrix[T](n:int):Matrix[T] =
+proc identityMatrix*[T](n:int):Matrix[T] =
   result = newMatrix[T](n,n)
   for i in 0..<n: result[i,i] = 1
-proc newMatrix[T](arr:seq[seq[T]]):Matrix[T] =
+proc newMatrix*[T](arr:seq[seq[T]]):Matrix[T] =
   new(result)
   result.w = arr[0].len
   result.h = arr.len
@@ -21,7 +21,7 @@ proc newMatrix[T](arr:seq[seq[T]]):Matrix[T] =
   for x in 0..<result.w:
     for y in 0..<result.h:
       result[x,y] = arr[y][x]
-proc `*`[T](a,b:Matrix[T]): Matrix[T] =
+proc `*`*[T](a,b:Matrix[T]): Matrix[T] =
   assert a.w == b.h
   result = newMatrix[T](a.h,b.w)
   for y in 0..<a.h:
@@ -30,14 +30,14 @@ proc `*`[T](a,b:Matrix[T]): Matrix[T] =
       for k in 0..<a.w:
         n += a[k,y] * b[x,k]
       result[x,y] = n
-proc `^`[T](m:Matrix[T],n:int) : Matrix[T] =
+proc `^`*[T](m:Matrix[T],n:int) : Matrix[T] =
   assert m.w == m.h
   if n <= 0 : return identityMatrix[T](m.w)
   if n == 1 : return m
   let m2 = m^(n div 2)
   if n mod 2 == 0 : return m2 * m2
   return m2 * m2 * m
-proc `$`[T](m:Matrix[T]) : string =
+proc `$`*[T](m:Matrix[T]) : string =
   result = ""
   for y in 0..<m.h:
     result .add "["
@@ -48,7 +48,7 @@ proc `$`[T](m:Matrix[T]) : string =
     if y != m.h - 1 : result .add "\n"
   result .add "\n"
 
-proc `*`[T](a:Matrix,b:seq[T]):seq[T] =
+proc `*`*[T](a:Matrix,b:seq[T]):seq[T] =
   assert a.w == b.len
   result = newSeq[T](b.len)
   for x in 0..<a.h:
@@ -56,18 +56,18 @@ proc `*`[T](a:Matrix,b:seq[T]):seq[T] =
     for k in 0..<a.w:
       n += a[k,x] * b[k]
     result[x] = n
-proc `+`[T](a,b:Matrix[T]): Matrix[T] =
+proc `+`*[T](a,b:Matrix[T]): Matrix[T] =
   assert a.w == b.w and a.h == b.h
   result = newMatrix[T](a.w,a.h)
   for y in 0..<a.h:
     for x in 0..<b.w:
       result[x,y] = a[x,y] + b[x,y]
-proc transpose[T](a:Matrix[T]): Matrix[T] =
+proc transpose*[T](a:Matrix[T]): Matrix[T] =
   result = newMatrix[T](a.h,a.w)
   for y in 0..<a.h:
     for x in 0..<a.w:
       result[x,y] = a[y,x]
-template mapIt[T](M: Matrix[T],op): untyped =
+template mapIt*[T](M: Matrix[T],op): untyped =
   type outType = type((var it{.inject.}: T;op))
   var i = 0
   var result = newMatrix[outType](M.w,M.h)

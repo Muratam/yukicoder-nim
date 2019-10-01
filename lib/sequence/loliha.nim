@@ -1,6 +1,6 @@
 # 軽量版 の ロリハ
 # https://qiita.com/keymoon/items/11fac5627672a6d6a9f6
-# 構築 O(|S|) / 部分文字列検索 O(1)
+# 構築 O(|S|) / 部分文字列の同一性判定 O(1) (検索文字列長に依らない)
 type LoliHa = ref object
   A: seq[int]  # baseA 進数表示
   AP: seq[int] # pow(baseA,n)
