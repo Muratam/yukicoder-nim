@@ -1,4 +1,4 @@
-import sequtils
+import sequtils,nimprof
 
 # 普通の2進表示のパトリシア木.
 # 葉同士がリンクし合うのと余分なノードはスキップするのとで高速.
@@ -114,7 +114,7 @@ proc createNextNode(now:BinPatriciaNode,target:BinPatriciaNode,n:int) : BinPatri
   return nil
 
 # multi-set 的な add
-proc addMulti*(self:BinPatricia,n:int) =
+proc addMulti*(self:var BinPatricia,n:int) =
   var now = self.root
   var target : BinPatriciaNode = nil
   while true:
@@ -144,16 +144,15 @@ proc `in`*(n:int,self:BinPatricia) : bool =
       now = now.to0
   return now.valueOrMask == n
 # multi-set にしたくなければ
-proc add*(self:BinPatricia,n:int) =
+proc add*(self:var BinPatricia,n:int) =
   if not (n in self): self.addMulti(n)
 
-
-import "../mathlib/random"
 import times
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
+import "../mathlib/random"
 var T = newBinPatricia()
 stopwatch:
-  for i in 0..100:
+  for i in 0..1000000:
     let r = random(1e9.uint)
     T.addMulti r.int
-  echo T.dump()
+  # echo T.dump()
