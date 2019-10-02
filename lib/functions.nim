@@ -6,8 +6,17 @@ import sequtils
 template times*(n:int,body) = (for _ in 0..<n: body)
 template `max=`*(x,y) = x = max(x,y)
 template `min=`*(x,y) = x = min(x,y)
+
+# 実行時間/メモリ使用量解析
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
-proc `^`(n:int) : int{.inline.} = (1 shl n)
+proc printMemories*() =
+  proc printMem(mem: int, spec: string) =
+    echo spec, " MEM:", mem div 1024 div 1024, "MB"
+  getTotalMem().printMem("TOTAL")
+  getOccupiedMem().printMem("OCCUP")
+  getFreeMem().printMem("FREE ")
+
+
 #
 template useUnsafeInput() =
   setStdIoUnbuffered()

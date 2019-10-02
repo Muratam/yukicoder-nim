@@ -1,4 +1,4 @@
-import sequtils,nimprof
+import sequtils#,nimprof
 
 # 普通の2進表示のパトリシア木.
 # 葉同士がリンクし合うのと余分なノードはスキップするのとで高速.
@@ -155,4 +155,3 @@ stopwatch:
   for i in 0..1000000:
     let r = random(1e9.uint)
     T.addMulti r.int
-  # echo T.dump()
