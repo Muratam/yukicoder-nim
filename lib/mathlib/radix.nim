@@ -31,12 +31,14 @@ proc binaryToIntSeq(n:int):seq[int] =
     if n < (1 shl (i+1)) : return
 proc binary(x:int,fill:int=0):string = # 二進表示
   if x == 0 : return "0".repeat(fill)
+  if x < 0  : return binary(int.high+x+1,fill)
   result = ""
   var x = x
   while x > 0:
     result .add chr('0'.ord + x mod 2)
     x = x div 2
   for i in 0..<result.len div 2: swap(result[i],result[result.len-1-i])
+  if result.len >= fill: return result[^fill..^1]
   return "0".repeat(0.max(fill - result.len)) & result
 
 when NimMajor * 100 + NimMinor >= 18:

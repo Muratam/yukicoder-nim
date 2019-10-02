@@ -21,63 +21,110 @@ proc newBinPatricia(bitSize:int = 5):BinPatricia =
   result.root.valueOrMask = 1 shl bitSize
 when NimMajor * 100 + NimMinor >= 18: import bitops
 else:
+  proc countLeadingZeroBits(x: culonglong): cint {.importc: "__builtin_clzll", cdecl.}
   proc countTrailingZeroBits(x: culonglong): cint {.importc: "__builtin_ctzll", cdecl.}
+  proc fastLog2(x:culonglong):cint = 63 - countLeadingZeroBits(x)
+
 proc bitSize(self:BinPatriciaNode):int =
   self.valueOrMask.culonglong.countTrailingZeroBits.int
 proc bitSize(self:BinPatricia):int = self.root.bitSize
-proc prefix(self:BinPatriciaNode): int = self.valueOrMask and (self.valueOrMask - 1)
+proc prefix(x:int): int = x and (x - 1)
 proc len*(self:BinPatricia) : int = self.root.count
 proc isTo1(self:BinPatriciaNode,n:int):bool{.inline.} =
   (self.valueOrMask and n) == self.valueOrMask # 上位bitは同じはずなので
+
+# デバッグ用
+import strutils
+proc binary(x:int,fill:int=0):string = # 二進表示
+  if x == 0 : return "0".repeat(fill)
+  if x < 0  : return binary(int.high+x+1,fill)
+  result = ""
+  var x = x
+  while x > 0:
+    result .add chr('0'.ord + x mod 2)
+    x = x div 2
+  for i in 0..<result.len div 2: swap(result[i],result[result.len-1-i])
+  if result.len >= fill: return result[^fill..^1]
+  return "0".repeat(0.max(fill - result.len)) & result
+proc dump(self:BinPatriciaNode,indent:int = 0) : string =
+  if self == nil : return ""
+  result = $self.count
+  result .add "\t"
+  for i in 0..<indent: result .add "  "
+  if self.isLeaf: result.add "_"
+  else: result.add "|"
+  result .add self.valueOrMask.binary(6) & "\n"
+  if self.isLeaf: return
+  if self.to0 != nil: result.add self.to0.dump(indent + 1)
+  if self.to1 != nil: result.add self.to1.dump(indent + 1)
+proc dump(self:BinPatricia) : string = self.root.dump()
+
 # multi-set 的な add
 proc addMulti*(self:BinPatricia,n:int) =
   var now = self.root
   while true:
     now.count += 1
-    proc createNode(target:var BinPatriciaNode) : bool =
-      if target != nil:
-        if target.isLeaf:
-          # 偶然にも同じ場所だった
-          if target.valueOrMask == n:
-            target.count += 1
-            return true
-          # 変な所に葉ができていたので中間点を生成
-          let cross = target.valueOrMask xor n
-          for bit in (now.bitSize() - 1).countdown(0):
-            if (cross and (1 shl bit)) == 0 : continue
-            var newLeaf = newBinPatriciaNode()
-            newLeaf.isLeaf = true
-            newLeaf.valueOrMask = n
-            newLeaf.count = 1
-            var preLeaf = target
-            target = newBinPatriciaNode()
-            target.isLeaf = false
-            target.valueOrMask = now.prefix() or (1 shl bit)
-            target.count = newLeaf.count + preLeaf.count
-            if target.isTo1(newLeaf.valueOrMask):
-              target.to1 = newLeaf
-              target.to0 = preLeaf
-            else:
-              target.to1 = preLeaf
-              target.to0 = newLeaf
-            return true
-          doAssert false, "このメッセージはでないはずだよ"
-        # 行こうとした方向に既に枝があった
-        # prefix が一致しているのでその子へ
-        if (target.prefix() or n) == n :
-          now = target
-          return false
-        doAssert false
-      # この先は空なので直接葉を作ってよい
-      target = newBinPatriciaNode()
-      target.isLeaf = true
-      target.valueOrMask = n
-      target.count = 1
+    # 中間点を生成
+    proc createInternalNode(target:var BinPatriciaNode) =
+      let cross = target.valueOrMask xor n
+      # 頑張れば bit 演算にできそう.
+      for bit in (now.bitSize() - 1).countdown(0):
+        if (cross and (1 shl bit)) == 0 : continue
+        var newLeaf = newBinPatriciaNode()
+        newLeaf.isLeaf = true
+        newLeaf.valueOrMask = n
+        newLeaf.count = 1
+        var pre = target
+        target = newBinPatriciaNode()
+        target.isLeaf = false
+        let n1 = pre.valueOrMask
+        let n2 = newLeaf.valueOrMask
+        let n3 = 1 shl (n1 xor n2).culonglong.fastLog2()
+        target.valueOrMask = (n1 or n2) and (not (n3 - 1))
+        target.count = newLeaf.count + pre.count
+        if target.isTo1(newLeaf.valueOrMask):
+          target.to1 = newLeaf
+          target.to0 = pre
+        else:
+          target.to1 = pre
+          target.to0 = newLeaf
+        return
+      echo "このメッセージはでないはずだよ"
+      echo n.binary(6)
+      echo now.dump()
+      echo target.dump()
+      doAssert false
+
+    proc goNextNode(target:var BinPatriciaNode) : bool =
+      if target == nil:
+        # この先が空なので直接葉を作る
+        target = newBinPatriciaNode()
+        target.isLeaf = true
+        target.valueOrMask = n
+        target.count = 1
+        return
+      if target.isLeaf:
+        if target.valueOrMask == n: # 葉があった
+          target.count += 1
+        else: # 中間点を作る
+          target.createInternalNode()
+        return
+      # prefix が違ったので新しくそこに作る
+      let x = target.valueOrMask
+      if 0 != (((x and (x - 1)) xor n) and (not ((x xor (x - 1) + 1) - 1))) :
+        echo "-------------------------------"
+        target.createInternalNode()
+        return
+      # 同じprefix を持つのでそちらに進む
+      echo "MATCHED"
+      echo "  ",x.binary(6)
+      echo "  ",n.binary(6)
+      now = target
       return true
     if now.isTo1(n) :
-      if now.to1.createNode(): return
+      if not now.to1.goNextNode(): return
     else:
-      if now.to0.createNode(): return
+      if not now.to0.goNextNode(): return
 proc `in`*(n:int,self:BinPatricia) : bool =
   var now = self.root
   while not now.isLeaf:
@@ -94,37 +141,23 @@ proc add*(self:BinPatricia,n:int) =
 
 
 
-import strutils
-proc dump(self:BinPatriciaNode,indent:int = 0) : string =
-  proc binary(x:int,fill:int=0):string = # 二進表示
-    if x == 0 : return "0".repeat(fill)
-    result = ""
-    var x = x
-    while x > 0:
-      result .add chr('0'.ord + x mod 2)
-      x = x div 2
-    for i in 0..<result.len div 2: swap(result[i],result[result.len-1-i])
-    return "0".repeat(0.max(fill - result.len)) & result
-  result = $self.count
-  result .add "\t"
-  for i in 0..<indent: result .add "  "
-  if self.isLeaf: result.add "_"
-  else: result.add "|"
-  result .add self.valueOrMask.binary(6) & "\n"
-  if self.to0 != nil: result.add self.to0.dump(indent + 1)
-  if self.to1 != nil: result.add self.to1.dump(indent + 1)
 
-proc `$`(self:BinPatricia) : string = self.root.dump()
+import "../mathlib/random"
 var T = newBinPatricia()
-echo T
-T.add 0b000100
-echo T
-T.add 0b010100
-echo T
-T.add 0b010111
-echo T
-echo 0b000100 in T
-echo 0b010100 in T
+for i in 0..30:
+  let r = random(40)
+  T.addMulti r.int
+  # echo T.dump()
+  # echo T.dump()
+# echo T.dump()
+# T.add 0b000100
+# echo T.dump()
+# T.add 0b010100
+# echo T.dump()
+# T.add 0b010111
+# echo T.dump()
+# echo 0b000100 in T
+# echo 0b010100 in T
 # # 削除. multi のときでも一括削除可能
 # proc delete*(self:BinPatricia,n:int,multiAll:bool = false) =
 #   var now = self.root
