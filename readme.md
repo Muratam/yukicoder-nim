@@ -6,7 +6,7 @@
 ライブラリはご自由にお使いください
 - `lib/datastructure` :: データ構造
   - UnionFind
-  - bitset :: 操作が全てビット演算
+  - bitset :: 操作が全てビット演算.
   - `queue/` :: Stack, Queue, Deque
   - `segmenttree/` :: クエリが O(logN)
     - セグメントツリー{1D,2D} :: 一点更新, 区間取得
@@ -26,7 +26,7 @@
     - LIS : 最長増加部分列
     - slidemin : スライド最小値
     - sequence : arg{min,max} / deduplicate / 10進数と配列変換
-    - iteration : 順列 / ペア順列 / 階段 / bitDP
+    - iteration : 順列 / ペア順列 / 階段
   - `cpp/`
     - std::{set,multiset} (min / max / >= がO(log(N)))
     - std::vector / std::priority_queue : 互換性のため

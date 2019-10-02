@@ -22,12 +22,6 @@ iterator chair(w,h:int): tuple[x,y:int] =
     for x in 0.max(n-h+1)..n.min(w-1):
       yield (x,n-x)
 
-# BitDPのテンプレート
-iterator bitDPIter(n:int) : tuple[i,j:int] =
-  for i in 0..<(1 shl n):
-    for j in 0..<n:
-      yield (i,j)
-
 
 when isMainModule:
   import unittest

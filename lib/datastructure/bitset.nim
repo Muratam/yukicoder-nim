@@ -1,12 +1,14 @@
-import sequtils,strutils
+import sequtils,strutils,algorithm
 # int を bool の 集合として扱って64個まで爆速
+# 基本的には seq[bool], keys は true のもののみを列挙
+# 多分動くけどキー「63」はちょっと怪しいかも
 type BitSet = int
 # 基本演算
 proc `[]=`(a:var BitSet,i:range[0..63],exists:bool) =
   if exists : a = a or (1 shl i)
-  else: a = a and (not (1 shr i))
-proc `[]`(a:BitSet,i:range[0..63]) : bool = (a shr i) > 0
-proc flipAt(a:var BitSet,i:range[0..63]) = a = a xor (1 shr i)
+  else: a = a and (not (1 shl i))
+proc `[]`(a:BitSet,i:range[0..63]) : bool = (a and (1 shl i)) != 0
+proc flipAt(a:var BitSet,i:range[0..63]) = a = a xor (1 shl i)
 proc clear(a:var BitSet) = a = 0
 proc fill(a:var BitSet) = a = -1
 proc flipped(a:BitSet): BitSet = not a
@@ -17,18 +19,25 @@ proc isSubset(a,b:BitSet):bool = (a and b) == a
 proc sub(a,b:BitSet):BitSet = a - (a and b) # aからbの要素を抜く
 
 # 型変換
-proc toSeq(a:BitSet): seq[bool] =
+proc toBoolSeq(a:BitSet): seq[bool] =
   result = newSeq[bool](64)
   for i in 0..<64: result[i] = a[i]
-proc fromSeq(a:seq[bool]) : BitSet =
-  for i in 0..<64: result[i] = a[i]
+proc fromBoolSeq(a:seq[bool]) : BitSet =
+  for i in 0..<a.len: result[i] = a[i]
 proc keys(a:BitSet): seq[int] =
   result = @[]
   for i in 0..<64:
     if a[i] : result.add i
-proc toStr(a:BitSet):string =
-  a.toSeq().mapIt($it.int).join("")
-
+proc fromKeys(keys:seq[int]): BitSet =
+  for k in keys: result[k] = true
+proc toBinStr(a:BitSet,maxKey:int=64):string =
+  result = a.toBoolSeq().reversed().mapIt($it.int).join("")
+  result = result[(64-maxKey)..^1]
+proc fromBinStr(S:string):BitSet =
+  let sLen = 64.min(S.len())
+  for i in 0..<sLen:
+    if S[i] == '1':
+      result[sLen-i-1] = true
 # 高度な演算
 when NimMajor * 100 + NimMinor >= 18: import bitops
 else:
@@ -66,12 +75,51 @@ proc allGreaterThanMaxKey(a:BitSet):BitSet = -2 * a.onlyMaxKey()
 # bitDP用
 # math.nextPowerOfTwo も使える
 proc factorOf2(n:int):int = n and -n # 48 -> 16
-proc powerOf2(i:[0..63]):int = 1 shl i
+proc powerOf2(i:range[0..63]):int = 1 shl i
 iterator allState(maxKey:int): BitSet =
   for a in 0..<(1 shl maxKey): yield a
 
+# 中間点
+# let n3 = 1 shl (n1 xor n2).culonglong.fastLog2()
+# created.valueOrMask = (n1 or n2) and (not (n3 - 1))
+
+# prefix
+# let mask = not(x xor (x - 1))
+# if (x and mask) != (n and mask) :
 # TODO: check -1,0,1,2^63
 # {.inline.,noSideEffect} をつけると速くなるかも？
-# when isMainModule:
-#   import unittest
-#   test "bitset":
+when isMainModule:
+  import unittest
+  test "bitset":
+    var n = 0b110101
+    check:n.toBinStr(6) == "110101"
+    check:n.keys() == @[0,2,4,5]
+    n[63] = true
+    check:n.keys() == @[0,2,4,5,63]
+    check:n[2]
+    check:(not n[1])
+    n[1] = true
+    n[2] = false
+    check:n.keys() == @[0,1,4,5,63]
+    n.flipAt(2)
+    check:n.keys() == @[0,1,2,4,5,63]
+    n.flipAt(0)
+    check:n.keys() == @[1,2,4,5,63]
+    n.clear()
+    check:n.keys() == newSeq[int]()
+    n.fill()
+    check:n.flipped().keys() == newSeq[int]()
+    var m = 0
+    n =   "110001".fromBinStr()
+    m =   "101011".fromBinStr()
+    check:"111011" == n.merge(m).toBinStr(6)
+    check:"100001" == n.common(m).toBinStr(6)
+    check:"011010" == n.diff(m).toBinStr(6)
+    check:"010000" == n.sub(m).toBinStr(6)
+    check:"100001".fromBinStr().isSubSet(m)
+    check:"101011" == m.toBinStr(6)
+    let ordinal = toSeq(0..63)
+    check:((-1).keys() == ordinal)
+    n = @[0,1,3,9,63].fromKeys()
+    check:n.keys() == @[0,1,3,9,63]
+    check: @[true,false,true].fromBoolSeq().keys() == @[0,2]
