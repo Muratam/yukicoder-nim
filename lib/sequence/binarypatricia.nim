@@ -111,14 +111,11 @@ proc addMulti*(self:BinPatricia,n:int) =
         return
       # prefix が違ったので新しくそこに作る
       let x = target.valueOrMask
-      if 0 != (((x and (x - 1)) xor n) and (not ((x xor (x - 1) + 1) - 1))) :
-        echo "-------------------------------"
+      let mask = not(x xor (x - 1))
+      if (x and mask) != (n and mask) :
         target.createInternalNode()
         return
       # 同じprefix を持つのでそちらに進む
-      echo "MATCHED"
-      echo "  ",x.binary(6)
-      echo "  ",n.binary(6)
       now = target
       return true
     if now.isTo1(n) :
@@ -144,10 +141,10 @@ proc add*(self:BinPatricia,n:int) =
 
 import "../mathlib/random"
 var T = newBinPatricia()
-for i in 0..30:
+for i in 0..100:
   let r = random(40)
   T.addMulti r.int
-  # echo T.dump()
+  echo T.dump()
   # echo T.dump()
 # echo T.dump()
 # T.add 0b000100
