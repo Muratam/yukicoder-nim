@@ -144,7 +144,7 @@ import times
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
 stopwatch:
   var T = newBinPatricia()
-  for i in 0..1000000:
+  for i in 0..100_0000:
     let r = random(1e9.uint)
     T.addMulti r.int
   # echo T.dump()
