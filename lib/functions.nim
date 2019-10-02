@@ -6,9 +6,24 @@ import sequtils
 template times*(n:int,body) = (for _ in 0..<n: body)
 template `max=`*(x,y) = x = max(x,y)
 template `min=`*(x,y) = x = min(x,y)
+
+# 実行時間/メモリ使用量解析
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
-proc `^`(n:int) : int{.inline.} = (1 shl n)
-#
+proc printMemories*() =
+  proc printMem(mem: int, spec: string) =
+    echo spec, " MEM:", mem div 1024 div 1024, "MB"
+  getTotalMem().printMem("TOTAL")
+  getOccupiedMem().printMem("OCCUP")
+  getFreeMem().printMem("FREE ")
+
+# Pos
+const dxdy4 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0)]
+const dxdy8 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0),(1,1),(1,-1),(-1,-1),(-1,1)]
+type Pos = tuple[x,y:int]
+proc `+`(p,v:Pos):Pos = (p.x+v.x,p.y+v.y)
+proc dot(p,v:Pos):int = p.x * v.x + p.y * v.y
+
+# Input
 template useUnsafeInput() =
   setStdIoUnbuffered()
   proc gets(str: untyped){.header: "<stdio.h>", varargs.}
@@ -32,7 +47,7 @@ template useUnsafeInput() =
       result = 10 * result + k.ord - '0'.ord
     if minus: result *= -1
 
-#
+# Output
 template useUnsafeOutput() =
   setStdIoUnbuffered()
   proc puts(str: untyped){.header: "<stdio.h>", varargs.}

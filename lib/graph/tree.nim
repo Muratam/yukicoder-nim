@@ -27,7 +27,8 @@ proc eulerTour(E:seq[seq[int]]):tuple[toured:seq[Slice[int]],rev:seq[int]] =
   dfs(0)
   return (toured,rev)
 
-# 最小共通祖先 構築:O(n),探索:O(log(n)) (深さに依存しない)
+# 最小共通祖先(LCA)
+# 構築:O(n),探索:O(log(n)) (深さに依存しない)
 when NimMajor * 100 + NimMinor >= 18:import bitops
 else:
   proc countLeadingZeroBits(x: culonglong): cint {.importc: "__builtin_clzll", cdecl.}
