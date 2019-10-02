@@ -1,7 +1,8 @@
 import sequtils#,nimprof
 
 # 普通の2進表示のパトリシア木.
-# 葉同士がリンクし合うのと余分なノードはスキップするのとで高速.
+# 葉同士がリンクし合うのと余分なノードはスキップするのとが便利だが、定数倍がかなり重め.
+
 
 type
   BinPatriciaNode = object
@@ -159,7 +160,8 @@ import times
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
 import "../mathlib/random"
 var T = newBinPatricia()
+# 1e5 が限界
 stopwatch:
-  for i in 0..1000000:
+  for i in 0..100000:
     let r = random(1e9.uint)
     T.addMulti r.int
