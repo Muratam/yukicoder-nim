@@ -1,4 +1,5 @@
 import sequtils,strutils,algorithm
+{.overflowChecks:off.}
 # int を bool の 集合として扱って64個まで爆速
 # 基本的には seq[bool], keys は true のもののみを列挙
 # 多分動くけどキー「63」はちょっと怪しいかも
@@ -9,9 +10,9 @@ proc `[]=`(a:var BitSet,i:range[0..63],exists:bool) =
   else: a = a and (not (1 shl i))
 proc `[]`(a:BitSet,i:range[0..63]) : bool = (a and (1 shl i)) != 0
 proc flipAt(a:var BitSet,i:range[0..63]) = a = a xor (1 shl i)
-proc clear(a:var BitSet) = a = 0
-proc fill(a:var BitSet) = a = -1
-proc flipped(a:BitSet): BitSet = not a
+proc zerosBitSet():BitSet = 0
+proc onesBitSet():BitSet = -1
+proc flip(a:BitSet): BitSet = not a
 proc merge(a,b: BitSet):BitSet = a or b
 proc common(a,b:BitSet):BitSet = a and b
 proc diff(a,b:BitSet):BitSet = a xor b
@@ -38,6 +39,7 @@ proc fromBinStr(S:string):BitSet =
   for i in 0..<sLen:
     if S[i] == '1':
       result[sLen-i-1] = true
+
 # 高度な演算
 when NimMajor * 100 + NimMinor >= 18: import bitops
 else:
@@ -55,38 +57,46 @@ else:
     let amount = amount and 63
     result = (value shl amount) or (value shr ( (-amount) and 63))
   # math.nextPowerOfTwo() (0->1, 5->8, 16->16)
+# 要素数
 proc len(a:BitSet) :int = cast[culonglong](a).popcount()
-proc lenIsOdd(a:BitSet) : int = cast[culonglong](a).parityBits()
+proc lenIsOdd(a:BitSet) : bool = 1 == cast[culonglong](a).parityBits()
 proc lenIs1(a:BitSet): bool =  (a > 0) and ((a and (a - 1)) == 0)
-proc maxKey(a:BitSet):int = 64 - cast[culonglong](a).countLeadingZeroBits()
+# キーの抽出/マスク
+proc maxKey(a:BitSet):int = 63 - cast[culonglong](a).countLeadingZeroBits()
 proc minKey(a:BitSet):int = cast[culonglong](a).countTrailingZeroBits()
-# {範囲外は消して/mod 64 の中で}キー全体に加算・減算
+proc onlyMinKeySet(a:BitSet):BitSet = a and (-a) # 意味的には factorOf2
+proc allGreaterThanMaxKeySet(a:BitSet):BitSet = # ダブリングするのでちょっと重い
+  var m = cast[uint64](a)
+  m = m or (m shr 32)
+  m = m or (m shr 16)
+  m = m or (m shr 8)
+  m = m or (m shr 4)
+  m = m or (m shr 2)
+  m = m or (m shr 1)
+  return cast[int](not m)
+proc onlyMaxKeySet(a:BitSet):BitSet = # 意味的には NextPowerOf2
+  if a < 0 : return 0x8000_0000_0000_0000.int
+  if a == 0 : return 0
+  return (cast[int]((a.allGreaterThanMaxKeySet() shr 1))).onlyMinKeySet()
+proc allSmallerThanMinKeySet(a:BitSet):BitSet =
+  if a == 0 : return 0
+  else: return a.onlyMinKeySet() - 1
+proc at(a:BitSet,slice:Slice[int]):BitSet =
+  let minMask = (1 shl slice.a) - 1
+  let maxMask = (2 shl slice.b) - 1
+  return a and (maxMask - minMask)
+# キー全体に加減算　{範囲外削除 / mod 64 内}
 proc plusAllKeys(a:BitSet,x:range[-64..64]) : BitSet =
   if x >= 0 : return a shl x
-  else: return a shr x
+  else: return cast[int](cast[uint64](a) shr (-x).uint64) # Nim 0.19.0 から 負のshrがrollingに
 proc plusAllKeysMod64(a:BitSet,x:range[-64..64]) : BitSet =
   if x >= 0 : return cast[int](cast[uint64](a).rotateLeftBits(x))
   return cast[int](cast[uint64](a).rotateRightBits(-x))
-proc onlyMaxKey(a:BitSet):BitSet = a and (-a)
-proc onlyMinKey(a:BitSet):BitSet = (not a) and (a + 1)
-proc allSmallerThanMinKey(a:BitSet):BitSet = a.onlyMinKey() - 1
-proc allGreaterThanMaxKey(a:BitSet):BitSet = -2 * a.onlyMaxKey()
-
 # bitDP用
-# math.nextPowerOfTwo も使える
-proc factorOf2(n:int):int = n and -n # 48 -> 16
 proc powerOf2(i:range[0..63]):int = 1 shl i
-iterator allState(maxKey:int): BitSet =
-  for a in 0..<(1 shl maxKey): yield a
+iterator allState(maxSize:int): BitSet =
+  for a in 0..<(1 shl maxSize): yield a
 
-# 中間点
-# let n3 = 1 shl (n1 xor n2).culonglong.fastLog2()
-# created.valueOrMask = (n1 or n2) and (not (n3 - 1))
-
-# prefix
-# let mask = not(x xor (x - 1))
-# if (x and mask) != (n and mask) :
-# TODO: check -1,0,1,2^63
 # {.inline.,noSideEffect} をつけると速くなるかも？
 when isMainModule:
   import unittest
@@ -105,10 +115,10 @@ when isMainModule:
     check:n.keys() == @[0,1,2,4,5,63]
     n.flipAt(0)
     check:n.keys() == @[1,2,4,5,63]
-    n.clear()
+    n = zerosBitSet()
     check:n.keys() == newSeq[int]()
-    n.fill()
-    check:n.flipped().keys() == newSeq[int]()
+    n = onesBitSet()
+    check:n.flip().keys() == newSeq[int]()
     var m = 0
     n =   "110001".fromBinStr()
     m =   "101011".fromBinStr()
@@ -123,3 +133,45 @@ when isMainModule:
     n = @[0,1,3,9,63].fromKeys()
     check:n.keys() == @[0,1,3,9,63]
     check: @[true,false,true].fromBoolSeq().keys() == @[0,2]
+    check: n.keys().len == 5
+    check: n.len == 5
+    check: n.lenIsOdd()
+    check: 64.lenIs1
+    check: not 52.lenIs1
+    n = @[0,1,3,9,63].fromKeys()
+    m = @[11,25,26,27,38].fromKeys()
+    check: n.maxKey() == 63
+    check: m.maxKey() == 38
+    check: n.minKey() == 0
+    check: m.minKey() == 11
+    check: n.plusAllKeys(3).keys() == @[3, 4, 6, 12]
+    check: n.plusAllKeys(-3).keys() == @[0, 6, 60]
+    check: m.plusAllKeys(3).keys() == @[14, 28, 29, 30, 41]
+    check: m.plusAllKeys(-3).keys() == @[8, 22, 23, 24, 35]
+    check: n.plusAllKeysMod64(3).keys() == @[2, 3, 4, 6, 12]
+    check: n.plusAllKeysMod64(-3).keys() == @[0, 6, 60, 61, 62]
+    check: m.plusAllKeysMod64(3).keys() == @[14, 28, 29, 30, 41]
+    check: m.plusAllKeysMod64(-3).keys() == @[8, 22, 23, 24, 35]
+    check: n.onlyMinKeySet().keys() == @[0]
+    check: m.onlyMinKeySet().keys() == @[11]
+    check: n.allSmallerThanMinKeySet().keys() == newSeq[int]()
+    check: m.allSmallerThanMinKeySet().keys() == toSeq(0..10)
+    check: n.onlyMaxKeySet().keys() == @[63]
+    check: m.onlyMaxKeySet().keys() == @[38]
+    check: n.allGreaterThanMaxKeySet().keys() == newSeq[int]()
+    check: m.allGreaterThanMaxKeySet().keys() == toSeq(39..63)
+    check: 0.onlyMaxKeySet().keys() == newSeq[int]()
+    check: 0.onlyMinKeySet().keys() == newSeq[int]()
+    check: 0.allSmallerThanMinKeySet().keys() == newSeq[int]()
+    check: 0.allGreaterThanMaxKeySet().keys() == toSeq(0..63)
+    check: onesBitSet().onlyMaxKeySet().keys() == @[63]
+    check: onesBitSet().onlyMinKeySet().keys() == @[0]
+    check: onesBitSet().allSmallerThanMinKeySet().keys() == newSeq[int]()
+    check: onesBitSet().allGreaterThanMaxKeySet().keys() == newSeq[int]()
+    check: @[0,1,3,4,5,7,11,15,29,30,31,32,33,63].fromKeys().at(4..32).keys() == @[4,5,7,11,15,29,30,31,32]
+    check: @[0,1,62,63].fromKeys().at(0..63).keys() == @[0,1,62,63]
+    check: @[0,1,62,63].fromKeys().at(1..<63).keys() == @[1,62]
+    check: 48.onlyMinKeySet() == 16
+    check: 1.powerOf2() == 2
+    for s in 3.allState():
+      check: s.keys() == @[@[],@[0],@[1],@[0, 1],@[2],@[0, 2],@[1, 2],@[0, 1, 2]][s]

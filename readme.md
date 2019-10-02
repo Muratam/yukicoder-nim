@@ -6,7 +6,7 @@
 ライブラリはご自由にお使いください
 - `lib/datastructure` :: データ構造
   - UnionFind
-  - bitset :: 操作が全てビット演算.
+  - bitset :: 操作が全てビット演算で64倍速.最大/最小キーなど.BitDPと供に
   - `queue/` :: Stack, Queue, Deque
   - `segmenttree/` :: クエリが O(logN)
     - セグメントツリー{1D,2D} :: 一点更新, 区間取得
