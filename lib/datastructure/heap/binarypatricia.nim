@@ -147,6 +147,8 @@ proc `in`*(n:int,self:BinPatricia) : bool =
 proc add*(self:var BinPatricia,n:int) =
   if not (n in self): self.addMulti(n)
 
+# TODO: fastLog2 は (n and -n)で累乗に
+
 import times
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
 import "../mathlib/random"

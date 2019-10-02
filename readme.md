@@ -4,10 +4,11 @@
 [![CircleCI](https://circleci.com/gh/Muratam/yukicoder-nim/tree/master.svg?style=svg)](https://circleci.com/gh/Muratam/yukicoder-nim/tree/master) (Nim 0.20 & Nim 0.13)
 
 ライブラリはご自由にお使いください
-- lib/datastructure
+- `lib/datastructure` :: データ構造
   - UnionFind
+  - bitset :: 操作が全てビット演算
   - `queue/` :: Stack, Queue, Deque
-  - `segmenttree/` :: クエリが O(logN) 以下
+  - `segmenttree/` :: クエリが O(logN)
     - セグメントツリー{1D,2D} :: 一点更新, 区間取得
     - BIT :: 一点更新, 区間和
     - StarrySkyTree :: 区間更新(加算),区間取得
@@ -24,20 +25,20 @@
     - search : 二分探索 / 三分探索 / lowerBoundの `< <= > >=` 表記
     - LIS : 最長増加部分列
     - slidemin : スライド最小値
-    - sequence : arg{min,max} / deduplicate
+    - sequence : arg{min,max} / deduplicate / 10進数と配列変換
     - iteration : 順列 / ペア順列 / 階段 / bitDP
   - `cpp/`
     - std::{set,multiset} (min / max / >= がO(log(N)))
     - std::vector / std::priority_queue : 互換性のため
-- lib/mathlib
-  - matrix : 行列(転置,乗算,累乗,加算,単位行列)
-  - modint : ModInt (累乗,除算)
-  - prime : 素数(SFF,素数表,素数リスト)
-  - arith : 算術(順列,組み合わせ,累乗,四捨五入)
-  - radix : 基数(2進数,10進数,ビット演算)
-  - count : 数え上げ(nCk,カタラン数,第2種スターリング数,x:ベル数,sternBrocotTree(有理数列挙))
-  - random : 乱数(Nim0.13用,時間制限まで乱択)
-- lib/graph
+- `lib/mathlib` :: 数学
+  - matrix :: 行列(転置,乗算,累乗,加算,単位行列)
+  - modint :: ModInt (累乗,除算)
+  - prime :: 素数(SFF,素数表,素数リスト)
+  - arith :: 算術(順列,組み合わせ,累乗,四捨五入)
+  - count :: 数え上げ(nCk,カタラン数,第2種スターリング数,x:ベル数,sternBrocotTree(有理数列挙))
+  - random :: 乱数(Nim0.13用,時間制限まで乱択)
+  - geometry :: 二次元(複素数)幾何
+- `lib/graph` :: グラフ理論
   - Tree :: 入力を木に,オイラーツアー,最小共通祖先(LCA:探索O(log(n)))
   - DAG :: トポロジカルソート,DAG判定, 強連結成分分解(SCC:O(V+E))
   - MST :: 最小全域木 O(ElogV)
@@ -46,10 +47,7 @@
   - Link :: 橋,関節点 ,x:一筆書き(オイラー路)
   - TODO: AdjMatrix(隣接行列: 補グラフ/変換/最大クリーク(最大独立集合)/(最小)彩色数)
   - TODO: Testgraph(テストケース)
-- lib/geometry
-  - geometry(二次元幾何(複素数))
-  - pos(二次元座標,dxdy4,dxdy8,Pos)
-- lib/functions.nim (いつもの + IO)
+- lib/functions.nim (いつもの / IO / Pos)
 - lib/garbase : 書き捨てたコード
   - sparsematrix : 疎行列
   - math : フィボナッチ数列の第N項 / 線形回帰(最小二乗法)

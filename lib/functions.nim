@@ -16,8 +16,14 @@ proc printMemories*() =
   getOccupiedMem().printMem("OCCUP")
   getFreeMem().printMem("FREE ")
 
+# Pos
+const dxdy4 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0)]
+const dxdy8 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0),(1,1),(1,-1),(-1,-1),(-1,1)]
+type Pos = tuple[x,y:int]
+proc `+`(p,v:Pos):Pos = (p.x+v.x,p.y+v.y)
+proc dot(p,v:Pos):int = p.x * v.x + p.y * v.y
 
-#
+# Input
 template useUnsafeInput() =
   setStdIoUnbuffered()
   proc gets(str: untyped){.header: "<stdio.h>", varargs.}
@@ -41,7 +47,7 @@ template useUnsafeInput() =
       result = 10 * result + k.ord - '0'.ord
     if minus: result *= -1
 
-#
+# Output
 template useUnsafeOutput() =
   setStdIoUnbuffered()
   proc puts(str: untyped){.header: "<stdio.h>", varargs.}
