@@ -2,6 +2,7 @@ import sequtils
 
 # 普通の2進表示のパトリシア木.
 # 葉同士がリンクし合うのと余分なノードはスキップするのとで高速.
+# XORSHIFT など、 intの範囲全てにわたるようなものには弱い
 
 type
   BinPatriciaNode = ref object
@@ -60,68 +61,67 @@ proc dump(self:BinPatriciaNode,indent:int = 0) : string =
 proc dump(self:BinPatricia) : string = self.root.dump()
 
 # multi-set 的な add
-proc addMulti*(self:BinPatricia,n:int) =
+proc addMulti*(self:var BinPatricia,n:int) =
   var now = self.root
+  var next = now
+  # 中間点を生成
+  proc createInternalNode() =
+    let cross = next.valueOrMask xor n
+    for bit in (now.bitSize() - 1).countdown(0):
+      if (cross and (1 shl bit)) == 0 :
+        continue
+      var newLeaf = newBinPatriciaNode()
+      newLeaf.isLeaf = true
+      newLeaf.valueOrMask = n
+      newLeaf.count = 1
+      var pre = next
+      next = newBinPatriciaNode()
+      next.isLeaf = false
+      let n1 = pre.valueOrMask
+      let n2 = newLeaf.valueOrMask
+      let n3 = 1 shl (n1 xor n2).culonglong.fastLog2()
+      next.valueOrMask = (n1 or n2) and (not (n3 - 1))
+      next.count = newLeaf.count + pre.count
+      if next.isTo1(newLeaf.valueOrMask):
+        next.to1 = newLeaf
+        next.to0 = pre
+      else:
+        next.to1 = pre
+        next.to0 = newLeaf
+      return
+    echo "このメッセージはでないはずだよ"
+    echo n.binary(6)
+    echo now.dump()
+    echo next.dump()
+    doAssert false
+  proc goNextNode() : bool =
+    if next == nil:
+      # この先が空なので直接葉を作る
+      next = newBinPatriciaNode()
+      next.isLeaf = true
+      next.valueOrMask = n
+      next.count = 1
+      return
+    if next.isLeaf:
+      if next.valueOrMask == n: # 葉があった
+        next.count += 1
+      else: # 中間点を作る
+        createInternalNode()
+      return
+    # prefix が違ったので新しくそこに作る
+    let x = next.valueOrMask
+    let mask = not(x xor (x - 1))
+    if (x and mask) != (n and mask) :
+      createInternalNode()
+      return
+    return true
   while true:
-    now.count += 1
-    # 中間点を生成
-    proc createInternalNode(target:var BinPatriciaNode) =
-      let cross = target.valueOrMask xor n
-      # 頑張れば bit 演算にできそう.
-      for bit in (now.bitSize() - 1).countdown(0):
-        if (cross and (1 shl bit)) == 0 : continue
-        var newLeaf = newBinPatriciaNode()
-        newLeaf.isLeaf = true
-        newLeaf.valueOrMask = n
-        newLeaf.count = 1
-        var pre = target
-        target = newBinPatriciaNode()
-        target.isLeaf = false
-        let n1 = pre.valueOrMask
-        let n2 = newLeaf.valueOrMask
-        let n3 = 1 shl (n1 xor n2).culonglong.fastLog2()
-        target.valueOrMask = (n1 or n2) and (not (n3 - 1))
-        target.count = newLeaf.count + pre.count
-        if target.isTo1(newLeaf.valueOrMask):
-          target.to1 = newLeaf
-          target.to0 = pre
-        else:
-          target.to1 = pre
-          target.to0 = newLeaf
-        return
-      echo "このメッセージはでないはずだよ"
-      echo n.binary(6)
-      echo now.dump()
-      echo target.dump()
-      doAssert false
-
-    proc goNextNode(target:var BinPatriciaNode) : bool =
-      if target == nil:
-        # この先が空なので直接葉を作る
-        target = newBinPatriciaNode()
-        target.isLeaf = true
-        target.valueOrMask = n
-        target.count = 1
-        return
-      if target.isLeaf:
-        if target.valueOrMask == n: # 葉があった
-          target.count += 1
-        else: # 中間点を作る
-          target.createInternalNode()
-        return
-      # prefix が違ったので新しくそこに作る
-      let x = target.valueOrMask
-      let mask = not(x xor (x - 1))
-      if (x and mask) != (n and mask) :
-        target.createInternalNode()
-        return
-      # 同じprefix を持つのでそちらに進む
-      now = target
-      return true
-    if now.isTo1(n) :
-      if not now.to1.goNextNode(): return
-    else:
-      if not now.to0.goNextNode(): return
+    next = now.to1
+    if now.isTo1(n): next = now.to1
+    if not goNextNode(): return
+    if now.isTo1(n): now.to1 = next
+    else: now.to0 = next
+    now = next
 proc `in`*(n:int,self:BinPatricia) : bool =
   var now = self.root
   while not now.isLeaf:
@@ -133,18 +133,21 @@ proc `in`*(n:int,self:BinPatricia) : bool =
       now = now.to0
   return now.valueOrMask == n
 # multi-set にしたくなければ
-proc add*(self:BinPatricia,n:int) =
+proc add*(self:var BinPatricia,n:int) =
   if not (n in self): self.addMulti(n)
 
 
 
 
 import "../mathlib/random"
-var T = newBinPatricia()
-for i in 0..100:
-  let r = random(40)
-  T.addMulti r.int
-  echo T.dump()
+import times
+template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
+stopwatch:
+  var T = newBinPatricia()
+  for i in 0..1000000:
+    let r = random(1e9.uint)
+    T.addMulti r.int
+  # echo T.dump()
   # echo T.dump()
 # echo T.dump()
 # T.add 0b000100
