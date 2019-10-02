@@ -27,8 +27,6 @@ else:
 
 proc bitSize(self:BinPatriciaNode):int =
   self.valueOrMask.culonglong.countTrailingZeroBits.int
-proc bitSize(self:BinPatricia):int = self.root.bitSize
-proc prefix(x:int): int = x and (x - 1)
 proc len*(self:BinPatricia) : int = self.root.count
 proc isTo1(self:BinPatriciaNode,n:int):bool{.inline.} =
   (self.valueOrMask and n) == self.valueOrMask # 上位bitは同じはずなので
@@ -48,12 +46,14 @@ proc binary(x:int,fill:int=0):string = # 二進表示
   return "0".repeat(0.max(fill - result.len)) & result
 proc dump(self:BinPatriciaNode,indent:int = 0) : string =
   if self == nil : return ""
-  result = $self.count
+  result = ""
+  result .add self.valueOrMask.binary(60)
   result .add "\t"
+  result .add $self.count
   for i in 0..<indent: result .add "  "
   if self.isLeaf: result.add "_"
   else: result.add "|"
-  result .add self.valueOrMask.binary(6) & "\n"
+  result = result & "\n"
   if self.isLeaf: return
   if self.to0 != nil: result.add self.to0.dump(indent + 1)
   if self.to1 != nil: result.add self.to1.dump(indent + 1)
@@ -62,66 +62,69 @@ proc dump(self:BinPatricia) : string = self.root.dump()
 # multi-set 的な add
 proc addMulti*(self:BinPatricia,n:int) =
   var now = self.root
+  # 中間点を生成
+  proc createInternalNode(target:var BinPatriciaNode) =
+    let cross = target.valueOrMask xor n
+    # 頑張れば bit 演算にできそう.
+    for bit in (now.bitSize() - 1).countdown(0):
+      if (cross and (1 shl bit)) == 0 : continue
+      var newLeaf = newBinPatriciaNode()
+      newLeaf.isLeaf = true
+      newLeaf.valueOrMask = n
+      newLeaf.count = 1
+      var pre = target
+      target = newBinPatriciaNode()
+      target.isLeaf = false
+      let n1 = pre.valueOrMask
+      let n2 = newLeaf.valueOrMask
+      let n3 = 1 shl (n1 xor n2).culonglong.fastLog2()
+      target.valueOrMask = (n1 or n2) and (not (n3 - 1))
+      target.count = newLeaf.count + pre.count
+      if target.isTo1(newLeaf.valueOrMask):
+        target.to1 = newLeaf
+        target.to0 = pre
+      else:
+        target.to1 = pre
+        target.to0 = newLeaf
+      return
+    echo "このメッセージはでないはずだよ"
+    echo n.binary(6)
+    echo now.dump()
+    echo target.dump()
+    doAssert false
+
+  proc goNextNode(target:var BinPatriciaNode) : bool =
+    if target == nil:
+      # この先が空なので直接葉を作る
+      target = newBinPatriciaNode()
+      target.isLeaf = true
+      target.valueOrMask = n
+      target.count = 1
+      return
+    if target.isLeaf:
+      if target.valueOrMask == n: # 葉があった
+        target.count += 1
+      else: # 中間点を作る
+        target.createInternalNode()
+      return
+    # prefix が違ったので新しくそこに作る
+    let x = target.valueOrMask
+    let mask = not(x xor (x - 1))
+    if (x and mask) != (n and mask) :
+      target.createInternalNode()
+      return
+    # 同じprefix を持つのでそちらに進む
+    return true
+
   while true:
     now.count += 1
-    # 中間点を生成
-    proc createInternalNode(target:var BinPatriciaNode) =
-      let cross = target.valueOrMask xor n
-      # 頑張れば bit 演算にできそう.
-      for bit in (now.bitSize() - 1).countdown(0):
-        if (cross and (1 shl bit)) == 0 : continue
-        var newLeaf = newBinPatriciaNode()
-        newLeaf.isLeaf = true
-        newLeaf.valueOrMask = n
-        newLeaf.count = 1
-        var pre = target
-        target = newBinPatriciaNode()
-        target.isLeaf = false
-        let n1 = pre.valueOrMask
-        let n2 = newLeaf.valueOrMask
-        let n3 = 1 shl (n1 xor n2).culonglong.fastLog2()
-        target.valueOrMask = (n1 or n2) and (not (n3 - 1))
-        target.count = newLeaf.count + pre.count
-        if target.isTo1(newLeaf.valueOrMask):
-          target.to1 = newLeaf
-          target.to0 = pre
-        else:
-          target.to1 = pre
-          target.to0 = newLeaf
-        return
-      echo "このメッセージはでないはずだよ"
-      echo n.binary(6)
-      echo now.dump()
-      echo target.dump()
-      doAssert false
-
-    proc goNextNode(target:var BinPatriciaNode) : bool =
-      if target == nil:
-        # この先が空なので直接葉を作る
-        target = newBinPatriciaNode()
-        target.isLeaf = true
-        target.valueOrMask = n
-        target.count = 1
-        return
-      if target.isLeaf:
-        if target.valueOrMask == n: # 葉があった
-          target.count += 1
-        else: # 中間点を作る
-          target.createInternalNode()
-        return
-      # prefix が違ったので新しくそこに作る
-      let x = target.valueOrMask
-      let mask = not(x xor (x - 1))
-      if (x and mask) != (n and mask) :
-        target.createInternalNode()
-        return
-      # 同じprefix を持つのでそちらに進む
-      now = target
-      return true
     if now.isTo1(n) :
       if not now.to1.goNextNode(): return
+      now = now.to1
     else:
       if not now.to0.goNextNode(): return
+      now = now.to0
+
 proc `in`*(n:int,self:BinPatricia) : bool =
   var now = self.root
   while not now.isLeaf:
@@ -142,9 +145,9 @@ proc add*(self:BinPatricia,n:int) =
 import "../mathlib/random"
 var T = newBinPatricia()
 for i in 0..100:
-  let r = random(40)
+  let r = random(1e9.uint)
   T.addMulti r.int
-  echo T.dump()
+echo T.dump()
   # echo T.dump()
 # echo T.dump()
 # T.add 0b000100
