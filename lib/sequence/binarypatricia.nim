@@ -1,4 +1,4 @@
-import sequtils
+import sequtils,nimprof
 
 # 普通の2進表示のパトリシア木.
 # 葉同士がリンクし合うのと余分なノードはスキップするのとで高速.
@@ -140,45 +140,12 @@ proc add*(self:BinPatricia,n:int) =
   if not (n in self): self.addMulti(n)
 
 
-
-
 import "../mathlib/random"
+import times
+template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
 var T = newBinPatricia()
-for i in 0..100:
-  let r = random(1e9.uint)
-  T.addMulti r.int
-echo T.dump()
+stopwatch:
+  for i in 0..1000000:
+    let r = random(1e9.uint)
+    T.addMulti r.int
   # echo T.dump()
-# echo T.dump()
-# T.add 0b000100
-# echo T.dump()
-# T.add 0b010100
-# echo T.dump()
-# T.add 0b010111
-# echo T.dump()
-# echo 0b000100 in T
-# echo 0b010100 in T
-# # 削除. multi のときでも一括削除可能
-# proc delete*(self:BinPatricia,n:int,multiAll:bool = false) =
-#   var now = self.root
-#   var lastBranch = now
-#   var lastIs0 = false
-#   for bit in (self.bitSize - 1).countdown(0):
-#     if (n and (1 shl bit)) > 0 : # 1
-#       if now.to1 == nil: return
-#       if now.to0 != nil:
-#         lastBranch = now
-#         lastIs0 = false
-#       now = now.to1
-#     else:
-#       if now.to0 == nil: return
-#       if now.to1 != nil:
-#         lastBranch = now
-#         lastIs0 = true
-#       now = now.to0
-#   if multiAll: now.count = 0
-#   now.count -= 1
-#   if now.count > 0: return
-#   self.card -= 1
-# せっかく木を作ったのでdeleteはしない.
-# そんなにメモリ困らないはず。困ったら消す.
