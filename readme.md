@@ -4,14 +4,14 @@
 [![CircleCI](https://circleci.com/gh/Muratam/yukicoder-nim/tree/master.svg?style=svg)](https://circleci.com/gh/Muratam/yukicoder-nim/tree/master) (Nim 0.20 & Nim 0.13)
 
 ライブラリはご自由にお使いください
-
+- lib/template.nim :: 競プロテンプレート
 - `lib/datastructure` :: データ構造
   - `queue/` : Deque, Queue, Stack : 末尾・先頭への追加削除 O(1)
   - `segmenttree/` :: 区間クエリ O(logN)
     - セグメントツリー{1D,2D} : 一点更新, 区間取得
     - BIT : 一点更新, 区間和
     - StarrySkyTree : 区間更新(加算),区間取得
-  - `set` :: 集合. 動的に要素を追加・削除可能
+  - `set/` :: 集合. 動的に要素を追加・削除可能
     - std::{set,multiset} :: 追加・削除・検索・最{小,大}値・{以上,以下}列挙 O(logN)
     - UnionFind : 森のマージ・根の取得 O(1)
     - bitset : ビット演算の集合.
@@ -21,12 +21,6 @@
     - ロリハ(通常/軽量) : 部分文字列同一判定 O(1)
     - SA-IS : 文字列全検索 O(MlogS)
     - Z-algorithm: S と S[i:] の 同一prefix長 O(1)
-  - `seq/`
-    - search : 二分探索 / 三分探索 / lowerBoundの `< <= > >=` 表記
-    - LIS : 最長増加部分列
-    - slidemin : スライド最小値
-    - sequence : arg{min,max} / deduplicate / 10進数と配列変換
-    - iteration : 順列 / ペア順列 / 階段
 - `lib/mathlib` :: 数学
   - matrix :: 行列(転置,乗算,累乗,加算,単位行列)
   - modint :: ModInt (累乗,除算)
@@ -44,7 +38,12 @@
   - Link :: 橋,関節点 ,x:一筆書き(オイラー路)
   - TODO: AdjMatrix(隣接行列: 補グラフ/変換/最大クリーク(最大独立集合)/(最小)彩色数)
   - TODO: Testgraph(テストケース)
-- lib/functions.nim (いつもの / IO / Pos)
+- `lib/seq/` :: seqを操作
+  - search : 二分探索 / 三分探索 / lowerBoundの `< <= > >=` 表記
+  - LIS : 最長増加部分列
+  - slidemin : スライド最小値
+  - sequence : arg{min,max} / deduplicate / 10進数と配列変換
+  - iteration : 順列 / ペア順列 / 階段
 - `lib/garbase` : 書き捨てたコード.いつか使う時はくるのか...?
   - `tree` : std::map で全て事足りるので...
     - 二進パトリシア木 : xorに強い k番目の最小値が取れるheap

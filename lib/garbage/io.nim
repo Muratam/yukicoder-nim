@@ -1,51 +1,20 @@
-import sequtils
-# import algorithm,math,times,bitops
-# import tables,intsets,sets,queues
-# import macros,strutils,sugar,heapqueue
-# import rationals,critbits,ropes,nre,pegs,complex,stats
-template times*(n:int,body) = (for _ in 0..<n: body)
-template `max=`*(x,y) = x = max(x,y)
-template `min=`*(x,y) = x = min(x,y)
-
-# 実行時間/メモリ使用量解析
-template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
-proc printMemories*() =
-  proc printMem(mem: int, spec: string) =
-    echo spec, " MEM:", mem div 1024 div 1024, "MB"
-  getTotalMem().printMem("TOTAL")
-  getOccupiedMem().printMem("OCCUP")
-  getFreeMem().printMem("FREE ")
-
-# Pos
-const dxdy4 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0)]
-const dxdy8 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0),(1,1),(1,-1),(-1,-1),(-1,1)]
-type Pos = tuple[x,y:int]
-proc `+`(p,v:Pos):Pos = (p.x+v.x,p.y+v.y)
-proc dot(p,v:Pos):int = p.x * v.x + p.y * v.y
-
-# Input
-template useUnsafeInput() =
-  setStdIoUnbuffered()
-  proc gets(str: untyped){.header: "<stdio.h>", varargs.}
-  proc scanf(formatstr: cstring){.header: "<stdio.h>", varargs.}
-  proc scan(): int = scanf("%lld\n",addr result)
-  proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>",discardable .}
-  proc scan(): int =
-    while true:
-      var k = getchar_unlocked()
-      if k < '0' or k > '9': break
-      result = 10 * result + k.ord - '0'.ord
-  proc scan(): int =
-    var minus = false
-    block:
-      let k = getchar_unlocked()
-      if k == '-' : minus = true
-      else: result = 10 * result + k.ord - '0'.ord
-    while true:
-      let k = getchar_unlocked()
-      if k < '0' or k > '9': break
-      result = 10 * result + k.ord - '0'.ord
-    if minus: result *= -1
+# 呪文
+setStdIoUnbuffered()
+# だめなやつだけど爆速
+proc gets(str: cstring){.header: "<stdio.h>", varargs.}
+# 負の要素がある場合のscan
+proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>",discardable .}
+proc scan(): int =
+  var minus = false
+  block:
+    let k = getchar_unlocked()
+    if k == '-' : minus = true
+    else: result = 10 * result + k.ord - '0'.ord
+  while true:
+    let k = getchar_unlocked()
+    if k < '0' or k > '9': break
+    result = 10 * result + k.ord - '0'.ord
+  if minus: result *= -1
 
 # Output
 template useUnsafeOutput() =
@@ -81,7 +50,6 @@ template useUnsafeOutput() =
   template printInt(n:int,c:char) =
     printInt(n.int32)
     putchar_unlocked(c)
-
   proc printInt(a0:int) =
     # if a0 < 0 : putchar_unlocked('-') # マイナスにも対応したければこれで可能
     # var a0 = a0.abs
