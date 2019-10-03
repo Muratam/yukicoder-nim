@@ -1,5 +1,5 @@
 import sequtils
-import "../datastructure/queue/priorityqueue"
+import "../datastructure/set/priorityqueue"
 const INF = 1e10.int
 # 最短経路 O(ElogE) / 負有り:O(EV) / 全:O(V^3)
 # ダイクストラ : O(ElogE) コストが負でないときの(startからの)最短路

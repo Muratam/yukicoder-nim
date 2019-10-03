@@ -1,4 +1,4 @@
-import "../datastructure/queue/priorityqueue"
+import "../datastructure/set/priorityqueue"
 import sequtils
 when NimMajor * 100 + NimMinor < 19:import queues
 else: import "../datastructure/queue/queue"

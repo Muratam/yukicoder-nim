@@ -1,6 +1,6 @@
 
 import sequtils,algorithm
-import "../datastructure/unionfind"
+import "../datastructure/set/unionfind"
 # 最小全域木(無効グラフ) O(ElogV)
 # 最小全域木のコスト(max / sum)を返却
 #  0..<maxN, E:辺のリスト(コスト順に並び替えるため)

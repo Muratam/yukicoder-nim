@@ -4,17 +4,19 @@
 [![CircleCI](https://circleci.com/gh/Muratam/yukicoder-nim/tree/master.svg?style=svg)](https://circleci.com/gh/Muratam/yukicoder-nim/tree/master) (Nim 0.20 & Nim 0.13)
 
 ライブラリはご自由にお使いください
+
 - `lib/datastructure` :: データ構造
-  - UnionFind : 森のマージ・根の取得 O(1)
-  - bitset : ビット演算の集合.
-  - `queue/` :
-    - Deque, Queue, Stack : 末尾・先頭への追加削除 O(1)
-    - PriorityQueue : 最小値検索 O(1), 追加・最小値削除　O(logN)
-    - SkewHeap : ↑ + マージ O(logN)
+  - `queue/` : Deque, Queue, Stack : 末尾・先頭への追加削除 O(1)
   - `segmenttree/` :: 区間クエリ O(logN)
     - セグメントツリー{1D,2D} : 一点更新, 区間取得
     - BIT : 一点更新, 区間和
     - StarrySkyTree : 区間更新(加算),区間取得
+  - `set` :: 集合. 動的に要素を追加・削除可能
+    - std::{set,multiset} :: 追加・削除・検索・最{小,大}値・{以上,以下}列挙 O(logN)
+    - UnionFind : 森のマージ・根の取得 O(1)
+    - bitset : ビット演算の集合.
+    - PriorityQueue : 最小値検索 O(1), 追加・最小値削除　O(logN)
+    - SkewHeap : ↑ + マージ O(logN)
   - `string/` :: 構築 O(S). 文字列検索用.
     - ロリハ(通常/軽量) : 部分文字列同一判定 O(1)
     - SA-IS : 文字列全検索 O(MlogS)
@@ -25,9 +27,6 @@
     - slidemin : スライド最小値
     - sequence : arg{min,max} / deduplicate / 10進数と配列変換
     - iteration : 順列 / ペア順列 / 階段
-  - `cpp/`
-    - std::{set,multiset} :: 追加・削除・検索・最小値・最大値・その値{以上,以下}全て列挙
-    - std::vector / std::priority_queue : 互換性のため
 - `lib/mathlib` :: 数学
   - matrix :: 行列(転置,乗算,累乗,加算,単位行列)
   - modint :: ModInt (累乗,除算)
@@ -50,6 +49,7 @@
   - `tree` : std::map で全て事足りるので...
     - 二進パトリシア木 : xorに強い k番目の最小値が取れるheap
     - 謎木 / RBST / 赤黒木
+  - `cpp` : std::vector / std::priority_queue
   - timecost : 演算の速度検証
   - sparsematrix : 疎行列
   - math : フィボナッチ数列の第N項 / 線形回帰(最小二乗法)
