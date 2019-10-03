@@ -28,14 +28,40 @@ proc contains*[T](self:CSet[T],x:T):bool = self.find(x) != self.`end`()
 iterator items*[T](self:CSet[T]) : T =
   var (a,b) = (self.begin(),self.`end`())
   while a != b : yield *a; ++a
-proc `>`*[T](self:CSet[T],x:T) : seq[T] =
+iterator `>`*[T](self:CSet[T],x:T) : T =
   var (a,b) = (self.upper_bound(x),self.`end`())
-  result = @[]; while a != b :result .add *a; ++a
-proc `>=`*[T](self:CSet[T],x:T) : seq[T] =
+  while a != b : yield *a; ++a
+iterator `>=`*[T](self:CSet[T],x:T) : T =
   var (a,b) = (self.lower_bound(x),self.`end`())
-  result = @[]; while a != b :result .add *a; ++a
+  while a != b : yield *a; ++a
+iterator `<=`*[T](self:CSet[T],x:T) : T =
+  # 重複要素を個数分列挙する必要があるので upper_bound
+  var (a,b) = (self.lower_bound(x),self.`begin`())
+  if a != self.`end`():
+    if *a <= x : yield *a
+    if a != b : # 0番だった
+      --a
+      while a != b :
+        yield *a
+        --a
+      if *a <= x : yield *a
+iterator `<`*[T](self:CSet[T],x:T) : T =
+  var (a,b) = (self.lower_bound(x),self.`begin`())
+  if a != self.`end`():
+    if *a < x : yield *a
+    if a != b : # 0番だった
+      --a
+      while a != b :
+        yield *a
+        --a
+      if *a < x : yield *a
+iterator range[T](self:CSet[T],slice:Slice[T]) : T =
+  for x in self >= slice.a:
+    if x > slice.b : break
+    yield x
+
 proc toSet*[T](arr:seq[T]): CSet[T] = (result = initSet[T]();for a in arr: result.add(a))
-proc toSeq[T](self:CSet[T]):seq[T] = self.mapIt(it)
+proc fromSet[T](self:CSet[T]):seq[T] = self.mapIt(it)
 proc `$`*[T](self:CSet[T]): string = $self.mapIt(it)
 
 when isMainModule:
@@ -46,16 +72,14 @@ when isMainModule:
     check: s.min() == 1
     check: s.max() == 9
     check: s.len == 7
-    check: s > 4 == @[5, 6, 9]
-    check: s >= 4 == @[4, 5, 6, 9]
+    check: s.fromSet() == @[1, 2, 3, 4, 5, 6, 9]
+    check: toSeq(s > 4) == @[5, 6, 9]
+    check: toSeq(s >= 4) == @[4, 5, 6, 9]
+    check: toSeq(s < 4) == @[3, 2, 1]
+    check: toSeq(s <= 4) == @[4, 3, 2, 1]
+    check: toSeq(s.range(2..6)) == @[2,3,4,5,6]
     s.erase(s.max())
     check: s.max() == 6
     for _ in 0..<10: s.erase(1)
     check: s.min() == 2
-    block: # https://github.com/nim-lang/Nim/issues/12184
-      var (S1,S2) = (cInitSet(int),cInitSet(int))
-      S1.insert 1
-      if S1 == S2:
-        check: false
-      else:
-        check: true
+    check: s == s

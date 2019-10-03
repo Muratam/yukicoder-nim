@@ -15,9 +15,6 @@
     - セグメントツリー{1D,2D} : 一点更新, 区間取得
     - BIT : 一点更新, 区間和
     - StarrySkyTree : 区間更新(加算),区間取得
-  - `tree/`　:: 追加・削除・クエリ O(logN)
-    - kd木
-    - TODO: トライ木
   - `string/` :: 構築 O(S). 文字列検索用.
     - ロリハ(通常/軽量) : 部分文字列同一判定 O(1)
     - SA-IS : 文字列全検索 O(MlogS)
@@ -29,7 +26,7 @@
     - sequence : arg{min,max} / deduplicate / 10進数と配列変換
     - iteration : 順列 / ペア順列 / 階段
   - `cpp/`
-    - std::{set,multiset} (min / max / >= がO(log(N)))
+    - std::{set,multiset} :: 追加・削除・検索・最小値・最大値・その値{以上,以下}全て列挙
     - std::vector / std::priority_queue : 互換性のため
 - `lib/mathlib` :: 数学
   - matrix :: 行列(転置,乗算,累乗,加算,単位行列)
@@ -49,8 +46,10 @@
   - TODO: AdjMatrix(隣接行列: 補グラフ/変換/最大クリーク(最大独立集合)/(最小)彩色数)
   - TODO: Testgraph(テストケース)
 - lib/functions.nim (いつもの / IO / Pos)
-- lib/garbase : 書き捨てたコード.いつか使う時はくるのか...?
-  - 二進パトリシア木 : k番目の最小値が取れるheap
+- `lib/garbase` : 書き捨てたコード.いつか使う時はくるのか...?
+  - `tree` : std::map で全て事足りるので...
+    - 二進パトリシア木 : xorに強い k番目の最小値が取れるheap
+    - 謎木 / RBST / 赤黒木
   - timecost : 演算の速度検証
   - sparsematrix : 疎行列
   - math : フィボナッチ数列の第N項 / 線形回帰(最小二乗法)
