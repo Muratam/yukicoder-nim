@@ -1,6 +1,6 @@
 # 赤黒木. custom-compareや特殊な木の構築が必要でなければこれで良い.
-type CMultiSet {.importcpp: "std::multiset", header: "<set>".} [T] = object
-type CMultiSetIter {.importcpp: "std::multiset<'0>::iterator", header: "<set>".} [T] = object
+type CMultiSet* {.importcpp: "std::multiset", header: "<set>".} [T] = object
+type CMultiSetIter* {.importcpp: "std::multiset<'0>::iterator", header: "<set>".} [T] = object
 proc cInitMultiSet(T: typedesc): CMultiSet[T] {.importcpp: "std::multiset<'*1>()", nodecl.}
 proc initMultiSet*[T](): CMultiSet[T] = cInitMultiSet(T)
 proc insert*[T](self: var CMultiSet[T],x:T) {.importcpp: "#.insert(@)", nodecl.}
@@ -59,14 +59,13 @@ iterator `<`*[T](self:CMultiSet[T],x:T) : T =
         yield *a
         --a
       if *a < x : yield *a
-iterator range[T](self:CMultiSet[T],slice:Slice[T]) : T =
+iterator range*[T](self:CMultiSet[T],slice:Slice[T]) : T =
   for x in self >= slice.a:
     if x > slice.b : break
     yield x
 
-
 proc toMultiSet*[T](arr:seq[T]): CMultiSet[T] = (result = initMultiSet[T]();for a in arr: result.add(a))
-proc fromMultiSet[T](self:CMultiSet[T]):seq[T] = self.mapIt(it)
+proc fromMultiSet*[T](self:CMultiSet[T]):seq[T] = self.mapIt(it)
 proc `$`*[T](self:CMultiSet[T]): string = $self.mapIt(it)
 
 

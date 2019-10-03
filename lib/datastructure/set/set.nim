@@ -1,12 +1,6 @@
-type CSet {.importcpp: "std::set", header: "<set>".} [T] = object
-type CSetIter {.importcpp: "std::set<'0>::iterator", header: "<set>".} [T] = object
+type CSet* {.importcpp: "std::set", header: "<set>".} [T] = object
+type CSetIter* {.importcpp: "std::set<'0>::iterator", header: "<set>".} [T] = object
 proc cInitSet(T: typedesc): CSet[T] {.importcpp: "std::set<'*1>()", nodecl.}
-proc initSet*[T](): CSet[T] = cInitSet(T)
-proc insert*[T](self: var CSet[T],x:T) {.importcpp: "#.insert(@)", nodecl.}
-proc empty*[T](self: CSet[T]):bool {.importcpp: "#.empty()", nodecl.}
-proc size*[T](self: CSet[T]):int {.importcpp: "#.size()", nodecl.}
-proc clear*[T](self:var CSet[T]) {.importcpp: "#.clear()", nodecl.}
-proc erase*[T](self: var CSet[T],x:T) {.importcpp: "#.erase(@)", nodecl.}
 proc erase*[T](self: var CSet[T],x:CSetIter[T]) {.importcpp: "#.erase(@)", nodecl.}
 proc find*[T](self: CSet[T],x:T): CSetIter[T] {.importcpp: "#.find(#)", nodecl.}
 proc lower_bound*[T](self: CSet[T],x:T): CSetIter[T] {.importcpp: "#.lower_bound(#)", nodecl.}
@@ -18,6 +12,12 @@ proc `++`*[T](self:var CSetIter[T]){.importcpp: "++#", nodecl.}
 proc `--`*[T](self:var CSetIter[T]){.importcpp: "--#", nodecl.}
 # https://github.com/nim-lang/Nim/issues/12184
 proc `==`*[T](x,y:CSetIter[T]):bool{.importcpp: "(#==#)", nodecl.}
+proc initSet*[T](): CSet[T] = cInitSet(T)
+proc insert*[T](self: var CSet[T],x:T) {.importcpp: "#.insert(@)", nodecl.}
+proc empty*[T](self: CSet[T]):bool {.importcpp: "#.empty()", nodecl.}
+proc size*[T](self: CSet[T]):int {.importcpp: "#.size()", nodecl.}
+proc clear*[T](self:var CSet[T]) {.importcpp: "#.clear()", nodecl.}
+proc erase*[T](self: var CSet[T],x:T) {.importcpp: "#.erase(@)", nodecl.}
 proc `==`*[T](x,y:CSet[T]):bool{.importcpp: "(#==#)", nodecl.}
 import sequtils # nim alias
 proc add*[T](self:var CSet[T],x:T) = self.insert(x)
@@ -55,6 +55,7 @@ iterator `<`*[T](self:CSet[T],x:T) : T =
         yield *a
         --a
       if *a < x : yield *a
+
 iterator range[T](self:CSet[T],slice:Slice[T]) : T =
   for x in self >= slice.a:
     if x > slice.b : break

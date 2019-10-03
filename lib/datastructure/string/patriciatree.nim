@@ -1,6 +1,5 @@
 # トライ木 (prefix-tree)
 # 追加・prefix探索が O(|S|)
-# 小さい文字列を大量に扱う場合に適当
 # 長い文字列ではパトリシア木(Radix-Tree)を使う
 import sequtils
 type
