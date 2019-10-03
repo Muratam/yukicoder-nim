@@ -75,59 +75,61 @@ proc addMulti*(self:PatriciaTree,S:string) =
     if now.nexts[s].value.len == index:
       now = now.nexts[s]
       continue
+    # 異なるので中間点を作る必要がある
+    var common = self.charSize
+      .newPatriciaNode(if S.len == index: S else: S[0..<index])
     # 自分の方が短かったので自身を中間点とする
     let differentCharP = now.nexts[s].value[index].ord - self.offset
-    if S.len == index:
-      var common = self.charSize.newPatriciaNode(S)
-      let preTree = now.nexts[s]
-      now.nexts[s] = common
-      common.nexts[differentCharP] = preTree
-      common.count = 1
-      common.countSum = preTree.countSum + 1 + 1
-      return
-    # まだまだ長さに余力があるが,prefixが違うところに来た
-    # 中間点を作成
-    let differentCharS = S[index].ord - self.offset
-    let commonPrefix = S[0..<index]
-    var common = self.charSize.newPatriciaNode(commonPrefix)
     let preTree = now.nexts[s]
     now.nexts[s] = common
-    common.nexts[differentCharS] = self.charSize.newPatriciaNode(S)
     common.nexts[differentCharP] = preTree
     common.count = 0
     common.countSum = preTree.countSum + 1
+    # そこで終了した
+    if S.len == index:
+      common.count += 1
+      common.countSum += 1
+      return
+    # まだまだ長さに余力があるが,prefixが違うところに来たのだった. 新しい葉を作って終了
+    let differentCharS = S[index].ord - self.offset
+    if common.nexts[differentCharS] != nil:
+      echo "このメッセージはでないはずだよ"
+      doAssert(false)
+    common.nexts[differentCharS] = self.charSize.newPatriciaNode(S)
     return
+
 proc len*(self:PatriciaTree):int = self.root.countSum
+
 
 when isMainModule:
   import strutils
-  # import algorithm,strutils
-  # proc `[]`(a:int,i:range[0..63]) : bool = (a and (1 shl i)) != 0
-  # proc toBoolSeq(a:int): seq[bool] =
-  #   result = newSeq[bool](64)
-  #   for i in 0..<64: result[i] = a[i]
-  # proc toBinStr(a:int,maxKey:int=64):string =
-  #   result = a.toBoolSeq().reversed().mapIt($it.int).join("")
-  #   result = result[(64-maxKey)..^1]
-  # import times
-  # var xorShiftVar* = 88172645463325252.uint64
-  # xorShiftVar = cast[uint64](cpuTime()) # 初期値を固定しない場合
-  # proc xorShift() : uint64 =
-  #   xorShiftVar = xorShiftVar xor (xorShiftVar shl 13)
-  #   xorShiftVar = xorShiftVar xor (xorShiftVar shr 7)
-  #   xorShiftVar = xorShiftVar xor (xorShiftVar shl 17)
-  #   return xorShiftVar
-  # proc random*(maxIndex: int): int =
-  #   cast[int](xorShift() mod maxIndex.uint64)
-  # proc shuffle*[T](x: var openArray[T]) =
-  #   for i in countdown(x.high, 1):
-  #     swap(x[i], x[random(i)])
-  var T = newLowerCasePatriciaTree()
-  # for i in 0..<1000:
-  #   T.addMulti random(10000).toBinStr(0)
-  T.addMulti "aiueo"
-  T.addMulti "aiaaueo"
-  T.addMulti "aiuedasdo"
-  T.addMulti "aaaiueo"
-  T.addMulti "aiddueoxx"
+  import algorithm,strutils
+  proc `[]`(a:int,i:range[0..63]) : bool = (a and (1 shl i)) != 0
+  proc toBoolSeq(a:int): seq[bool] =
+    result = newSeq[bool](64)
+    for i in 0..<64: result[i] = a[i]
+  proc toBinStr(a:int,maxKey:int=64):string =
+    result = a.toBoolSeq().reversed().mapIt($it.int).join("")
+    result = result[(64-maxKey)..^1]
+  import times
+  var xorShiftVar* = 88172645463325252.uint64
+  xorShiftVar = cast[uint64](cpuTime()) # 初期値を固定しない場合
+  proc xorShift() : uint64 =
+    xorShiftVar = xorShiftVar xor (xorShiftVar shl 13)
+    xorShiftVar = xorShiftVar xor (xorShiftVar shr 7)
+    xorShiftVar = xorShiftVar xor (xorShiftVar shl 17)
+    return xorShiftVar
+  proc random*(maxIndex: int): int =
+    cast[int](xorShift() mod maxIndex.uint64)
+  proc shuffle*[T](x: var openArray[T]) =
+    for i in countdown(x.high, 1):
+      swap(x[i], x[random(i)])
+  var T = newNumericPatriciaTree()
+  for i in 0..<1000:
+    T.addMulti random(10000).toBinStr(random(20))
+  # T.addMulti "aiueo"
+  # T.addMulti "aiaaueo"
+  # T.addMulti "aiuedasdo"
+  # T.addMulti "aaaiueo"
+  # T.addMulti "aiddueoxx"
   echo T
