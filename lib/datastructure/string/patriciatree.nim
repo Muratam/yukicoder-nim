@@ -17,6 +17,14 @@ proc newPatriciaNode(charSize:int,value:string):PatriciaNode =
   result.count = 1
   result.countSum = 1
   result.value = value
+proc `$`*(self:PatriciaTree):string =
+  proc dump(node:PatriciaNode,indent:int = 0):string =
+    result = ""
+    for i in 0..<indent: result.add " "
+    result.add node.value & "(" & $node.countSum & ", " & $node.count & ")\n"
+    for next in node.nexts:
+      if next != nil: result.add next.dump(indent + 1)
+  return self.root.dump()
 proc newPatriciaTree*(charSize:int,offset:int):PatriciaTree =
   new(result)
   result.root = newPatriciaNode(charSize,"")
@@ -45,47 +53,44 @@ proc addMulti*(self:PatriciaTree,S:string) =
   var index = 0
   while true:
     now.countSum += 1
+    # 既に index は該当の場所になっていると仮定
     let s = S[index].ord - self.offset
-     # 無かったので追加
+    # 無かったので追加
     if now.nexts[s] == nil:
       now.nexts[s] = self.charSize.newPatriciaNode(S)
       return
+    # now.nexts[s] が存在する
+    # どちらがよりふさわしいかを確かめる.
     let minLen = S.len.min(now.nexts[s].value.len)
     while true:
       if index >= minLen: break
       if now.nexts[s].value[index] != S[index]: break
       index += 1
-    # 自分は短かった
-    if S.len == index:
-      # 全く同じだったので何もしなくて良い
-      if S.len == now.nexts[s].value.len:
-        now.nexts[s].count += 1
-        now.nexts[s].countSum += 1
-        return
-      # 相手の方が長かったので自身を中間点とする
-      var common = self.charSize.newPatriciaNode(S)
-      let preTree = now.nexts[s]
-      let differentCharP = now.nexts[s].value[index].ord - self.offset
-      now.nexts[s] = common
-      common.nexts[differentCharP] = preTree
-      common.count = 1
-      common.countSum = preTree.countSum + 2
-      return
-    # 次へ
-    let differentCharS = S[index].ord - self.offset
-    if now.nexts[s].nexts[differentCharS] != nil:
+    # 全く同じだった
+    if S.len == index and now.nexts[s].value.len == index:
+      now.nexts[s].count += 1
       now.nexts[s].countSum += 1
-      now = now.nexts[s].nexts[differentCharS] # WARN
-      continue
-    # ちょうどそれがprefix だった
+      return
+    # 相手の方が短かったので相手はただの通過点であった.
     if now.nexts[s].value.len == index:
       now = now.nexts[s]
       continue
+    # 自分の方が短かったので自身を中間点とする
+    let differentCharP = now.nexts[s].value[index].ord - self.offset
+    if S.len == index:
+      var common = self.charSize.newPatriciaNode(S)
+      let preTree = now.nexts[s]
+      now.nexts[s] = common
+      common.nexts[differentCharP] = preTree
+      common.count = 1
+      common.countSum = preTree.countSum + 1 + 1
+      return
+    # まだまだ長さに余力があるが,prefixが違うところに来た
     # 中間点を作成
+    let differentCharS = S[index].ord - self.offset
     let commonPrefix = S[0..<index]
     var common = self.charSize.newPatriciaNode(commonPrefix)
     let preTree = now.nexts[s]
-    let differentCharP = now.nexts[s].value[index].ord - self.offset
     now.nexts[s] = common
     common.nexts[differentCharS] = self.charSize.newPatriciaNode(S)
     common.nexts[differentCharP] = preTree
@@ -93,34 +98,36 @@ proc addMulti*(self:PatriciaTree,S:string) =
     common.countSum = preTree.countSum + 1
     return
 proc len*(self:PatriciaTree):int = self.root.countSum
-proc `$`*(self:PatriciaTree):string =
-  proc dump(node:PatriciaNode,indent:int = 0):string =
-    result = ""
-    for i in 0..<indent: result.add " "
-    result.add node.value & "(" & $node.countSum & ", " & $node.count & ")\n"
-    for next in node.nexts:
-      if next != nil: result.add next.dump(indent + 1)
-  return self.root.dump()
-
 
 when isMainModule:
   import strutils
-  var T = newNumericPatriciaTree()
-  T.addMulti "22222"
-  echo T
-  T.addMulti "12345"
-  echo T
-  T.addMulti "22333"
-  echo T
-  T.addMulti "22333444"
-  echo T
-  T.addMulti "22333444"
-  echo T
-  T.addMulti ""
-  echo T
-  T.addMulti "123456789"
-  echo T
-  T.addMulti "1234"
-  echo T
-  T.addMulti "22334"
+  # import algorithm,strutils
+  # proc `[]`(a:int,i:range[0..63]) : bool = (a and (1 shl i)) != 0
+  # proc toBoolSeq(a:int): seq[bool] =
+  #   result = newSeq[bool](64)
+  #   for i in 0..<64: result[i] = a[i]
+  # proc toBinStr(a:int,maxKey:int=64):string =
+  #   result = a.toBoolSeq().reversed().mapIt($it.int).join("")
+  #   result = result[(64-maxKey)..^1]
+  # import times
+  # var xorShiftVar* = 88172645463325252.uint64
+  # xorShiftVar = cast[uint64](cpuTime()) # 初期値を固定しない場合
+  # proc xorShift() : uint64 =
+  #   xorShiftVar = xorShiftVar xor (xorShiftVar shl 13)
+  #   xorShiftVar = xorShiftVar xor (xorShiftVar shr 7)
+  #   xorShiftVar = xorShiftVar xor (xorShiftVar shl 17)
+  #   return xorShiftVar
+  # proc random*(maxIndex: int): int =
+  #   cast[int](xorShift() mod maxIndex.uint64)
+  # proc shuffle*[T](x: var openArray[T]) =
+  #   for i in countdown(x.high, 1):
+  #     swap(x[i], x[random(i)])
+  var T = newLowerCasePatriciaTree()
+  # for i in 0..<1000:
+  #   T.addMulti random(10000).toBinStr(0)
+  T.addMulti "aiueo"
+  T.addMulti "aiaaueo"
+  T.addMulti "aiuedasdo"
+  T.addMulti "aaaiueo"
+  T.addMulti "aiddueoxx"
   echo T
