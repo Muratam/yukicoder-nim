@@ -5,22 +5,23 @@
 
 ライブラリはご自由にお使いください
 - `lib/datastructure` :: データ構造
-  - UnionFind
-  - bitset :: 操作が全てビット演算で64倍速.最大/最小キーなど.BitDPと供に
-  - `queue/` :: Stack, Queue, Deque
-  - `segmenttree/` :: クエリが O(logN)
-    - セグメントツリー{1D,2D} :: 一点更新, 区間取得
-    - BIT :: 一点更新, 区間和
-    - StarrySkyTree :: 区間更新(加算),区間取得
-  - `heap/`　:: 追加・削除 O(logN) 以下
-    - BinaryHeap : 最小値 O(1)
-    - SkewHeap : ↑ + マージ O(1)
+  - UnionFind : 森のマージ・根の取得 O(1)
+  - bitset : ビット演算の集合.
+  - `queue/`
+    - Deque, Queue, Stack : 末尾・先頭への追加削除 O(1)
+    - PriorityQueue : 最小値検索 O(1), 追加・最小値削除　O(logN)
+    - SkewHeap : ↑ + マージ O(logN)
+  - `segmenttree/` :: 区間クエリ O(logN)
+    - セグメントツリー{1D,2D} : 一点更新, 区間取得
+    - BIT : 一点更新, 区間和
+    - StarrySkyTree : 区間更新(加算),区間取得
+  - `heap/`　:: 追加・削除・クエリ O(logN)
     - TODO: 二進パトリシア木
-  - `string/`
-    - ロリハ(通常/軽量) :
-    - SA-IS: 接尾辞配列 O(S)
-    - Z-algorithm: 最長共通接頭辞 O(S)
     - TODO: トライ木
+  - `string/` :: 構築 O(S). 文字列検索用.
+    - ロリハ(通常/軽量) : 部分文字列同一判定 O(1)
+    - SA-IS : 文字列全検索 O(MlogS)
+    - Z-algorithm: S と S[i:] の 同一prefix長 O(1)
   - `seq/`
     - search : 二分探索 / 三分探索 / lowerBoundの `< <= > >=` 表記
     - LIS : 最長増加部分列
@@ -36,7 +37,7 @@
   - prime :: 素数(SFF,素数表,素数リスト)
   - arith :: 算術(順列,組み合わせ,累乗,四捨五入)
   - count :: 数え上げ(nCk,カタラン数,第2種スターリング数,x:ベル数,sternBrocotTree(有理数列挙))
-  - random :: 乱数(Nim0.13用,時間制限まで乱択)
+  - random :: 乱数(xorShift,時間制限内乱択)
   - geometry :: 二次元(複素数)幾何
 - `lib/graph` :: グラフ理論
   - Tree :: 入力を木に,オイラーツアー,最小共通祖先(LCA:探索O(log(n)))
@@ -49,6 +50,7 @@
   - TODO: Testgraph(テストケース)
 - lib/functions.nim (いつもの / IO / Pos)
 - lib/garbase : 書き捨てたコード
+  - timecost : 演算の速度検証
   - sparsematrix : 疎行列
   - math : フィボナッチ数列の第N項 / 線形回帰(最小二乗法)
   - sequence : countContinuity / toCountTable / toTuple / cmp ...
@@ -59,5 +61,9 @@
 - introduction : https://chy72.hatenablog.com/entry/2017/12/16/214708
 - AtCoder Beginners Selection : https://chy72.hatenablog.com/entry/2019/07/10/212911
 
-# TODO
-- lib/graph は問題によって正しさを証明したい
+# 定数倍改善のヒント
+- 通常は `tuple[x,y:int]` などのように書いて楽をするが、 定数倍でTLEする場合は `ref object` を検討する価値がある.
+-`lib/garbage/timecost` に基づく結果.
+  - malloc は動的に行うと10~100倍遅い.可能なら最初に一括でやりたい
+  - データはなるべくassignしない.
+  - 配列にあるならそれをそのまま毎回index-accessして使う方が速い。

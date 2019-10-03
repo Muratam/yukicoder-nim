@@ -57,6 +57,7 @@ else:
     let amount = amount and 63
     result = (value shl amount) or (value shr ( (-amount) and 63))
   # math.nextPowerOfTwo() (0->1, 5->8, 16->16)
+
 # 要素数
 proc len(a:BitSet) :int = cast[culonglong](a).popcount()
 proc lenIsOdd(a:BitSet) : bool = 1 == cast[culonglong](a).parityBits()
@@ -65,19 +66,11 @@ proc lenIs1(a:BitSet): bool =  (a > 0) and ((a and (a - 1)) == 0)
 proc maxKey(a:BitSet):int = 63 - cast[culonglong](a).countLeadingZeroBits()
 proc minKey(a:BitSet):int = cast[culonglong](a).countTrailingZeroBits()
 proc onlyMinKeySet(a:BitSet):BitSet = a and (-a) # 意味的には factorOf2
-proc allGreaterThanMaxKeySet(a:BitSet):BitSet = # ダブリングするのでちょっと重い
-  var m = cast[uint64](a)
-  m = m or (m shr 32)
-  m = m or (m shr 16)
-  m = m or (m shr 8)
-  m = m or (m shr 4)
-  m = m or (m shr 2)
-  m = m or (m shr 1)
-  return cast[int](not m)
-proc onlyMaxKeySet(a:BitSet):BitSet = # 意味的には NextPowerOf2
-  if a < 0 : return 0x8000_0000_0000_0000.int
-  if a == 0 : return 0
-  return (cast[int]((a.allGreaterThanMaxKeySet() shr 1))).onlyMinKeySet()
+proc onlyMaxKeySet(a:BitSet):BitSet = 1 shl a.maxKey() # 意味的には NextPowerOf2
+proc allGreaterThanMaxKeySet(a:BitSet):BitSet =
+  if a == 0 : return -1
+  let maxKey = a.onlyMaxKeySet()
+  return (not(maxKey - 1)) xor maxKey
 proc allSmallerThanMinKeySet(a:BitSet):BitSet =
   if a == 0 : return 0
   else: return a.onlyMinKeySet() - 1
@@ -97,7 +90,8 @@ proc powerOf2(i:range[0..63]):int = 1 shl i
 iterator allState(maxSize:int): BitSet =
   for a in 0..<(1 shl maxSize): yield a
 
-# {.inline.,noSideEffect} をつけると速くなるかも？
+# TODO: LZCNT ははやい！ を shl とどちらが速いか検証
+# {.inline,noSideEffect.} をつけてもそんなに変わらない.見にくくなるだけ損
 when isMainModule:
   import unittest
   test "bitset":
