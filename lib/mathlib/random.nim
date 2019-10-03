@@ -9,8 +9,8 @@ proc xorShift() : uint64 =
   return xorShiftVar
 proc random*(maxIndex: int): int =
   cast[int](xorShift() mod maxIndex.uint64)
-proc randomBit*(maxBit:int):uint64 = # mod が遅い場合
-  xorShift() and cast[uint64]((1 shl maxBit) - 1)
+proc randomBit*(maxBit:int):int = # mod が遅い場合
+  cast[int](xorShift() and cast[uint64]((1 shl maxBit) - 1))
 proc shuffle*[T](x: var openArray[T]) =
   for i in countdown(x.high, 1):
     swap(x[i], x[random(i)])

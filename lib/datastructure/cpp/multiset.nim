@@ -42,6 +42,7 @@ proc `$`*[T](self:CMultiSet[T]): string = $self.mapIt(it)
 
 when isMainModule:
   import unittest,sequtils
+  import times
   test "C++ multi set":
     var s = @[3,1,4,1,5,9,2,6,5,3,5].toMultiSet()
     check: 8 notin s
@@ -55,3 +56,7 @@ when isMainModule:
     for _ in 0..<10: s.erase(1)
     check: s.min() == 2
     check: s == s
+    # template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
+    # stopwatch:
+    #   for i in 0..<100_0000:
+    #     s.add i
