@@ -21,6 +21,7 @@
     - ロリハ(通常/軽量) : 部分文字列同一判定 O(1)
     - SA-IS : 文字列全検索 O(MlogS)
     - Z-algorithm: S と S[i:] の 同一prefix長 O(1)
+    - パトリシア木: 追加・prefix探索 O(S)
 - `lib/mathlib` :: 数学
   - matrix :: 行列(転置,乗算,累乗,加算,単位行列)
   - modint :: ModInt (累乗,除算)
