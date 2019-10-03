@@ -6,7 +6,7 @@ import "../datastructure/unionfind"
 #  0..<maxN, E:辺のリスト(コスト順に並び替えるため)
 type Edge = tuple[src,dst,cost:int]
 proc kruskal(E:seq[Edge],maxN:int) : int =
-  var uf = newUnionFind[int](maxN)
+  var uf = initUnionFind(maxN)
   for e in E.sortedByIt(it.cost):
     if uf.same(e.src,e.dst) : continue
     uf.merge(e.src,e.dst)

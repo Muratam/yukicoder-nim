@@ -1,7 +1,7 @@
-import "../datastructure/binaryheap"
+import "../datastructure/queue/priorityqueue"
 import sequtils
 when NimMajor * 100 + NimMinor < 19:import queues
-else: import "../datastructure/queue"
+else: import "../datastructure/queue/queue"
 
 # 最大流/最小カット O(FE) / O(EV^2)
 template useMaxFlow =
@@ -112,7 +112,7 @@ template useMinCostFlow =
     proc dijkestra(E:var seq[seq[Edge]]): seq[int] =
       type P = tuple[len,src:int] # 最短距離と頂点番号
       result = newSeqWith(E.len,INF)
-      var pq = newBinaryHeap[P](
+      var pq = newPriorityQueue[P](
         proc(x,y:P):int = (if x.len != y.len : x.len - y.len else: x.src - y.src))
       pq.push((0,start))
       result[start] = 0

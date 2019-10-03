@@ -1,6 +1,6 @@
 # スライド最小値
 # 固定サイズの最小値を O(1)
-import "../datastructure/deques"
+import "../queue/deques"
 import sequtils
 proc slideMin[T](arr:seq[T],width:int,paddingLast:bool = false) : seq[T] =
   let size = if paddingLast : arr.len else: arr.len-width+1

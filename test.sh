@@ -6,7 +6,7 @@ cd lib
 rmnimcache
 dirs=`ls -l | grep d | awk '{print $9}'`
 for dir in $dirs; do
-  [[ $dir == "trivial" ]] && continue
+  [[ $dir == "garbage" ]] && continue
   echo "test : [" $dir "]"
   cd $dir
   rmnimcache

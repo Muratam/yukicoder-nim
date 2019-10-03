@@ -17,7 +17,7 @@ proc shuffle*[T](x: var openArray[T]) =
 
 # 時間ギリギリまでサーチ.
 import times
-template timeUpSearch(milliSec:int,body) =
+template timeUpSearch*(milliSec:int,body) =
   # 時間計測は 1e5 回で100ms.
   # この回数以上探索するなら, for i in 0..<100: body にする
   let startTime = cpuTime()

@@ -17,7 +17,6 @@
     - StarrySkyTree : 区間更新(加算),区間取得
   - `tree/`　:: 追加・削除・クエリ O(logN)
     - kd木
-    - TODO: 二進パトリシア木
     - TODO: トライ木
   - `string/` :: 構築 O(S). 文字列検索用.
     - ロリハ(通常/軽量) : 部分文字列同一判定 O(1)
@@ -50,7 +49,8 @@
   - TODO: AdjMatrix(隣接行列: 補グラフ/変換/最大クリーク(最大独立集合)/(最小)彩色数)
   - TODO: Testgraph(テストケース)
 - lib/functions.nim (いつもの / IO / Pos)
-- lib/garbase : 書き捨てたコード
+- lib/garbase : 書き捨てたコード.いつか使う時はくるのか...?
+  - 二進パトリシア木 : k番目の最小値が取れるheap
   - timecost : 演算の速度検証
   - sparsematrix : 疎行列
   - math : フィボナッチ数列の第N項 / 線形回帰(最小二乗法)

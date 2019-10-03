@@ -1,7 +1,11 @@
-import sequtils#,nimprof
+import sequtils
+# 2進表示のパトリシア木.
+# 本質的には、 multiset と同じく, 追加・削除・極値系全部 ができる
+# 更に以下ができる
+#   k番目の最小値の取得
+#   x と xor したときの極値系全部
+# 動的に値が変化する中で, ランキング順でページングしたときのN番目の値...?
 
-# 普通の2進表示のパトリシア木.
-# 葉同士がリンクし合うのと余分なノードはスキップするのとで高速.
 
 type
   BinPatriciaNode = ref object
@@ -151,9 +155,9 @@ proc add*(self:var BinPatricia,n:int) =
 
 import times
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
-import "../mathlib/random"
+import "../../mathlib/random"
 var T = newBinPatricia()
 stopwatch:
-  for i in 0..100000:
-    let r = random(1e9.uint)
+  for i in 0..100_0000:
+    let r = random(1e9.int)
     T.addMulti r.int

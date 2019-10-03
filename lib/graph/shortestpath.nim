@@ -1,12 +1,12 @@
 import sequtils
-import "../datastructure/binaryheap"
+import "../datastructure/queue/priorityqueue"
 const INF = 1e10.int
 # 最短経路 O(ElogE) / 負有り:O(EV) / 全:O(V^3)
 # ダイクストラ : O(ElogE) コストが負でないときの(startからの)最短路
 type Edge = tuple[dst,cost:int] # E:隣接リスト(端点とコストのtuple)
 proc dijkestra(E:seq[seq[Edge]], start:int) :seq[int] =
   var costs = newSeqWith(E.len,INF)
-  var opens = newBinaryHeap[Edge](proc(a,b:Edge): int = a.cost - b.cost)
+  var opens = newPriorityQueue[Edge](proc(a,b:Edge): int = a.cost - b.cost)
   opens.push((start,0))
   while opens.len() > 0:
     let (src,cost) = opens.pop()
@@ -22,7 +22,7 @@ proc dijkestra(E:seq[seq[int]], start:int) :seq[int] =
   type Edge = tuple[dst,cost:int] # E:隣接リスト(端点とコストのtuple)
   const INF = 1e10.int
   var costs = newSeqWith(E.len,INF)
-  var opens = newBinaryHeap[Edge](proc(a,b:Edge): int = a.cost - b.cost)
+  var opens = newPriorityQueue[Edge](proc(a,b:Edge): int = a.cost - b.cost)
   opens.push((start,0))
   while opens.len() > 0:
     let (src,cost) = opens.pop()
@@ -36,7 +36,7 @@ proc dijkestra(E:seq[seq[int]], start:int) :seq[int] =
 
 # SPFA (ベルマンフォード) O(EV) : 二点間の最短路(負の閉路でも動作)
 when NimMajor * 100 + NimMinor < 19:import queues
-else: import "../datastructure/queue"
+else: import "../datastructure/queue/queue"
 # type Edge = tuple[dst,cost:int] # E:隣接リスト(端点とコストのtuple)
 proc SPFA(E:seq[seq[Edge]],start:int): seq[int] =
   # import queues

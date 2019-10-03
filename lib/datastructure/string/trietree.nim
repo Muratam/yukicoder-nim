@@ -2,7 +2,6 @@
 # 追加・prefix探索が O(|S|)
 # 小さい文字列を大量に扱う場合に適当
 # 長い文字列ではパトリシア木(Radix-Tree)を使う
-# ２進数もintも実はO(1) で探索できるのでは？？
 import sequtils
 type
   TrieNode = ref object
