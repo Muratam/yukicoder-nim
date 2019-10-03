@@ -7,7 +7,7 @@
 - `lib/datastructure` :: データ構造
   - UnionFind : 森のマージ・根の取得 O(1)
   - bitset : ビット演算の集合.
-  - `queue/`
+  - `queue/` :
     - Deque, Queue, Stack : 末尾・先頭への追加削除 O(1)
     - PriorityQueue : 最小値検索 O(1), 追加・最小値削除　O(logN)
     - SkewHeap : ↑ + マージ O(logN)
@@ -15,7 +15,8 @@
     - セグメントツリー{1D,2D} : 一点更新, 区間取得
     - BIT : 一点更新, 区間和
     - StarrySkyTree : 区間更新(加算),区間取得
-  - `heap/`　:: 追加・削除・クエリ O(logN)
+  - `tree/`　:: 追加・削除・クエリ O(logN)
+    - kd木
     - TODO: 二進パトリシア木
     - TODO: トライ木
   - `string/` :: 構築 O(S). 文字列検索用.
