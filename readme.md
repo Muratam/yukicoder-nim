@@ -21,7 +21,6 @@
     - ロリハ(通常/軽量) : 部分文字列同一判定 O(1)
     - SA-IS : 文字列全検索 O(MlogS)
     - Z-algorithm: S と S[i:] の 同一prefix長 O(1)
-    - パトリシア木: 追加・prefix探索 O(S)
 - `lib/mathlib` :: 数学
   - matrix :: 行列(転置,乗算,累乗,加算,単位行列)
   - modint :: ModInt (累乗,除算)
@@ -34,10 +33,10 @@
   - Tree :: 入力を木に,オイラーツアー,最小共通祖先(LCA:探索O(log(n)))
   - DAG :: トポロジカルソート,DAG判定, 強連結成分分解(SCC:O(V+E))
   - MST :: 最小全域木 O(ElogV)
-  - ShortestPath :: 最短経路 , O(ElogE) | 負有り:O(EV) | 全:O(V^3)
-  - Flow :: 最小費用流 , O(FElogV) | 最大流/最小カット O(FE),O(EV^2) | 二部グラフの最大マッチング O(E)
-  - Link :: 橋,関節点 ,x:一筆書き(オイラー路)
-  - TODO: AdjMatrix(隣接行列: 補グラフ/変換/最大クリーク(最大独立集合)/(最小)彩色数)
+  - ShortestPath :: 最短経路 [ O(ElogE), 負有り:O(EV), 全:O(V^3) ]
+  - Flow :: 最小費用流 [ O(FElogV) , 最大流/最小カット O(FE),O(EV^2) , 二部グラフの最大マッチング O(E) ]
+  - Link :: 橋,関節点
+  - AdjMatrix :: 隣接行列, 補グラフ | 彩色数 O(2^N N) | 最大{クリーク,独立集合} O(N * √2^N)
   - TODO: Testgraph(テストケース)
 - `lib/seq/` :: seqを操作
   - search : 二分探索 / 三分探索 / lowerBoundの `< <= > >=` 表記
@@ -46,6 +45,7 @@
   - sequence : arg{min,max} / deduplicate / 10進数と配列変換
   - iteration : 順列 / ペア順列 / 階段
 - `lib/garbase` : 書き捨てたコード.いつか使う時はくるのか...?
+  - パトリシア木: 追加・prefix探索 O(S).  verify(y430)に失敗...
   - `tree` : std::map で全て事足りるので...
     - 二進パトリシア木 : xorに強い k番目の最小値が取れるheap
     - 謎木 / RBST / 赤黒木
@@ -54,7 +54,7 @@
   - sparsematrix : 疎行列
   - math : フィボナッチ数列の第N項 / 線形回帰(最小二乗法)
   - sequence : countContinuity / toCountTable / toTuple / cmp ...
-
+  - そのうち書きたい :: 一筆書き(オイラー路)
 # MEMO
 - Nim 0.13: https://qiita.com/sessions/items/561f8a3aa6eba6d4d7a9
 - with C++: https://qiita.com/sessions/items/96c57a4dad9246d2cd59

@@ -1,6 +1,5 @@
-# トライ木 (prefix-tree)
-# 追加・prefix探索  O(|S|)
-import sequtils
+# https://yukicoder.me/problems/no/430
+import nimprof
 type
   PatriciaNode = ref object
     nexts : seq[PatriciaNode]
@@ -34,13 +33,13 @@ proc newPatriciaTree*(charSize:int,offset:int):PatriciaTree =
   result.charSize = charSize
   result.offset = offset
 proc newLowerCasePatriciaTree*():PatriciaTree = # a~z,26種
-  newPatriciaTree('z'.ord - 'a'.ord , 'a'.ord)
+  newPatriciaTree('z'.ord - 'a'.ord + 1, 'a'.ord)
 proc newUpperCasePatriciaTree*():PatriciaTree = # A~Z,26種
-  newPatriciaTree('Z'.ord - 'A'.ord , 'A'.ord)
+  newPatriciaTree('Z'.ord - 'A'.ord + 1, 'A'.ord)
 proc newASCIIPatriciaTree*():PatriciaTree = # ASCII印字可能文字全て,94種
-  newPatriciaTree('~'.ord - '!'.ord, '!'.ord)
+  newPatriciaTree('~'.ord - '!'.ord + 1, '!'.ord)
 proc newNumericPatriciaTree*():PatriciaTree = # 0~9,10種
-  newPatriciaTree('9'.ord - '0'.ord , '0'.ord)
+  newPatriciaTree('9'.ord - '0'.ord + 1, '0'.ord)
 proc newBytePatriciaTree*():PatriciaTree = # 0~255,256種
   newPatriciaTree(256 , 0)
 proc newBinaryPatriciaTree*():PatriciaTree = # 01,2種
@@ -152,33 +151,6 @@ proc delete*(self:var PatriciaTree,S:string) =
     return
 # 要素数
 proc len*(self:PatriciaTree):int = self.root.countSum
-# そのprefixを持つものを全て列挙(辞書昇順)
-iterator findAllWithPrefix*(self:PatriciaTree,S:string): string =
-  var stack = @[(0,self.root)]
-  while stack.len > 0:
-    var (index,now) = stack.pop()
-    while true:
-      # 子が全てallow
-      if index >= S.len:
-        for _ in 0..<now.count: yield now.value
-        for i in (now.nexts.len-1).countdown(0):
-          if now.nexts[i] != nil: stack.add((index,now.nexts[i]))
-        break
-      let s = S[index].ord - self.offset
-      if now.nexts[s] == nil: break
-      if S.len < now.nexts[s].value.len :
-        index = now.nexts[s].value.len
-        now = now.nexts[s]
-        continue
-      while true:
-        if index >= now.nexts[s].value.len: break
-        if now.nexts[s].value[index] != S[index]: break
-        index += 1
-      if now.nexts[s].value.len >= index:
-        now = now.nexts[s]
-        continue
-      else: break
-# そのprefixを持つもののサイズを列挙
 proc countWithPrefix*(self:PatriciaTree,S:string):int =
   if S.len == 0: return self.root.countSum
   var index = 0
@@ -186,7 +158,10 @@ proc countWithPrefix*(self:PatriciaTree,S:string):int =
   while true:
     if index >= S.len: return now.countSum
     let s = S[index].ord - self.offset
-    if now.nexts[s] == nil: return 0
+    if now.nexts[s] == nil:
+      # "bcd" に "bc" みたいなノードがきた
+      # if index == now.value.len: return now.countSum
+      return 0
     if S.len < now.nexts[s].value.len :
       index = now.nexts[s].value.len
       now = now.nexts[s]
@@ -195,37 +170,23 @@ proc countWithPrefix*(self:PatriciaTree,S:string):int =
       if index >= now.nexts[s].value.len: break
       if now.nexts[s].value[index] != S[index]: break
       index += 1
-    if now.nexts[s].value.len >= index:
-      now = now.nexts[s]
+    now = now.nexts[s]
 
-when isMainModule:
-  import unittest,sequtils
-  test "patricia tree":
-    var T = newNumericPatriciaTree()
-    T.add ""
-    T.add "1001"
-    T.add "100100"
-    T.add "100001"
-    T.add "10"
-    check: "100100" in T
-    check: not("100101" in T)
-    check: T.len == 5
-    check: T.countWithPrefix("") == 5
-    check: T.countWithPrefix("") == 5
-    check: T.countWithPrefix("0") == 0
-    check: T.countWithPrefix("10") == 4
-    check: T.countWithPrefix("100") == 3
-    check: T.countWithPrefix("1001") == 2
-    check: T.countWithPrefix("10010") == 1
-    check: T.countWithPrefix("100001") == 1
-    check: T.countWithPrefix("1000011") == 0
-    T.delete "100100"
-    T.delete "100001"
-    check: not ("100100" in T)
-    T.delete "1001"
-    T.delete ""
-    T.add "1001"
-    T.add "100100"
-    T.add "100001"
-    T.add "10"
-    check: toSeq(T.findAllWithPrefix("10")) == @["10", "100001", "1001", "100100"]
+template times*(n:int,body) = (for _ in 0..<n: body)
+template `max=`*(x,y) = x = max(x,y)
+template `min=`*(x,y) = x = min(x,y)
+proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" ,discardable.}
+proc scan(): int =
+  while true:
+    let k = getchar_unlocked()
+    if k < '0' or k > '9': return
+    result = 10 * result + k.ord - '0'.ord
+let S = stdin.readLine()
+let m = scan()
+var T = newUpperCasePatriciaTree()
+for i in 0..<S.len: T.addMulti S[i..^1]
+var ans = 0
+m.times:
+  let C = stdin.readLine()
+  ans += T.countWithPrefix(C)
+echo ans

@@ -91,81 +91,81 @@ proc powerOf2*(i:range[0..63]):int = 1 shl i
 iterator allState*(maxSize:int): BitSet =
   for a in 0..<(1 shl maxSize): yield a
 
-# {.inline,noSideEffect.} をつけてもそんなに変わらない.見にくくなるだけ損
-when isMainModule:
-  import unittest
-  test "bitset":
-    var n = 0b110101
-    check:n.toBinStr(6) == "110101"
-    check:n.keys() == @[0,2,4,5]
-    n[63] = true
-    check:n.keys() == @[0,2,4,5,63]
-    check:n[2]
-    check:(not n[1])
-    n[1] = true
-    n[2] = false
-    check:n.keys() == @[0,1,4,5,63]
-    n.flipAt(2)
-    check:n.keys() == @[0,1,2,4,5,63]
-    n.flipAt(0)
-    check:n.keys() == @[1,2,4,5,63]
-    n = zerosBitSet()
-    check:n.keys() == newSeq[int]()
-    n = onesBitSet()
-    check:n.flip().keys() == newSeq[int]()
-    var m = 0
-    n =   "110001".fromBinStr()
-    m =   "101011".fromBinStr()
-    check:"111011" == n.merge(m).toBinStr(6)
-    check:"100001" == n.common(m).toBinStr(6)
-    check:"011010" == n.diff(m).toBinStr(6)
-    check:"010000" == n.sub(m).toBinStr(6)
-    check:"100001".fromBinStr().isSubSet(m)
-    check:"101011" == m.toBinStr(6)
-    let ordinal = toSeq(0..63)
-    check:((-1).keys() == ordinal)
-    n = @[0,1,3,9,63].fromKeys()
-    check:n.keys() == @[0,1,3,9,63]
-    check: @[true,false,true].fromBoolSeq().keys() == @[0,2]
-    check: n.keys().len == 5
-    check: n.len == 5
-    check: n.lenIsOdd()
-    check: 64.lenIs1
-    check: not 52.lenIs1
-    n = @[0,1,3,9,63].fromKeys()
-    m = @[11,25,26,27,38].fromKeys()
-    check: n.maxKey() == 63
-    check: m.maxKey() == 38
-    check: n.minKey() == 0
-    check: m.minKey() == 11
-    check: n.plusAllKeys(3).keys() == @[3, 4, 6, 12]
-    check: n.plusAllKeys(-3).keys() == @[0, 6, 60]
-    check: m.plusAllKeys(3).keys() == @[14, 28, 29, 30, 41]
-    check: m.plusAllKeys(-3).keys() == @[8, 22, 23, 24, 35]
-    check: n.plusAllKeysMod64(3).keys() == @[2, 3, 4, 6, 12]
-    check: n.plusAllKeysMod64(-3).keys() == @[0, 6, 60, 61, 62]
-    check: m.plusAllKeysMod64(3).keys() == @[14, 28, 29, 30, 41]
-    check: m.plusAllKeysMod64(-3).keys() == @[8, 22, 23, 24, 35]
-    check: n.onlyMinKeySet().keys() == @[0]
-    check: m.onlyMinKeySet().keys() == @[11]
-    check: n.allSmallerThanMinKeySet().keys() == newSeq[int]()
-    check: m.allSmallerThanMinKeySet().keys() == toSeq(0..10)
-    check: n.onlyMaxKeySet().keys() == @[63]
-    check: m.onlyMaxKeySet().keys() == @[38]
-    check: n.allGreaterThanMaxKeySet().keys() == newSeq[int]()
-    check: m.allGreaterThanMaxKeySet().keys() == toSeq(39..63)
-    check: 0.onlyMaxKeySet().keys() == newSeq[int]()
-    check: 0.onlyMinKeySet().keys() == newSeq[int]()
-    check: 0.allSmallerThanMinKeySet().keys() == newSeq[int]()
-    check: 0.allGreaterThanMaxKeySet().keys() == toSeq(0..63)
-    check: onesBitSet().onlyMaxKeySet().keys() == @[63]
-    check: onesBitSet().onlyMinKeySet().keys() == @[0]
-    check: onesBitSet().allSmallerThanMinKeySet().keys() == newSeq[int]()
-    check: onesBitSet().allGreaterThanMaxKeySet().keys() == newSeq[int]()
-    check: @[0,1,3,4,5,7,11,15,29,30,31,32,33,63].fromKeys().at(4..32).keys() == @[4,5,7,11,15,29,30,31,32]
-    check: @[0,1,62,63].fromKeys().at(0..63).keys() == @[0,1,62,63]
-    check: @[0,1,62,63].fromKeys().at(1..<63).keys() == @[1,62]
-    check: 48.onlyMinKeySet() == 16
-    check: 1.powerOf2() == 2
-    for s in 3.allState():
-      check: s.keys() == @[@[],@[0],@[1],@[0, 1],@[2],@[0, 2],@[1, 2],@[0, 1, 2]][s]
+import sequtils
+
+# 隣接リスト => 隣接行列
+# 有向グラフ(E[src][dst] => M[src][dst])
+proc toMatrix(E:seq[seq[int]]):seq[seq[bool]] =
+  result = newSeqWith(E.len,newSeq[bool](E.len))
+  for src, dsts in E:
+    for dst in dsts:
+      result[src][dst] = true
+proc fromMatrix(M:seq[seq[bool]]):seq[seq[int]] =
+  result = newSeqWith(M.len,newSeq[int]())
+  for src in 0..<M.len:
+    for dst in 0..<M.len:
+      if M[src][dst] : result[src].add dst
+proc coGraph(M:seq[seq[bool]]):seq[seq[bool]] =
+  result = newSeqWith(M.len,newSeq[bool](M.len))
+  for src in 0..<M.len:
+    for dst in 0..<M.len:
+      result[src][dst] = not M[src][dst]
+proc coGraph(E:seq[seq[int]]):seq[seq[int]] =
+  E.toMatrix().coGraph().fromMatrix()
+
+import math
+proc maximumIndependentSet(M:seq[seq[bool]]) : seq[int] =
+  let n = M.len
+  var G = newSeq[BitSet](n)
+  var usable = 0
+  for i in 0..<M.len:
+    G[i] = M[i].fromBoolSeq()
+    usable[i] = true
+  proc impl(usable:BitSet): seq[int] =
+    var v = -1
+    var usable = usable
+    result = @[]
+    for i in 0..<n:
+      if not usable[i] : continue
+      let neighbor = (usable and G[i]).len
+      if neighbor > 1: v = i
+      else:
+        usable[i] = false
+        usable = usable and not G[i]
+        result.add i
+    if v < 0 : return result
+    usable[v] = false
+    var res1 = impl(usable and not G[v])
+    res1.add v
+    var res2 = impl(usable)
+    if res1.len > res2.len: result.add res1
+    else: result.add res2
+  return impl(usable)
+proc maximumClique(M:seq[seq[bool]]):seq[int] =
+  M.coGraph.maximumIndependentSet()
+
+
+
+import sequtils,algorithm,math,strutils,tables,sets
+template times*(n:int,body) = (for _ in 0..<n: body)
+template `max=`*(x,y) = x = max(x,y)
+template `min=`*(x,y) = x = min(x,y)
+proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" ,discardable.}
+proc scan(): int =
+  while true:
+    let k = getchar_unlocked()
+    if k < '0' or k > '9': return
+    result = 10 * result + k.ord - '0'.ord
+# proc scanf(formatstr: cstring){.header: "<stdio.h>", varargs.}
+# proc scan(): int = scanf("%lld\n",addr result)
+
+
+let n = scan()
+let m = scan()
+var M = newSeqWith(n,newSeq[bool](n))
+m.times:
+  let x = scan() - 1
+  let y = scan() - 1
+  M[x][y] = true
+  M[y][x] = true
+echo M.maximumClique().len

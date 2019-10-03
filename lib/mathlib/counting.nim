@@ -46,9 +46,6 @@ proc sternBrocotTree(maxNum:int): seq[tuple[u,d:int]] =
 
 when isMainModule:
   import unittest
-when isMainModule:
-  import unittest
-  import sequtils
   test "modint":
     check: 100.combination(50) == 538992043.toModInt()
     for i,c in @[1, 1, 2, 5, 14, 42, 132, 429, 1430, 4862, 16796, 58786, 208012, 742900, 2674440, 9694845]:
