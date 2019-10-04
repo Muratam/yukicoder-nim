@@ -1,11 +1,10 @@
 # SA-IS :: O(N) で Suffix Array を構築
 # 文字列検索は O(MlogN) でできる.
 # 「追加の更新が発生するprefix検索」はTrie木を使うしかないが,
-#   prefix検索だけなら,予め "^hoge^hogera^hogege" みたいな文字列を作りSAすればよい。
 # SA-IS は ほぼこれ https://blog.knshnb.com/posts/sa-is/
 import sequtils,algorithm
-type SuffixArray = ref object
-  S : string
+type SuffixArray* = ref object
+  S* : string
   SA : seq[int]
   LCP : seq[int]
 proc SAIS(inputString:string) : seq[int] =
@@ -92,7 +91,7 @@ proc SAIS(inputString:string) : seq[int] =
   for i in 0..<inputString.len:
     G[i] = inputString[i].int + 1
   return SAISImpl(G,260)
-proc newSuffixArray(S:string):SuffixArray =
+proc newSuffixArray*(S:string):SuffixArray =
   new(result)
   result.S = S
   result.SA = S.SAIS()
@@ -111,7 +110,8 @@ proc newSuffixArray(S:string):SuffixArray =
       result.LCP[B[i]] = h
     if h > 0 : h -= 1
   result.LCP[0] = -1
-iterator find(self:SuffixArray,target:string): int =
+# その文字列の出現位置
+iterator findIndex(self:SuffixArray,target:string): int =
   var a = -1
   var b = self.S.len + 1
   while a + 1 < b:
@@ -130,43 +130,78 @@ iterator find(self:SuffixArray,target:string): int =
       already = true
     else: break
     b += 1
-proc findAll(self:SuffixArray,target:string):seq[int] = toSeq(self.find(target)).reversed()
-proc findOne(self:SuffixArray,target:string): int =
-  for i in self.find(target): return i
+proc findAllIndex(self:SuffixArray,target:string):seq[int] =
+  toSeq(self.findIndex(target))
+proc findOneIndex(self:SuffixArray,target:string): int =
+  for i in self.findIndex(target): return i
   return -1
-# その単語の出現個数
-proc getCount(self:SuffixArray,target:string): int =
-  for _ in self.find(target): result += 1
-# デバッグ用: 末尾まで読んでヒットした文字列を復元
-proc getSuffixString(S:string,index:int) : string = S[index..^1]
-proc getSuffixString(self:SuffixArray,index:int) : string = self.S[self.SA[index]..^1]
-proc getAllSuffixString(self:SuffixArray):seq[string] =
+# その単語の出現個数.
+proc getCount*(self:SuffixArray,target:string): int =
+  for _ in self.findIndex(target): result += 1
+# 文字列がそのまま欲しいとき用. 文字列なので処理時間に注意！
+proc getString(S:string,index:int) : string = S[index..^1]
+proc getString(self:SuffixArray,index:int) : string = self.S[index..^1]
+proc getAllString(self:SuffixArray):seq[string] =
   result = newSeq[string](self.SA.len)
   for i in 0..<self.SA.len:
-    result[i] = self.getSuffixString(i)
+    result[i] = self.getString(self.SA[i])
+iterator findMatchedString(self:SuffixArray,target:string): string =
+  for i in self.findIndex(target):
+    yield self.getString(i)
+proc findAllMatchedString(self:SuffixArray,target:string):seq[string] =
+  toSeq(self.findMatchedString(target))
+proc findOneMatchedString(self:SuffixArray,target:string):string =
+  for s in self.findMatchedString(target): return s
+  return ""
 
-#
-# 文字集合 {S} から,クエリ Q にマッチした i と個数が欲しい.
-block:
-  # let target = "^ab^bc^ca^abc"
-  # let sa = target.newSuffixArray()
-  # echo sa.SA
-  # echo sa.getAllSuffixString()
-  # echo toSeq(sa.find("^"))
-  # echo toSeq(sa.find("^ab")).mapIt(target.getSuffixString(it))
+# https://tenka1-2016-final-open.contest.atcoder.jp/tasks/tenka1_2016_final_c でverify したい
+# ^hoge^fuga^piyo^ という形でjoinする.
+# prefix/suffix での検索ができる.
+import tables
+type StringFinder = ref object
+  SA: SuffixArray
+  strs: seq[string]
+  indexMap:Table[int,int] # ^ の位置からstrsのindex
+  separator : char
+proc newStringFinder(strs:seq[string],separator:char = '\0'): StringFinder =
+  new(result)
+  result.strs = strs
+  result.indexMap = initTable[int,int]()
+  result.separator = separator # 含まれない文字列
+  var strLenSum = 1
+  for i in 0..<strs.len:
+    strLenSum += strs[i].len + 1
+  var S = newSeq[char](strLenSum)
+  var currentPos = 0
+  for i in 0..<strs.len:
+    S[currentPos] = separator
+    result.indexMap[currentPos] = i
+    currentPos += 1
+    for j in 0..<strs[i].len:
+      S[currentPos] = strs[i][j]
+      currentPos += 1
+  S[currentPos] = separator
+  result.SA = cast[string](S).newSuffixArray()
+iterator findIndexWithPrefix(self:StringFinder,target:string): int =
+  for i in self.SA.findIndex(self.separator & target): yield i
+proc findAllIndexWithPrefix(self:StringFinder,target:string):seq[int] =
+  toSeq(self.findIndexWithPrefix(target)).reversed()
+proc findOneIndexWithPrefix(self:StringFinder,target:string): int =
+  for i in self.findIndexWithPrefix(target): return i
+  return -1
+proc getCountWithPrefix(self:StringFinder,target:string): int =
+  for _ in self.findIndexWithPrefix(target): result += 1
+proc getString(self:StringFinder,index:int):string =
+  if index in self.indexMap:
+    return self.strs[self.indexMap[index]]
+  # 無かった場合悲しいね
 
 
-# ### 以下はメモ
-# クエリ先読みができるなら,Trie木 や Aho-Chorasick の代替ができる
-# 検索クエリは以下の二つ
-#   文字     S と クエリ Q で, S 内の Q のprefix を持つ i[O(個数)] / 個数[O(1)]
-#   文字集合{S} と クエリ Q で, {S} の中で Q の prefix を持つ ...
-#     集合内の文字列の長さの和   クエリの長さ　クエリの回数
-# 対象が {S} 全体からか, {S} の一つひとつからかで 対象{S} と 対象 S と分ける
-# Z-Algorithmで 全探索すると Σ{len|S|} x Σ{len{Q}} の回数の計算が発生する.
-# Trie木 : {S},Q が動的. Σ{len|S|} + Σ{len{Q}}
-# Aho    : S     が動的. Σ{len|S|} + Σ{len|Q|}
-# SA-IS  :     Q が動的. Σ{len|S|} + Σ{len|Q|}
+let sa4 = newStringFinder(@["ab","bc","ca","abc","abbb","ab"])
+echo sa4.findAllIndexWithPrefix("ab").mapIt(sa4.getString(it))
+echo sa4.getCountWithPrefix("ab")
+# echo sa4.findAll("cc").mapIt(sa4.getString(it))
+
 
 when isMainModule:
   import unittest
@@ -178,14 +213,17 @@ when isMainModule:
       let S = "abc".repeat(100000)
       let SA = S.newSuffixArray()
       let target = "abc".repeat(50000)
-      check: SA.findAll(target).len == 50001
+      check: SA.findAllIndex(target).len == 50001
+      check: SA.getCount(target) == 50001
     block:
       let bananaStr = "banana"
       let banana = bananaStr.newSuffixArray()
       check: banana.SA == @[6, 5, 3, 1, 0, 4, 2]
       check: banana.LCP == @[-1, 0, 1, 3, 0, 0, 2]
-      check: banana.getAllSuffixString() == @["","a","ana","anana","banana","na","nana"]
-      check: banana.findAll("an") == @[1,3]
-      check: banana.findAll("an").mapIt(bananaStr.getSuffixString(it)) == @["anana","ana"]
-      check: banana.findOne("an") == 3
+      check: banana.getAllString() == @["","a","ana","anana","banana","na","nana"]
+      check: banana.findAllIndex("an") == @[3,1]
+      check: banana.findAllIndex("an").mapIt(bananaStr.getString(it)) == @["ana","anana"]
+      check: banana.findOneIndex("an") == 3
       check: banana.getCount("an") == 2
+      check: banana.findAllMatchedString("an") == @["ana", "anana"]
+      check: banana.findOneMatchedString("an") == "ana"
