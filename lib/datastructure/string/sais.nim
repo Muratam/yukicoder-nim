@@ -145,6 +145,29 @@ proc getAllSuffixString(self:SuffixArray):seq[string] =
   for i in 0..<self.SA.len:
     result[i] = self.getSuffixString(i)
 
+#
+# 文字集合 {S} から,クエリ Q にマッチした i と個数が欲しい.
+block:
+  # let target = "^ab^bc^ca^abc"
+  # let sa = target.newSuffixArray()
+  # echo sa.SA
+  # echo sa.getAllSuffixString()
+  # echo toSeq(sa.find("^"))
+  # echo toSeq(sa.find("^ab")).mapIt(target.getSuffixString(it))
+
+
+# ### 以下はメモ
+# クエリ先読みができるなら,Trie木 や Aho-Chorasick の代替ができる
+# 検索クエリは以下の二つ
+#   文字     S と クエリ Q で, S 内の Q のprefix を持つ i[O(個数)] / 個数[O(1)]
+#   文字集合{S} と クエリ Q で, {S} の中で Q の prefix を持つ ...
+#     集合内の文字列の長さの和   クエリの長さ　クエリの回数
+# 対象が {S} 全体からか, {S} の一つひとつからかで 対象{S} と 対象 S と分ける
+# Z-Algorithmで 全探索すると Σ{len|S|} x Σ{len{Q}} の回数の計算が発生する.
+# Trie木 : {S},Q が動的. Σ{len|S|} + Σ{len{Q}}
+# Aho    : S     が動的. Σ{len|S|} + Σ{len|Q|}
+# SA-IS  :     Q が動的. Σ{len|S|} + Σ{len|Q|}
+
 when isMainModule:
   import unittest
   import strutils

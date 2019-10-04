@@ -10,7 +10,7 @@
   - `segmenttree/` :: 区間クエリ O(logN)
     - セグメントツリー{1D,2D} : 一点更新, 区間取得
     - BIT : 一点更新, 区間和
-    - StarrySkyTree : 区間更新(加算),区間取得
+    - StarrySkyTree : 区間更新(加算),区間最{大,小}値取得
   - `set/` :: 集合. 動的に要素を追加・削除可能
     - std::{set,multiset} :: 追加・削除・検索・最{小,大}値・{以上,以下}列挙 O(logN)
     - UnionFind : 森のマージ・根の取得 O(1)
@@ -20,7 +20,6 @@
   - `string/` :: 構築 O(S). 文字列検索用.
     - ロリハ(通常/軽量) : 部分文字列同一判定 O(1)
     - SA-IS : 文字列全検索 O(MlogS)
-    - Z-algorithm: S と S[i:] の 同一prefix長 O(1)
 - `lib/mathlib` :: 数学
   - matrix :: 行列(転置,乗算,累乗,加算,単位行列)
   - modint :: ModInt (累乗,除算)
@@ -45,15 +44,19 @@
   - sequence : arg{min,max} / deduplicate / 10進数と配列変換
   - iteration : 順列 / ペア順列 / 階段
 - `lib/garbase` : 書き捨てたコード.いつか使う時はくるのか...?
-  - パトリシア木: 追加・prefix探索 O(S).  verify(y430)に失敗...
+  - Z-Algorithm : `S と S[i:]` を求めることしかできない. 定数倍とこの目的以外なら SA-IS でよくない？
+  - Link-Cut木 : UnionFind + 木のカットやLCAや...をしたくなったらだけど必要になることある？？必要になったら書きます.
   - `tree` : std::map で全て事足りるので...
+    - パトリシア木: 追加・prefix探索 O(S).  verify(y430)に失敗...
     - 二進パトリシア木 : xorに強い k番目の最小値が取れるheap
     - 謎木 / RBST / 赤黒木
+    - KDTree: 普通に使いそうだけど書いてる途中で飽きた(wf2016.pdf参照)
   - `cpp` : std::vector / std::priority_queue
   - timecost : 演算の速度検証
   - sparsematrix : 疎行列
   - math : フィボナッチ数列の第N項 / 線形回帰(最小二乗法)
   - sequence : countContinuity / toCountTable / toTuple / cmp ...
+  - なんかのパズルのソルバーが欲しい時はZDDを使いそうだけど競技プログラミングだと関係無いね
   - そのうち書きたい :: 一筆書き(オイラー路)
 # MEMO
 - Nim 0.13: https://qiita.com/sessions/items/561f8a3aa6eba6d4d7a9
