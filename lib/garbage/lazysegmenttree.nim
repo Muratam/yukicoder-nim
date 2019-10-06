@@ -1,6 +1,6 @@
 import sequtils,math
 # 遅延セグメントツリー
-# モノイドの区間の更新・区間の取得ができる
+# モノイドでの区間の更新・区間の取得ができる
 
 # https://ei1333.github.io/algorithm/segment-tree.html
 type LazySegmentTree[T] = ref object
@@ -9,7 +9,6 @@ type LazySegmentTree[T] = ref object
   m1,om0:T
   f,g,h:proc(x,y:T):T
   p:proc(x:T,n:int):T
-
 proc newLazySegmentTree[T](size:int,f,g,h:proc(x,y:T):T,p:proc(x:T,n:int):T,m1,om0:T) : LazySegmentTree[T] =
   new(result)
   result.size = size.nextPowerOfTwo()
@@ -33,7 +32,6 @@ proc initWithSeq[T](self:LazySegmentTree[T],arr:seq[T]) =
     self.data[i+self.size] = self.arr[i]
   for i in (self.size - 2).countdown(0):
     self.data[i] = self.f(self.data[2*i],self.data[2*i+1])
-# 遅延を解決した値を取得.
 proc propagate[T](self:var LazySegmentTree[T],i,length:int) =
   if self.lazy[i] == self.om0: return
   if i < self.size:
@@ -78,18 +76,16 @@ proc newMinStarrySkyTree[T](size:int) : LazySegmentTree[T] =
   proc minimpl(x,y:T):T=(if x <= y : x else:y)
   newLazySegmentTree[T](size,
     minimpl,
-    minimpl,
+    addimpl,
     addimpl,
     proc(x:T,n:int):T=x,
     1e12.int,
     0.int,
     )
 
-
-
 when isMainModule:
   import unittest
-  import math,strutils
+  import math
   test "segmenttree lazy":
     block:
       var S = newMinStarrySkyTree[int](4)
@@ -97,6 +93,11 @@ when isMainModule:
       S.update(1,2)
       S.update(2,3)
       S.update(3,4)
+      echo S[0]
+      echo S[1]
+      echo S[2]
+      echo S[3]
+      S.update(0..3,8)
       echo S[0]
       echo S[1]
       echo S[2]

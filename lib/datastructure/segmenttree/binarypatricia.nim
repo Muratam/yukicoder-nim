@@ -13,11 +13,11 @@ type
     count : int32 # (自身以下の木の)葉の要素数
     isLeaf : bool
     valueOrMask : int # 葉なら value / 枝なら一番下位bitが自身が担当するbit番号.それ以外はprefix
-  BinPatricia = ref object
+  PatriciaTree = ref object
     root : BinPatriciaNode
 proc newBinPatriciaNode():BinPatriciaNode =
   new(result)
-proc newBinPatricia(bitSize:int = 5):BinPatricia =
+proc newPatriciaTree*(bitSize:int = 5):PatriciaTree =
   new(result)
   result.root = newBinPatriciaNode()
   result.root.count = 0
@@ -31,7 +31,7 @@ else:
 
 proc bitSize(self:BinPatriciaNode):int =
   self.valueOrMask.culonglong.countTrailingZeroBits.int
-proc len*(self:BinPatricia) : int = self.root.count
+proc len*(self:PatriciaTree) : int = self.root.count
 proc isTo1(self:BinPatriciaNode,n:int):bool{.inline.} =
   (self.valueOrMask and n) == self.valueOrMask # 上位bitは同じはずなので
 
@@ -61,7 +61,7 @@ proc dump(self:BinPatriciaNode,indent:int = 0) : string =
   if self.isLeaf: return
   if self.to0 != nil: result.add self.to0.dump(indent + 1)
   if self.to1 != nil: result.add self.to1.dump(indent + 1)
-proc dump(self:BinPatricia) : string = self.root.dump()
+proc dump(self:PatriciaTree) : string = self.root.dump()
 
 
 #
@@ -79,6 +79,7 @@ proc createInternalNode(now:BinPatriciaNode,preTree:BinPatriciaNode,n:int) : Bin
     created.isLeaf = false
     let n1 = preTree.valueOrMask
     let n2 = newLeaf.valueOrMask
+    # NOTE: fastLog2 は (n and -n)で累乗に
     let n3 = 1 shl (n1 xor n2).culonglong.fastLog2()
     created.valueOrMask = (n1 or n2) and (not (n3 - 1))
     created.count = newLeaf.count + preTree.count
@@ -118,7 +119,7 @@ proc createNextNode(now:BinPatriciaNode,target:BinPatriciaNode,n:int) : BinPatri
   return nil
 
 # multi-set 的な add
-proc addMulti*(self:var BinPatricia,n:int) =
+proc addMulti*(self:var PatriciaTree,n:int) =
   var now = self.root
   var target : BinPatriciaNode = nil
   while true:
@@ -137,7 +138,7 @@ proc addMulti*(self:var BinPatricia,n:int) =
         return
     now = target
 
-proc `in`*(n:int,self:BinPatricia) : bool =
+proc `in`*(n:int,self:PatriciaTree) : bool =
   var now = self.root
   while not now.isLeaf:
     if now.isTo1(n):
@@ -148,10 +149,9 @@ proc `in`*(n:int,self:BinPatricia) : bool =
       now = now.to0
   return now.valueOrMask == n
 # multi-set にしたくなければ
-proc add*(self:var BinPatricia,n:int) =
+proc add*(self:var PatriciaTree,n:int) =
   if not (n in self): self.addMulti(n)
 
-# TODO: fastLog2 は (n and -n)で累乗に
 
 import times
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
