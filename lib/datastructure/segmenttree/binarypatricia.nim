@@ -1,26 +1,26 @@
 import sequtils
-# 2進表示のパトリシア木.
 # 本質的には、 multiset と同じく, 追加・削除・極値系全部 ができる
-# 更に以下ができる
-#   prefixとして k を持つ要素取得.
-#   - [x,2x) の要素 ですね
-#   k 番目の最小値
-#   x と xor したときの極値系全部
-
+# 非負整数のときのセグツリと化した 2進パトリシア木.
 type
-  BinPatriciaNode = ref object
-    to0,to1 : BinPatriciaNode
-    count : int32 # (自身以下の木の)葉の要素数
+  PatriciaNode[T] = ref object
+    to0,to1 : PatriciaNode[T]
     isLeaf : bool
+    count : int32
     valueOrMask : int # 葉なら value / 枝なら一番下位bitが自身が担当するbit番号.それ以外はprefix
-  PatriciaTree = ref object
-    root : BinPatriciaNode
-proc newBinPatriciaNode():BinPatriciaNode =
+    data : T
+  PatriciaTree[T] = ref object
+    root : PatriciaNode[T]
+    unit : T
+    apply*:proc(x,y:T):T
+proc newPatriciaNode*[T](self:PatriciaTree[T]):PatriciaNode[T] =
   new(result)
-proc newPatriciaTree*(bitSize:int = 5):PatriciaTree =
+  result.data = self.unit
+proc newPatriciaTree*[T](apply:proc(x,y:T):T,unit:T,bitSize:int = 60):PatriciaTree[T] =
   new(result)
-  result.root = newBinPatriciaNode()
+  result.unit = unit
+  result.apply = apply
   result.root.count = 0
+  result.root = result.newPatriciaNode()
   result.root.isLeaf = false
   result.root.valueOrMask = 1 shl bitSize
 when NimMajor * 100 + NimMinor >= 18: import bitops
@@ -29,15 +29,15 @@ else:
   proc countTrailingZeroBits(x: culonglong): cint {.importc: "__builtin_ctzll", cdecl.}
   proc fastLog2(x:culonglong):cint = 63 - countLeadingZeroBits(x)
 
-proc bitSize(self:BinPatriciaNode):int =
+proc bitSize*[T](self:PatriciaNode[T]):int =
   self.valueOrMask.culonglong.countTrailingZeroBits.int
-proc len*(self:PatriciaTree) : int = self.root.count
-proc isTo1(self:BinPatriciaNode,n:int):bool{.inline.} =
+proc len*[T](self:PatriciaTree[T]) : int = self.root.count
+proc isTo1*[T](self:PatriciaNode[T],n:int):bool{.inline.} =
   (self.valueOrMask and n) == self.valueOrMask # 上位bitは同じはずなので
 
 # デバッグ用
 import strutils
-proc binary(x:int,fill:int=0):string = # 二進表示
+proc binary*[T](x:int,fill:int=0):string = # 二進表示
   if x == 0 : return "0".repeat(fill)
   if x < 0  : return binary(int.high+x+1,fill)
   result = ""
@@ -48,7 +48,7 @@ proc binary(x:int,fill:int=0):string = # 二進表示
   for i in 0..<result.len div 2: swap(result[i],result[result.len-1-i])
   if result.len >= fill: return result[^fill..^1]
   return "0".repeat(0.max(fill - result.len)) & result
-proc dump(self:BinPatriciaNode,indent:int = 0) : string =
+proc dump*[T](self:PatriciaNode[T],indent:int = 0) : string =
   if self == nil : return ""
   result = ""
   result .add self.valueOrMask.binary(60)
@@ -61,25 +61,26 @@ proc dump(self:BinPatriciaNode,indent:int = 0) : string =
   if self.isLeaf: return
   if self.to0 != nil: result.add self.to0.dump(indent + 1)
   if self.to1 != nil: result.add self.to1.dump(indent + 1)
-proc dump(self:PatriciaTree) : string = self.root.dump()
+proc dump*[T](self:PatriciaTree[T]) : string = self.root.dump()
 
 
 #
 # 中間点を生成
-proc createInternalNode(now:BinPatriciaNode,preTree:BinPatriciaNode,n:int) : BinPatriciaNode =
+proc createInternalNode[T](self:PatriciaTree[T],now:PatriciaNode,preTree:PatriciaNode,n:int,val:T) : PatriciaNode[T] =
   let cross = preTree.valueOrMask xor n
   # 頑張れば bit 演算にできそう.
   for bit in (now.bitSize() - 1).countdown(0):
     if (cross and (1 shl bit)) == 0 : continue
-    var newLeaf = newBinPatriciaNode()
+    var newLeaf = newPatriciaNode()
     newLeaf.isLeaf = true
     newLeaf.valueOrMask = n
     newLeaf.count = 1
-    var created = newBinPatriciaNode()
+
+    var created = newPatriciaNode()
     created.isLeaf = false
     let n1 = preTree.valueOrMask
     let n2 = newLeaf.valueOrMask
-    # NOTE: fastLog2 は (n and -n)で累乗に
+    # fastLog2 は (n and -n)で累乗にできるね
     let n3 = 1 shl (n1 xor n2).culonglong.fastLog2()
     created.valueOrMask = (n1 or n2) and (not (n3 - 1))
     created.count = newLeaf.count + preTree.count
@@ -96,17 +97,18 @@ proc createInternalNode(now:BinPatriciaNode,preTree:BinPatriciaNode,n:int) : Bin
   echo preTree.dump()
   doAssert false
 
-proc createNextNode(now:BinPatriciaNode,target:BinPatriciaNode,n:int) : BinPatriciaNode =
+proc createNextNode[T](self:PatriciaTree[T],now:PatriciaNode[T],target:PatriciaNode[T],n:int,val:T) : PatriciaNode[T] =
   if target == nil:
     # この先が空なので直接葉を作る
-    result = newBinPatriciaNode()
+    result = newPatriciaNode()
     result.isLeaf = true
     result.valueOrMask = n
     result.count = 1
     return
   if target.isLeaf:
     if target.valueOrMask == n: # 葉があった
-      target.count += 1
+      # target.count += 1
+      target.data = val
       return target
     else: # 中間点を作る
       return createInternalNode(now,target,n)
@@ -119,14 +121,14 @@ proc createNextNode(now:BinPatriciaNode,target:BinPatriciaNode,n:int) : BinPatri
   return nil
 
 # multi-set 的な add
-proc addMulti*(self:var PatriciaTree,n:int) =
+proc `[]=`*[T](self:var PatriciaTree,n:int,val:T) =
   var now = self.root
-  var target : BinPatriciaNode = nil
+  var target : PatriciaNode = nil
   while true:
     now.count += 1
     if (now.valueOrMask and n) == now.valueOrMask :
       target = now.to1
-      let created = createNextNode(now,target,n)
+      let created = self.createNextNode(now,target,n,val)
       if created != nil :
         now.to1 = created
         return
@@ -156,8 +158,4 @@ proc add*(self:var PatriciaTree,n:int) =
 import times
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
 import "../../mathlib/random"
-var T = newBinPatricia()
-stopwatch:
-  for i in 0..100_0000:
-    let r = random(1e9.int)
-    T.addMulti r.int
+var T = newPatriciaTree(proc(x,y:int):int = x + y,0)
