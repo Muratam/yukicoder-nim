@@ -21,7 +21,6 @@
   - `string/` :: 構築 O(S). 文字列検索用.
     - ロリハ(通常/軽量) : 部分文字列同一判定 O(1)
     - SA-IS : 文字列全検索 O(MlogS)
-    - パトリシア木 : (動的)文字列追加 prefix検索 O(|Q|log|{S}|)
 - `lib/mathlib` :: 数学
   - matrix :: 行列(転置,乗算,累乗,加算,単位行列)
   - modint :: ModInt (累乗,除算)
@@ -55,6 +54,7 @@
     - 謎木 / RBST / 赤黒木
     - KDTree: 普通に使いそうだけど書いてる途中で飽きた(wf2016.pdf参照)
   - `cpp` : std::vector / std::priority_queue
+  - パトリシア木 : Nim のやつ.動く. (動的)文字列追加 prefix検索 O(|Q|log|{S}|). prefixの要素を数えることはできないので出番が少ないのではないか.
   - timecost : 演算の速度検証
   - sparsematrix : 疎行列
   - math : フィボナッチ数列の第N項 / 線形回帰(最小二乗法)
