@@ -1,23 +1,27 @@
-
-import critbits
 # 標準ライブラリにパトリシア木があるのでそれをモノイドに拡張したもの
 include "system/inclrtl"
 type
-  NodeObj[T] = object # {.acyclic.}
+  PatriciaNodeObj[T] = object # {.acyclic.}
     byte: int
     otherBits: char
     case isLeaf: bool
-    of false: child: array[0..1, ref NodeObj[T]]
+    of false: child: array[0..1, ref PatriciaNodeObj[T]]
     of true:
       key: string
       val: T
-  Node[T] = ref NodeObj[T]
-  CritBitTree*[T] = object
-    root: Node[T]
+  PatriciaNode[T] = ref PatriciaNodeObj[T]
+  PatriciaTree*[T] = ref object
+    root: PatriciaNode[T]
     count: int
-
-proc len*[T](c: CritBitTree[T]): int =  c.count
-proc rawGet[T](c: CritBitTree[T], key: string): Node[T] =
+    unit*: T
+    apply*:proc(x,y:T):T
+proc newPatriciaTree*[T](apply:proc(x,y:T):T,unit:T) : PatriciaTree[T] =
+  new(result)
+  result.root = nil
+  result.unit = unit
+  result.apply = apply
+proc len*[T](c: PatriciaTree[T]): int =  c.count
+proc rawGet[T](c: PatriciaTree[T], key: string): PatriciaNode[T] =
   var it = c.root
   while it != nil:
     if not it.isLeaf:
@@ -26,61 +30,60 @@ proc rawGet[T](c: CritBitTree[T], key: string): Node[T] =
       it = it.child[dir]
     else:
       return if it.key == key: it else: nil
-proc contains*[T](c: CritBitTree[T], key: string): bool {.inline.} = rawGet(c, key) != nil
-proc rawInsert[T](c: var CritBitTree[T], key: string): Node[T] =
+proc contains*[T](c: PatriciaTree[T], key: string): bool {.inline.} = rawGet(c, key) != nil
+proc rawInsert[T](c: var PatriciaTree[T], key: string): PatriciaNode[T] =
   if c.root == nil:
-    c.root = Node[T](isleaf: true, key: key)
-    result = c.root
-  else:
-    var it = c.root
-    while not it.isLeaf:
-      let ch = if it.byte < key.len: key[it.byte] else: '\0'
-      let dir = (1 + (ch.ord or it.otherBits.ord)) shr 8
-      it = it.child[dir]
-    var newOtherBits = 0
-    var newByte = 0
-    block blockX:
-      while newByte < key.len:
-        let ch = if newByte < it.key.len: it.key[newByte] else: '\0'
-        if ch != key[newByte]:
-          newOtherBits = ch.ord xor key[newByte].ord
-          break blockX
-        inc newByte
-      if newByte < it.key.len:
-        newOtherBits = it.key[newByte].ord
-      else:
-        return it
-    while (newOtherBits and (newOtherBits-1)) != 0:
-      newOtherBits = newOtherBits and (newOtherBits-1)
-    newOtherBits = newOtherBits xor 255
-    let ch = if newByte < it.key.len: it.key[newByte] else: '\0'
-    let dir = (1 + (ord(ch) or newOtherBits)) shr 8
-    var inner: Node[T]
-    new inner
-    result = Node[T](isLeaf: true, key: key)
-    inner.otherBits = chr(newOtherBits)
-    inner.byte = newByte
-    inner.child[1 - dir] = result
-
-    var wherep = addr(c.root)
-    while true:
-      var p = wherep[]
-      if p.isLeaf: break
-      if p.byte > newByte: break
-      if p.byte == newByte and p.otherBits.ord > newOtherBits: break
-      let ch = if p.byte < key.len: key[p.byte] else: '\0'
-      let dir = (1 + (ch.ord or p.otherBits.ord)) shr 8
-      wherep = addr(p.child[dir])
-    inner.child[dir] = wherep[]
-    wherep[] = inner
+    c.root = PatriciaNode[T](isleaf: true, key: key)
+    inc c.count
+    return c.root
+  var it = c.root
+  while not it.isLeaf:
+    let ch = if it.byte < key.len: key[it.byte] else: '\0'
+    let dir = (1 + (ch.ord or it.otherBits.ord)) shr 8
+    it = it.child[dir]
+  var newOtherBits = 0
+  var newByte = 0
+  block blockX:
+    while newByte < key.len:
+      let ch = if newByte < it.key.len: it.key[newByte] else: '\0'
+      if ch != key[newByte]:
+        newOtherBits = ch.ord xor key[newByte].ord
+        break blockX
+      inc newByte
+    if newByte < it.key.len:
+      newOtherBits = it.key[newByte].ord
+    else:
+      return it
+  while (newOtherBits and (newOtherBits-1)) != 0:
+    newOtherBits = newOtherBits and (newOtherBits-1)
+  newOtherBits = newOtherBits xor 255
+  let ch = if newByte < it.key.len: it.key[newByte] else: '\0'
+  let dir = (1 + (ord(ch) or newOtherBits)) shr 8
+  var inner: PatriciaNode[T]
+  new inner
+  result = PatriciaNode[T](isLeaf: true, key: key)
+  inner.otherBits = chr(newOtherBits)
+  inner.byte = newByte
+  inner.child[1 - dir] = result
+  var wherep = addr(c.root)
+  while true:
+    var p = wherep[]
+    if p.isLeaf: break
+    if p.byte > newByte: break
+    if p.byte == newByte and p.otherBits.ord > newOtherBits: break
+    let ch = if p.byte < key.len: key[p.byte] else: '\0'
+    let dir = (1 + (ch.ord or p.otherBits.ord)) shr 8
+    wherep = addr(p.child[dir])
+  inner.child[dir] = wherep[]
+  wherep[] = inner
   inc c.count
-proc exclImpl[T](c: var CritBitTree[T], key: string): int =
+proc exclImpl[T](c: var PatriciaTree[T], key: string): int =
   var p = c.root
   var wherep = addr(c.root)
-  var whereq: ptr Node[T] = nil
+  var whereq: ptr PatriciaNode[T] = nil
   if p == nil: return c.count
   var dir = 0
-  var q: Node[T]
+  var q: PatriciaNode[T]
   while not p.isLeaf:
     whereq = wherep
     q = p
@@ -95,11 +98,11 @@ proc exclImpl[T](c: var CritBitTree[T], key: string): int =
       whereq[] = q.child[1 - dir]
     dec c.count
   return c.count
-proc excl*[T](c: var CritBitTree[T], key: string) = discard exclImpl(c, key)
-proc `[]=`*[T](c: var CritBitTree[T], key: string, val: T) = rawInsert(c, key).val = val
-proc `[]`*[T](c: CritBitTree[T], key: string): T {.inline.} = rawGet(c, key).val
-proc `[]`*[T](c: var CritBitTree[T], key: string): var T {.inline.} = rawGet(c, key).val
-iterator leaves[T](n: Node[T]): Node[T] =
+proc excl*[T](c: var PatriciaTree[T], key: string) = discard exclImpl(c, key)
+proc `[]=`*[T](c: var PatriciaTree[T], key: string, val: T) = rawInsert(c, key).val = val
+proc `[]`*[T](c: PatriciaTree[T], key: string): T {.inline.} = rawGet(c, key).val
+proc `[]`*[T](c: var PatriciaTree[T], key: string): var T {.inline.} = rawGet(c, key).val
+iterator leaves[T](n: PatriciaNode[T]): PatriciaNode[T] =
   if n != nil:
     var stack = @[n]
     while stack.len > 0:
@@ -109,11 +112,11 @@ iterator leaves[T](n: Node[T]): Node[T] =
         it = it.child[0]
         assert(it != nil)
       yield it
-iterator keys*[T](c: CritBitTree[T]): string =
+iterator keys*[T](c: PatriciaTree[T]): string =
   for x in leaves(c.root): yield x.key
-iterator values*[T](c: CritBitTree[T]): T =
+iterator values*[T](c: PatriciaTree[T]): T =
   for x in leaves(c.root): yield x.val
-proc allprefixedAux[T](c: CritBitTree[T], key: string, longestMatch: bool): Node[T] =
+proc allprefixedAux[T](c: PatriciaTree[T], key: string, longestMatch: bool): PatriciaNode[T] =
   var p = c.root
   var top = p
   if p == nil: return nil
@@ -127,11 +130,11 @@ proc allprefixedAux[T](c: CritBitTree[T], key: string, longestMatch: bool): Node
     for i in 0 ..< key.len:
       if i >= p.key.len or p.key[i] != key[i]: return
   result = top
-iterator keysWithPrefix*[T](c: CritBitTree[T], prefix: string, longestMatch = false): string =
+iterator keysWithPrefix*[T](c: PatriciaTree[T], prefix: string, longestMatch = false): string =
   for x in allprefixedAux(c, prefix, longestMatch).leaves(): yield x.key
-iterator valuesWithPrefix*[T](c: CritBitTree[T], prefix: string, longestMatch = false): T =
+iterator valuesWithPrefix*[T](c: PatriciaTree[T], prefix: string, longestMatch = false): T =
   for x in allprefixedAux(c, prefix, longestMatch).leaves(): yield x.val
-proc `$`*[T](c: CritBitTree[T]): string =
+proc `$`*[T](c: PatriciaTree[T]): string =
   if c.len == 0:
     when T is void:
       result = "{}"
@@ -182,54 +185,12 @@ when isMainModule:
     else:
       result = ""
       for i in 0..<size: result.add cast[char](randomBit(kindBit) + A)
-  # bench
-  # import sets
-  # stopwatch:
-  #   block:
-  #     echo "Raw"
-  #     var S = 0
-  #     for i in 0..<6e5.int:
-  #       S += randomStringFast(3).len
-  #     echo S
-  # stopwatch:
-  #   block:
-  #     echo "HashSet"
-  #     var S = initSet[string]()
-  #     for i in 0..<1e6.int:
-  #       S.incl randomStringFast(3,1)
-  #     echo S.len
-  stopwatch:
-    block:
-      echo "Patricia Tree"
-      var S : CritBitTree[int]
-      for i in 0..<1e6.int:
-        S[randomStringFast(3,1)] = 123
-      echo S.len
-
-  # test "Patricia Tree":
-  #   block: # キーの重複を許さないver
-  #     var T : CritBitTree[int]
-  #     echo T.len
-  #     T.inc "aiueo"
-  #     T.inc "aiueoeo"
-  #     T.inc "aiueo"
-  #     echo T.len
-  #     echo "aiueo" in T
-  #     echo "aiueoa" in T
-  #     echo T
-  #   block: # これはなんですか
-  #     var T : CritBitTree[void]
-  #     echo T.len
-  #     T.incl "aiueo"
-  #     T.incl "aiueoeo"
-  #     T.incl "aiueo"
-  #     echo T.len
-  #   block: # これはTableですね
-  #     var T : CritBitTree[char]
-  #     echo T.len
-  #     T["aiueo"] = 'x'
-  #     T["aiueoeo"] = 'o'
-  #     T["aiueo"] = 'c'
-  #     echo T["aiueo"]
-  #     T.excl "aiueo"
-  #     echo "aiueo" in T
+  test "Monoidic Patricia Tree":
+    var S = newPatriciaTree(proc(x,y:int):int=x+y,1)
+    S["aiueo"] = 10
+    S["aiueoao"] = 20
+    S["aaaea"] = 30
+    check: "aiueo" in S
+    check: S.len == 3
+    S.excl "aiueo"
+    check: S.len == 2
