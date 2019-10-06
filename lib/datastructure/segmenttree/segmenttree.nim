@@ -4,22 +4,23 @@ type
   SegmentTree*[T] = ref object
     n* : int
     data*:seq[T]
-    infinity*: T
+    initialValue*: T
     cmp*:proc(x,y:T):T
-proc newSegmentTree*[T](size:int,infinity:T,cmp:proc(x,y:T):T) : SegmentTree[T] =
+# 親は (i-1)/2 , 子は 2n+{1,2}
+proc newSegmentTree*[T](size:int,initialValue:T,cmp:proc(x,y:T):T) : SegmentTree[T] =
   new(result)
   result.n = size.nextPowerOfTwo()
-  result.data = newSeqWith(result.n * 2,infinity)
-  result.infinity = infinity
+  result.data = newSeqWith(result.n*2,initialValue)
+  result.initialValue = initialValue
   result.cmp = cmp
 proc `[]=`*[T](self:var SegmentTree[T],i:int,val:T) =
   var i = i + self.n - 1
   self.data[i] = val
   while i > 0:
     i = (i - 1) shr 1
-    self.data[i] = self.cmp(self.data[i * 2 + 1],self.data[i * 2 + 2])
+    self.data[i] = self.cmp(self.data[i*2+1],self.data[i*2+2])
 proc queryImpl*[T](self:SegmentTree[T],target,now:Slice[int],i:int) : T =
-  if now.b <= target.a or target.b <= now.a : return self.infinity
+  if now.b <= target.a or target.b <= now.a : return self.initialValue
   if target.a <= now.a and now.b <= target.b : return self.data[i]
   let next = (now.a + now.b) shr 1
   let vl = self.queryImpl(target, now.a..next, i*2+1)
@@ -30,12 +31,12 @@ proc `[]`*[T](self:SegmentTree[T],slice:Slice[int]): T =
 proc `[]`*[T](self:SegmentTree[T],i:int): T = self[i..i]
 proc `$`*[T](self:SegmentTree[T]): string =
   var arrs : seq[seq[T]] = @[]
-  var l = 0
-  var r = 1
-  while r <= self.data.len:
-    arrs.add self.data[l..<r]
-    l = l * 2 + 1
-    r = r * 2 + 1
+  var left = 0
+  var right = 1
+  while right <= self.data.len:
+    arrs.add self.data[left..<right]
+    left = left * 2 + 1
+    right = right * 2 + 1
   return $arrs
 # 目的の値を返すindexを返す
 proc findIndexImpl*[T](self:SegmentTree[T],target,now:Slice[int],i,d:int = 0) : int =
@@ -51,9 +52,9 @@ proc findIndexImpl*[T](self:SegmentTree[T],target,now:Slice[int],i,d:int = 0) : 
 proc findIndex*[T](self:SegmentTree[T],slice:Slice[int]): int =
   var index = self.findIndexImpl(slice.a..slice.b+1,0..self.n,0)
   while index < self.n - 1:
-    let l = index * 2 + 1
-    if self.data[l] == self.data[index] : index = l
-    else: index = l + 1
+    let left = index * 2 + 1
+    if self.data[left] == self.data[index] : index = left
+    else: index = left + 1
   return index - (self.n - 1)
 
 proc newMaxSegmentTree*[T](size:int) : SegmentTree[T] =
@@ -62,12 +63,10 @@ proc newMaxSegmentTree*[T](size:int) : SegmentTree[T] =
   result = newSegmentTree[T](size,-1e12.T,maximpl[T])
 proc newMinSegmentTree*[T](size:int) : SegmentTree[T] =
   # 最小値のセグツリ
-  proc minimpl[T](x,y:T): T = (if x <= y: x else: y)
-  result = newSegmentTree[T](size,1e12.T,minimpl[T])
+  result = newSegmentTree[T](size,1e12.T,proc(x,y:T): T = (if x <= y: x else: y))
 proc newAddSegmentTree*[T](size:int) : SegmentTree[T] =
-  # 区間和のセグツリ
-  proc addimpl[T](x,y:T): T = x + y
-  result = newSegmentTree[T](size,0.T,addImpl[T])
+  # 区間和のセグツリ(= BIT)
+  result = newSegmentTree[T](size,0.T,proc(x,y:T): T = x + y)
 
 
 when isMainModule:

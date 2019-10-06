@@ -59,7 +59,7 @@ iterator `<`*[T](self:CMultiSet[T],x:T) : T =
         yield *a
         --a
       if *a < x : yield *a
-iterator range*[T](self:CMultiSet[T],slice:Slice[T]) : T =
+iterator getRange*[T](self:CMultiSet[T],slice:Slice[T]) : T =
   for x in self >= slice.a:
     if x > slice.b : break
     yield x
@@ -83,7 +83,7 @@ when isMainModule:
     check: toSeq(s >= 5) == @[5, 5, 5, 6, 9]
     check: toSeq(s <= 5) == @[5, 5, 5, 4, 3, 3, 2, 1, 1]
     check: toSeq(s < 5) == @[4, 3, 3, 2, 1, 1]
-    check: toSeq(s.range(3..5)) == @[3, 3, 4, 5, 5, 5]
+    check: toSeq(s.getRange(3..5)) == @[3, 3, 4, 5, 5, 5]
     s.erase(s.max())
     check: s.max() == 6
     for _ in 0..<10: s.erase(1)

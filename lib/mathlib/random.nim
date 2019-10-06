@@ -14,15 +14,18 @@ proc randomBit*(maxBit:int):int = # mod が遅い場合
 proc shuffle*[T](x: var openArray[T]) =
   for i in countdown(x.high, 1):
     swap(x[i], x[random(i)])
+proc randomString*(maxLen:int): string =
+  let size = 1 + random(maxLen - 1)
+  var S = newSeq[char](size)
+  for i in 0..<size: S[i] = chr(random(26) + 'A'.ord)
+  return cast[string](S)
+proc randomStringFast*(maxBit:int,kindBit:int=4):string =
+  let size = 1 + randomBit(maxBit)
+  var S = newSeq[char](size)
+  const A = 'A'.ord
+  for i in 0..<size: S[i] = cast[char](randomBit(kindBit) + A)
+  return cast[string](S)
 
-# 時間ギリギリまでサーチ.
-import times
-template timeUpSearch*(milliSec:int,body) =
-  # 時間計測は 1e5 回で100ms.
-  # この回数以上探索するなら, for i in 0..<100: body にする
-  let startTime = cpuTime()
-  while (cpuTime() - startTime) * 1000 < milliSec:
-    body
 
 when isMainModule:
   import unittest

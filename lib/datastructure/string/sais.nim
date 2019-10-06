@@ -2,11 +2,11 @@
 # 文字列検索は O(MlogN) でできる.
 # 「追加の更新が発生するprefix検索」はTrie木を使うしかないが,
 # SA-IS は ほぼこれ https://blog.knshnb.com/posts/sa-is/
-import sequtils,algorithm
+import sequtils
 type SuffixArray* = ref object
   S* : string
-  SA : seq[int]
-  LCP : seq[int]
+  SA*: seq[int]
+  LCP*: seq[int]
 proc SAIS(inputString:string) : seq[int] =
   proc SAISImpl(S:seq[int], k:int):seq[int] =
     # https://blog.knshnb.com/posts/sa-is/
@@ -111,7 +111,7 @@ proc newSuffixArray*(S:string):SuffixArray =
     if h > 0 : h -= 1
   result.LCP[0] = -1
 # その文字列の出現位置
-iterator findIndex(self:SuffixArray,target:string): int =
+iterator findIndex*(self:SuffixArray,target:string): int =
   var a = -1
   var b = self.S.len + 1
   while a + 1 < b:
@@ -130,86 +130,42 @@ iterator findIndex(self:SuffixArray,target:string): int =
       already = true
     else: break
     b += 1
-proc findAllIndex(self:SuffixArray,target:string):seq[int] =
+proc findAllIndex*(self:SuffixArray,target:string):seq[int] =
   toSeq(self.findIndex(target))
-proc findOneIndex(self:SuffixArray,target:string): int =
+proc findOneIndex*(self:SuffixArray,target:string): int =
   for i in self.findIndex(target): return i
   return -1
 # その単語の出現個数.
+# TODO: もっと高速化できる.
+# abcab*** で検索すると [abcab,abcab\0,...abcab\ff\ff\ff\ff] までが対象となるので,
+# upperBound / lowerBound 関数を作り、 at("abcac") - at("abcab") すれば出せる
 proc getCount*(self:SuffixArray,target:string): int =
   for _ in self.findIndex(target): result += 1
 # 文字列がそのまま欲しいとき用. 文字列なので処理時間に注意！
-proc getString(S:string,index:int) : string = S[index..^1]
-proc getString(self:SuffixArray,index:int) : string = self.S[index..^1]
-proc getAllString(self:SuffixArray):seq[string] =
+proc getString*(S:string,index:int) : string = S[index..^1]
+proc getString*(self:SuffixArray,index:int) : string = self.S[index..^1]
+proc getAllSuffixArrayString*(self:SuffixArray):seq[string] =
   result = newSeq[string](self.SA.len)
   for i in 0..<self.SA.len:
     result[i] = self.getString(self.SA[i])
-iterator findMatchedString(self:SuffixArray,target:string): string =
+iterator findMatchedString*(self:SuffixArray,target:string): string =
   for i in self.findIndex(target):
     yield self.getString(i)
-proc findAllMatchedString(self:SuffixArray,target:string):seq[string] =
+proc findAllMatchedString*(self:SuffixArray,target:string):seq[string] =
   toSeq(self.findMatchedString(target))
-proc findOneMatchedString(self:SuffixArray,target:string):string =
+proc findOneMatchedString*(self:SuffixArray,target:string):string =
   for s in self.findMatchedString(target): return s
   return ""
 
-# https://tenka1-2016-final-open.contest.atcoder.jp/tasks/tenka1_2016_final_c でverify したい
-# ^hoge^fuga^piyo^ という形でjoinする.
-# prefix/suffix での検索ができる.
-import tables
-type StringFinder = ref object
-  SA: SuffixArray
-  strs: seq[string]
-  indexMap:Table[int,int] # ^ の位置からstrsのindex
-  separator : char
-proc newStringFinder(strs:seq[string],separator:char = '\0'): StringFinder =
-  new(result)
-  result.strs = strs
-  result.indexMap = initTable[int,int]()
-  result.separator = separator # 含まれない文字列
-  var strLenSum = 1
-  for i in 0..<strs.len:
-    strLenSum += strs[i].len + 1
-  var S = newSeq[char](strLenSum)
-  var currentPos = 0
-  for i in 0..<strs.len:
-    S[currentPos] = separator
-    result.indexMap[currentPos] = i
-    currentPos += 1
-    for j in 0..<strs[i].len:
-      S[currentPos] = strs[i][j]
-      currentPos += 1
-  S[currentPos] = separator
-  result.SA = cast[string](S).newSuffixArray()
-iterator findIndexWithPrefix(self:StringFinder,target:string): int =
-  for i in self.SA.findIndex(self.separator & target): yield i
-proc findAllIndexWithPrefix(self:StringFinder,target:string):seq[int] =
-  toSeq(self.findIndexWithPrefix(target)).reversed()
-proc findOneIndexWithPrefix(self:StringFinder,target:string): int =
-  for i in self.findIndexWithPrefix(target): return i
-  return -1
-proc getCountWithPrefix(self:StringFinder,target:string): int =
-  for _ in self.findIndexWithPrefix(target): result += 1
-proc getString(self:StringFinder,index:int):string =
-  if index in self.indexMap:
-    return self.strs[self.indexMap[index]]
-  # 無かった場合悲しいね
-
-
-let sa4 = newStringFinder(@["ab","bc","ca","abc","abbb","ab"])
-echo sa4.findAllIndexWithPrefix("ab").mapIt(sa4.getString(it))
-echo sa4.getCountWithPrefix("ab")
-# echo sa4.findAll("cc").mapIt(sa4.getString(it))
 
 
 when isMainModule:
   import unittest
   import strutils
-  # import times
-  # template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
+  import times
+  template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
   test "Suffix Array":
-    block:
+    block: # 46ms
       let S = "abc".repeat(100000)
       let SA = S.newSuffixArray()
       let target = "abc".repeat(50000)
@@ -220,7 +176,7 @@ when isMainModule:
       let banana = bananaStr.newSuffixArray()
       check: banana.SA == @[6, 5, 3, 1, 0, 4, 2]
       check: banana.LCP == @[-1, 0, 1, 3, 0, 0, 2]
-      check: banana.getAllString() == @["","a","ana","anana","banana","na","nana"]
+      check: banana.getAllSuffixArrayString() == @["","a","ana","anana","banana","na","nana"]
       check: banana.findAllIndex("an") == @[3,1]
       check: banana.findAllIndex("an").mapIt(bananaStr.getString(it)) == @["ana","anana"]
       check: banana.findOneIndex("an") == 3

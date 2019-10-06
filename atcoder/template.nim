@@ -1,5 +1,5 @@
-import sequtils,algorithm,math,strutils,tables,sets
-template times*(n:int,body) = (for _ in 0..<n: body)
+import sequtils,algorithm,math,tables,sets,strutils,times
+template time*(n:int,body) = (for _ in 0..<n: body)
 template `max=`*(x,y) = x = max(x,y)
 template `min=`*(x,y) = x = min(x,y)
 proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" ,discardable.}

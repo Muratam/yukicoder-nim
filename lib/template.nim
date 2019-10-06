@@ -1,11 +1,7 @@
-import sequtils
-template times*(n:int,body) = (for _ in 0..<n: body)
+import sequtils,algorithm,math,tables,sets,strutils,times
+template time*(n:int,body) = (for _ in 0..<n: body)
 template `max=`*(x,y) = x = max(x,y)
 template `min=`*(x,y) = x = min(x,y)
-# import algorithm,math,tables,sets
-# import strutils,queues,heapqueue
-# import sugar,times,bitops,intsets,macros
-# import rationals,critbits,ropes,nre,pegs,complex,stats
 
 # Input
 proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>",discardable .}
@@ -23,8 +19,11 @@ proc putchar_unlocked(c:char){. importc:"putchar_unlocked",header: "<stdio.h>" .
 proc puts(str: cstring){.header: "<stdio.h>", varargs.}
 
 # 実行時間 / メモリ使用量
-import times
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
+template timeUpSearch*(milliSec:int,body) =
+  let startTime = cpuTime() # 時間計測行為は1000倍遅く.1e5 回で100ms.
+  while (cpuTime() - startTime) * 1000 < milliSec:
+    for i in 0..<100: body
 proc printMemories*() =
   proc printMem(mem: int, spec: string) =
     echo spec, " MEM:", mem div 1024 div 1024, "MB"
@@ -38,3 +37,7 @@ const dxdy8 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0),(1,1),(1,-1),(-1,
 type Pos = tuple[x,y:int]
 proc `+`(p,v:Pos):Pos = (p.x+v.x,p.y+v.y)
 proc `-`(p,v:Pos):Pos = (p.x-v.x,p.y-v.y)
+
+# # queues は <= 0.18 , heapqueue は => 0.18 ,intsets はHashSet[int]の完全下位互換
+# import queues,heapqueue,critbits,ropes,nre,pegs
+# import bitops,stats,rationals,complex,intsets,,macros,sugar,future
