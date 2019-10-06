@@ -1,33 +1,33 @@
-import segmenttree
+import "./segmenttree"
 import sequtils,math
 type
   SegmentTree2D[T] = ref object
     w,h : int
     data:seq[SegmentTree[T]]
-    infinity: T
-    cmp:proc(x,y:T):T
-proc newSegmentTree2D[T](w,h:int,infinity:T,cmp:proc(x,y:T):T) : SegmentTree2D[T] =
+    unit: T
+    apply:proc(x,y:T):T
+proc newSegmentTree2D[T](w,h:int,apply:proc(x,y:T):T,unit:T) : SegmentTree2D[T] =
   new(result)
   result.w = w.nextPowerOfTwo()
   result.h = h.nextPowerOfTwo()
-  result.infinity = infinity
-  result.cmp = cmp
+  result.unit = unit
+  result.apply = apply
   result.data = newSeq[SegmentTree[T]](result.w * 2)
   for i in 0..<result.data.len:
-    result.data[i] = newSegmentTree[T](h,infinity,cmp)
+    result.data[i] = newSegmentTree[T](h,apply,unit)
 proc `[]=`*[T](self:var SegmentTree2D[T],x,y:int,val:T) =
   var x = x + self.w - 1
   self.data[x][y] = val
   while x > 0:
     x = (x - 1) shr 1
-    self.data[x][y] = self.cmp(self.data[x * 2 + 1][y],self.data[x * 2 + 2][y])
+    self.data[x][y] = self.apply(self.data[x * 2 + 1][y],self.data[x * 2 + 2][y])
 proc queryImpl*[T](self:SegmentTree2D[T],target,ys,now:Slice[int],i:int) : T =
-  if now.b <= target.a or target.b <= now.a : return self.infinity
+  if now.b <= target.a or target.b <= now.a : return self.unit
   if target.a <= now.a and now.b <= target.b : return self.data[i][ys]
   let next = (now.a + now.b) shr 1
   let vl = self.queryImpl(target, ys, now.a..next, i*2+1)
   let vr = self.queryImpl(target, ys, next..now.b, i*2+2)
-  return self.cmp(vl,vr)
+  return self.apply(vl,vr)
 proc `[]`*[T](self:SegmentTree2D[T],xs,ys:Slice[int]): T =
   return self.queryImpl(xs.a..xs.b+1,ys,0..self.w,0)
 proc `[]`*[T](self:SegmentTree2D[T],x,y:int): T = self[x..x,y..y]
@@ -40,23 +40,15 @@ proc `$`*[T](self:SegmentTree2D[T]): string =
   return $arrs
 
 
+# 最大値のセグツリ
 proc newMaxSegmentTree2D*[T](w,h:int) : SegmentTree2D[T] =
-  # 最大値のセグツリ
-  proc maximpl[T](x,y:T): T = (if x >= y: x else: y)
-  result = newSegmentTree2D[T](w,h,-1e12.T,maximpl[T])
+  newSegmentTree2D[T](w,h,proc(x,y:T):T=(if x >= y: x else: y),-1e12.T)
+# 最小値のセグツリ
 proc newMinSegmentTree2D*[T](w,h:int) : SegmentTree2D[T] =
-  # 最小値のセグツリ
-  proc minimpl[T](x,y:T): T = (if x <= y: x else: y)
-  result = newSegmentTree2D[T](w,h,1e12.T,minimpl[T])
-
+  newSegmentTree2D[T](w,h,proc(x,y:T):T=(if x <= y: x else: y),-1e12.T)
+# 区間和のセグツリ
 proc newCumulativeSum2D*[T](w,h:int) : SegmentTree2D[T] =
-  # 累積和のセグツリ.
-  # 範囲取得クエリが M かつ 1箇所更新クエリが N ある時に重宝.
-  # 範囲取得クエリが 1 かつ  範囲更新クエリが 1 なら 普通の累積和 (https://ei1333.github.io/luzhiled/snippets/dp/cumulative-sum-2d.html)
-  # 範囲取得クエリが 1 かつ  範囲更新クエリが N なら 2次いもす O(N+WH) の方が速い
-  proc plusimpl[T](x,y:T): T = x + y
-  result = newSegmentTree2D[T](w,h,0.T,plusimpl[T])
-
+  newSegmentTree2D[T](w,h,proc(x,y:T):T= x + y,0.T)
 
 when isMainModule:
   import unittest

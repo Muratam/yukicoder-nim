@@ -11,10 +11,10 @@ else:
   proc complex(x,y:float):Complex64 = (x,y)
 
 const EPS = 1e-6
-proc `$`*(a:Complex64):string = ($a.re)[0..<min(($a.re).len,9)] & " + " & ($a.im)[0..<min(($a.im).len,9)] & "i"
 proc `~~` *(x, y: float): bool = abs(x - y) < EPS # ≒
 proc `~~<` *(x, y: float): bool = x < y + EPS # ≒
 proc `~~` *(x, y: Complex64): bool = abs(x.re - y.re) ~~ 0.0 and abs(x.im - y.im) ~~ 0.0
+proc `$`*(a:Complex64):string = ($a.re)[0..<min(($a.re).len,9)] & " + " & ($a.im)[0..<min(($a.im).len,9)] & "i"
 proc conj*(a:Complex64):Complex64 = a.conjugate # 共役
 proc unit*(a:Complex64):Complex64 = a / a.abs() # 単位ベクトル
 proc norm*(a:Complex64):Complex64 = complex(-a.im,a.re).unit # 法線ベクトル

@@ -7,10 +7,11 @@
 - lib/template.nim :: 競プロテンプレート
 - `lib/datastructure` :: データ構造
   - `queue/` : Deque, Queue, Stack : 末尾・先頭への追加削除 O(1)
-  - `segmenttree/` :: 区間クエリ O(logN)
+  - `segmenttree/` :: 区間クエリ O(logN). モノイド.
     - セグメントツリー{1D,2D} : 一点更新, 区間取得
-    - BIT : 一点更新, 区間和
-    - StarrySkyTree : 区間更新(加算),区間最{大,小}値取得
+      - セグツリutils (T(生値)->R(集約値)/座標圧縮)
+    - StarrySkyTree: 区間更新(可換モノイド演算), 区間取得
+    - BIT : 一点更新, 区間[**0**,T]の取得. 可換など制限がつく分速い.
   - `set/` :: 集合. 動的に要素を追加・削除可能
     - std::{set,multiset} :: 追加・削除・検索・最{小,大}値・{以上,以下}列挙 O(logN)
     - UnionFind : 森のマージ・根の取得 O(1)
@@ -39,7 +40,7 @@
   - AdjMatrix :: 隣接行列, 補グラフ | 彩色数 O(2^N N) | 最大{クリーク,独立集合} O(N * √2^N)
   - TODO: Testgraph(テストケース)
 - `lib/seq/` :: seqを操作
-  - search : 二分探索 / 三分探索 / lowerBoundの `< <= > >=` 表記
+  - search : {二,三}分探索 / lowerBound <-> `< <= > >=`  / 座標圧縮
   - LIS : 最長増加部分列
   - slidemin : スライド最小値
   - sequence : arg{min,max} / deduplicate / 10進数と配列変換
@@ -47,6 +48,7 @@
 - `lib/garbase` : 書き捨てたコード.いつか使う時はくるのか...?
   - Z-Algorithm : `S と S[i:]` を求めることしかできない. 定数倍とこの目的以外なら SA-IS でよくない
   - Link-Cut木 : UnionFind + 木のカットやLCAや...をしたくなったらだけど必要になることある？？必要になったら書きます.
+  - 遅延セグツリ : つらい.StarrySkyTreeの加算性が無いと困ることあったらそのとき考えよう
   - `tree` : std::map で全て事足りるので...
     - パトリシア木: 追加・prefix探索 O(S).  verify(y430)に失敗...
     - 二進パトリシア木 : xorに強い k番目の最小値が取れるheap
