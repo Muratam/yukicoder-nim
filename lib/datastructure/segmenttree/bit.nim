@@ -5,7 +5,7 @@ type BinaryIndexedTree*[T] = ref object
   data*: seq[T]
   apply*: proc(x,y:T):T
   unit*: T
-proc newBinaryIndexedTree[T](n:int,apply:proc(x,y:T):T,unit:T):BinaryIndexedTree[T] =
+proc newBinaryIndexedTree*[T](n:int,apply:proc(x,y:T):T,unit:T):BinaryIndexedTree[T] =
   new(result)
   result.data = newSeq[T](n)
   for i in 0..<result.data.len: result.data[i] = unit
@@ -25,7 +25,18 @@ proc until*[T](self:BinaryIndexedTree[T],i:int): T =
   while i >= 0:
     result = self.apply(result,self.data[i])
     i = (i and (i + 1)) - 1
-proc `$`[T](self:BinaryIndexedTree[T]): string =
+# 速度にこだわるなら構築の定数倍も大事だよね.速いよ.
+proc newBinaryIndexedTree*[T](arr:seq[T],apply:proc(x,y:T):T,unit:T):BinaryIndexedTree[T] =
+  new(result)
+  result.data = arr
+  result.apply = apply
+  result.unit = unit
+  for i in 0..<arr.len:
+    let x = i or (i+1)
+    if x < arr.len:
+      result.data[x] = result.apply(result.data[i],result.data[x])
+
+proc `$`*[T](self:BinaryIndexedTree[T]): string =
   result = "["
   for i in 0..<self.len.min(100): result &= $(self.until(i)) & ", "
   return result[0..result.len()-2] & (if self.len > 100 : " ...]" else: "]")
@@ -71,3 +82,11 @@ when isMainModule:
       check: S.until(75) == 0
       check: S.until(25) == 10 # 更新される
       check: S.until(0) == 50
+    block:
+      var T = newSeq[int](100)
+      for i in 0..<100: T[i] = abs(i - 50)
+      var S1 = newMinBinaryIndexedTree[int](100)
+      for i,t in T: S1.update(i,t)
+      var S2 = T.newBinaryIndexedTree(proc(x,y:int):int = (if x <= y: x else: y),1e12.int)
+      for i in 0..<100:
+        check: S1.until(i) == S2.until(i)

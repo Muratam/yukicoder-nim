@@ -81,6 +81,12 @@ proc `>=`[T](a:T,arr:seq[T]): int =
   let i = arr.lowerBound(a) - 1
   if i + 1 < arr.len and a >= arr[i+1]:return i + 1
   return i
+proc at[T](arr:seq[T],slice:Slice[T]): Slice[int] =
+  var a = slice.a >= arr
+  var b = slice.b <= arr
+  if a < 0 : a = 0
+  if b >= arr.len : b = arr.len - 1
+  return a..b
 
 # 座標圧縮.
 import algorithm
@@ -151,11 +157,14 @@ when isMainModule:
     # 最大値が複数ある時,どれになるかは不明であることに注意
     let A = @[1,2,3,4,5,5,5,5,2,0]
     check:termarySearch(0..<A.len,proc(x:int):int= A[x],SearchMax) notin [4,7]
-  test "<= > < >=":
+  test "<= > < >= at":
     check: @[1,2,3,4,5,10].mapIt(it <= @[2,4,6,8]) == @[0, 0, 1, 1, 2, 4]
     check: @[1,2,3,4,5,10].mapIt(it < @[2,4,6,8]) == @[0, 1, 1, 2, 2, 4]
     check: @[1,2,3,4,5,10].mapIt(it > @[2,4,6,8]) == @[-1, -1, 0, 0, 1, 3]
     check: @[1,2,3,4,5,10].mapIt(it >= @[2,4,6,8]) == @[-1, 0, 0, 1, 1, 3]
+    check: @[1,2,3,4,5,10].at(2..4) == 1..3
+    check: @[1,2,3,4,5,10].at(5..11) == 4..5
+    check: @[1,2,3,4,5,10].at(0..11) == 0..5
   test "compressed Position":
     let poses = @[1,10,100,1000,10000]
     var T = poses.newCompressedPos()

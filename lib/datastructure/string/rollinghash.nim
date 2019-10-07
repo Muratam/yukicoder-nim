@@ -1,11 +1,12 @@
 # ロリハ
 # 構築 O(|S|) / 部分文字列検索 O(1)
-type RollingHash = ref object
+type RollingHash* = ref object
   modA,modB : int
   baseA,baseB : int
   A,B: seq[int]  # baseA 進数表示
   AP,BP: seq[int] # pow(baseA,n)
-proc newRollingHash(
+type RollingHashed* = (int,int)
+proc newRollingHash*(
     S:string, baseA:int=17, baseB:int=19,
     modA:int=1_0000_0000_7.int, modB:int=1_0000_0000_9.int) : RollingHash =
   new(result)
@@ -23,7 +24,7 @@ proc newRollingHash(
   for i in 0..<S.len: result.B[i+1] = (result.B[i] * baseB + S[i].ord) mod modB
   for i in 0..<S.len: result.AP[i+1] = (result.AP[i] * baseA) mod modA
   for i in 0..<S.len: result.BP[i+1] = (result.BP[i] * baseB) mod modB
-proc hash(self:RollingHash,slice:Slice[int]):(int,int) = # [l,r)
+proc hash*(self:RollingHash,slice:Slice[int]): RollingHashed =
   let l = slice.a
   let r = slice.b + 1
   return ((self.AP[r-l] * self.A[l] - self.A[r] + self.modA) mod self.modA,

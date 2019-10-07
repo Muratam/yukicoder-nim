@@ -19,6 +19,7 @@ proc putchar_unlocked(c:char){. importc:"putchar_unlocked",header: "<stdio.h>" .
 proc puts(str: cstring){.header: "<stdio.h>", varargs.}
 
 # 実行時間 / メモリ使用量
+import times
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
 template timeUpSearch*(milliSec:int,body) =
   let startTime = cpuTime() # 時間計測行為は1000倍遅く.1e5 回で100ms.

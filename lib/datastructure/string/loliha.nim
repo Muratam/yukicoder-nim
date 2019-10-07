@@ -1,17 +1,17 @@
 # 軽量版 の ロリハ
 # https://qiita.com/keymoon/items/11fac5627672a6d6a9f6
 # 構築 O(|S|) / 部分文字列の同一性判定 O(1) (検索文字列長に依らない)
-type LoliHa = ref object
+type LoliHa* = ref object
   A: seq[int]  # baseA 進数表示
   AP: seq[int] # pow(baseA,n)
-proc modMasked(a:int) : int =
+proc modMasked*(a:int) : int =
   const mask61 = (1 shl 61) - 1
   var a = a
   while a < 0: a += mask61
   a = (a and mask61) + (a shr 61)
   if a > mask61 : a -= mask61
   return a
-proc mulMasked(a,b:int) : int =
+proc mulMasked*(a,b:int) : int =
   const mask30 = (1 shl 30) - 1
   const mask31 = (1 shl 31) - 1
   let au = a shr 31
@@ -22,7 +22,7 @@ proc mulMasked(a,b:int) : int =
   let midu = mid shr 30
   let midd = mid and mask30
   return (au * bu * 2 + ad * bd + midu + (midd shl 31)).modMasked()
-proc newLoliHa(S:string) : LoliHa =
+proc newLoliHa*(S:string) : LoliHa =
   # 67800 と 678 は 67800 == 678 * 100 で得られる
   const LH_BASE = 123804440394837511.int # ランダムに取れば落ちても落ちない
   new(result)
@@ -32,12 +32,14 @@ proc newLoliHa(S:string) : LoliHa =
   for i in 0..<S.len:
     result.A[i+1] = (result.A[i].mulMasked(LH_BASE) + S[i].ord).modMasked()
     result.AP[i+1] = result.AP[i].mulMasked(LH_BASE)
-proc hash(self:LoliHa,slice:Slice[int]): int =
+proc hash*(self:LoliHa,slice:Slice[int]): int =
   let l = slice.a
   let r = slice.b + 1
   return (self.AP[r-l].mulMasked(self.A[l]) - self.A[r]).modMasked()
-
-
+# ハッシュの衝突が辛い場合でも変えられるように本家と互換性を保つ
+proc newRollingHash*(S:string) : LoliHa {.inline.} = newLoliHa(S)
+type RollingHash* = LoliHa
+type RollingHashed* = int
 
 when isMainModule:
   import unittest
@@ -48,6 +50,9 @@ when isMainModule:
       check:LH.hash(0..<4) == LH.hash(8..<12)
       check:LH.hash(0..0) == LH.hash(1..1)
       check:LH.hash(0..10) != LH.hash(5..9)
+      check:LH.hash(0..3) == LH.hash(8..11)
+      check:LH.hash(0..3) == "iika".newLoliha().hash(0..3)
+      check:LH.hash(0..3) != "dame".newLoliha().hash(0..3)
     block:
       const str = "1234567890-^qwertyuiop@[asdfghjkl;:zxcvbnm,./_"
       var LH = newLoliHa(str)

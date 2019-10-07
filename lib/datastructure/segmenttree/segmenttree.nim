@@ -20,6 +20,20 @@ proc newSegmentTree*[T](size:int,apply:proc(x,y:T):T,unit:T) : SegmentTree[T] =
   for i in 0..<result.data.len: result.data[i] = unit
   result.unit = unit
   result.apply = apply
+# 構築. O(N)
+proc newSegmentTree*[T](arr:seq[T],apply:proc(x,y:T):T,unit:T) : SegmentTree[T] =
+  new(result)
+  result.n = arr.len.nextPowerOfTwo()
+  result.unit = unit
+  result.apply = apply
+  result.data = newSeq[T](result.n*2)
+  let offset = result.n - 1
+  for i,a in arr: result.data[i+offset] = a
+  for i in arr.len..<result.n-1:
+    result.data[i] = unit
+  for i in (offset-1).countdown(0):
+    result.data[i] = apply(result.data[i*2+1],result.data[i*2+2])
+  result.data[0] = apply(result.data[1],result.data[2])
 proc `[]=`*[T](self:var SegmentTree[T],i:int,val:T) =
   var i = i + self.n - 1 # 葉から
   self.data[i] = val
@@ -92,8 +106,15 @@ when isMainModule:
   import math
   test "segment tree":
     block: # max
+      var T = newSeq[int](100)
+      for i in 0..<100: T[i] = abs(i - 50)
       var S = newMaxSegmentTree[int](100)
-      for i in 0..<100: S[i] = abs(i - 50)
+      for i,t in T: S[i] = t
+      var S2 = T.newSegmentTree(proc(x,y:int): int = (if x >= y: x else: y),-1e12.int)
+      for i in 0..<100:
+        for j in i..<100:
+          if S[i..j] != S2[i..j]:
+            echo i..j,@[S[i..j],S2[i..j]]
       check: S[0..<100] == 50
       check: S[25..75] == 25
       check: S.findIndex(0..<100) == 0
@@ -102,6 +123,7 @@ when isMainModule:
       check: S[50..50] == 100
       check: S[0..25] == 50
       check: S.findIndex(0..<100) == 50
+
     block: # min
       var S = newMinSegmentTree[int](100)
       for i in 0..<100: S[i] = abs(i - 50)
