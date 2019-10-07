@@ -8,7 +8,7 @@ type
     count : int32
     valueOrMask : int # 葉なら value / 枝なら一番下位bitが自身が担当するbit番号.それ以外はprefix
     data : T
-  PatriciaSegmentTree[T] = ref object
+  PatriciaSegmentTree[T] = object
     root : PatriciaSegmentNode[T]
     unit : T
     apply*:proc(x,y:T):T
@@ -23,7 +23,6 @@ proc newPatriciaSegmentLeaf[T](self:PatriciaSegmentTree[T],n:int,val:T) : Patric
   result.count = 1
   result.data = val
 proc newPatriciaSegmentTree*[T](apply:proc(x,y:T):T,unit:T,bitSize:int = 60):PatriciaSegmentTree[T] =
-  new(result)
   result.unit = unit
   result.apply = apply
   result.root = result.newPatriciaSegmentNode()
@@ -40,7 +39,9 @@ proc bitSize*[T](self:PatriciaSegmentNode[T]):int =
   self.valueOrMask.culonglong.countTrailingZeroBits.int
 proc len*[T](self:PatriciaSegmentTree[T]) : int = self.root.count
 proc isTo1*[T](self:PatriciaSegmentNode[T],n:int):bool{.inline.} =
-  (self.valueOrMask and n) == self.valueOrMask # 上位bitは同じはずなので
+  let x = self.valueOrMask
+  result = (x and n) == x
+   # 上位bitは同じはずなので
 
 # デバッグ用
 import strutils
@@ -74,9 +75,12 @@ proc dump*[T](self:PatriciaSegmentNode[T],indent:int = 0) : string =
 proc dump*[T](self:PatriciaSegmentTree[T]) : string = self.root.dump()
 
 # 完全一致検索
-proc `in`*(n:int,self:PatriciaSegmentTree) : bool =
+var cnt = 0
+# たかだか 2e7 回
+proc `in`*[T](n:int,self:PatriciaSegmentTree[T]) : bool =
   var now = self.root
   while not now.isLeaf:
+    cnt += 1
     if now.isTo1(n):
       if now.to1 == nil : return false
       now = now.to1
@@ -86,7 +90,7 @@ proc `in`*(n:int,self:PatriciaSegmentTree) : bool =
   return now.valueOrMask == n
 
 # 中間点を生成
-proc createInternalNode[T](self:PatriciaSegmentTree[T],now:PatriciaSegmentNode,preTree:PatriciaSegmentNode,n:int,val:T) : PatriciaSegmentNode[T] =
+proc createInternalNode[T](self:var PatriciaSegmentTree[T],now:PatriciaSegmentNode,preTree:PatriciaSegmentNode,n:int,val:T) : PatriciaSegmentNode[T] =
   let cross = preTree.valueOrMask xor n
   var bit = 0
   # 頑張れば bit 演算にできそう.
@@ -179,12 +183,23 @@ proc `[]`*[T](self:PatriciaSegmentTree[T],n:int) : T =
 import times
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
 import "../../mathlib/random"
-var T = newPatriciaSegmentTree(proc(x,y:string):string = x&y,"")
-T[6] = "A"
-T[3] = "B"
-T[0] = "C"
-T[7] = "D"
-T[7] = "E"
-T[15] = "F"
-T[0] = "G"
-echo T.dump()
+block:
+  var T = newPatriciaSegmentTree(proc(x,y:string):string = x&y,"")
+  T[6] = "A"
+  T[3] = "B"
+  T[0] = "C"
+  T[7] = "D"
+  T[7] = "E"
+  T[15] = "F"
+  T[0] = "G"
+  echo T.dump()
+block:
+  # 1e6のランダムケースで
+  # 1000ms: std::set[int]()  なので、
+  # 7倍のコストでセグツリができるならまあよいのでは
+  stopwatch:
+    var T = newPatriciaSegmentTree(proc(x,y:int):int = x+y,0)
+    for i in 0..<1e5.int:
+      T[randomBit(32)] = randomBit(32)
+    echo T[0]
+    echo cnt
