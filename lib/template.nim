@@ -31,7 +31,8 @@ proc printMemories*() =
   getTotalMem().printMem("TOTAL")
   getOccupiedMem().printMem("OCCUP")
   getFreeMem().printMem("FREE ")
-
+# 呪文
+setStdIoUnbuffered()
 # Pos
 const dxdy4 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0)]
 const dxdy8 :seq[tuple[x,y:int]] = @[(0,1),(1,0),(0,-1),(-1,0),(1,1),(1,-1),(-1,-1),(-1,1)]

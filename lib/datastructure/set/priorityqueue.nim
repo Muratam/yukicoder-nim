@@ -35,7 +35,6 @@ proc siftup[T](heap: var PriorityQueue[T], p: int) =
     childpos = 2*pos + 1
   heap.data[pos] = newitem
   siftdown(heap, startpos, pos)
-
 proc len*[T](heap: PriorityQueue[T]): int = heap.data.len
 proc push*[T](heap: var PriorityQueue[T], item: T) =
   heap.data.add(item)
@@ -82,6 +81,17 @@ when isMainModule:
       pq.push(0)
       check: pq.pop() == 0
       check: pq.pop() == 30
+      var pq2 = newPriorityQueue[int](proc(x,y:int):int = x - y)
+      pq2.push(30)
+      pq2.push(10)
+      pq2.push(20)
+      check: pq2.pop() == 10
+      check: pq2.top() == 20
+      check: pq2.pop() == 20
+      pq2.push(0)
+      check: pq2.pop() == 0
+      check: pq2.pop() == 30
+
     block: # 最大値
       var pq = newPriorityQueue[int](revcmp)
       pq.push(30)

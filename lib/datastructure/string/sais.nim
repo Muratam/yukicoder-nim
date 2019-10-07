@@ -1,16 +1,14 @@
 # SA-IS :: O(S) で Suffix Array を構築
 # prefix検索(個数,{上,下}界) O(PlogS)
+# Pがかなり長い(P>log|S|)場合,セグツリで O((log|S|)^2+P) にできる.
+# https://echizen-tm.hatenadiary.org/entry/20110728/1311871765
 # 「追加の更新が発生するprefix検索」はTrie木を使うしかないが...
-# SA-IS は ほぼこれ https://blog.knshnb.com/posts/sa-is/
+# SAIS実装の参考 : https://blog.knshnb.com/posts/sa-is/
 import sequtils
-import "./../segmenttree/segmenttree"
 type SuffixArray* = ref object
   S* : string
   SA*: seq[int]
   LCP*: seq[int]
-import times,strutils
-template stopwatch(body) =
-  let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms"
 proc SAIS(inputString:string) : seq[int] =
   proc SAISImpl(S:seq[int], k:int):seq[int] =
     # https://blog.knshnb.com/posts/sa-is/
@@ -114,8 +112,6 @@ proc newSuffixArray*(S:string):SuffixArray =
     if h > 0 : h -= 1
   result.LCP[0] = -1
 # O(Plog|S|)
-# Pがかなり長い(P>log|S|)場合,セグツリで O((log|S|)^2+P) にできる.
-# https://echizen-tm.hatenadiary.org/entry/20110728/1311871765
 proc lowerBound*(self:SuffixArray,prefix:string): tuple[index:int,isMatched:bool] =
   # i := {S} >= prefix の最小の位置を返却
   var now = -1..self.S.len + 1
@@ -131,7 +127,7 @@ proc lowerBound*(self:SuffixArray,prefix:string): tuple[index:int,isMatched:bool
   let isMatched = self.S[start..<self.S.len.min(start+prefix.len)].cmp(prefix) == 0
   return (found,isMatched)
 # O(Plog|S|+M) (P:prefix, M:iterateを進めた数)
-# prefix にマッチした文字列の最初の位置から順に.
+# prefix にマッチした文字列の最初の位置から順に.辞書順.
 iterator findIndex*(self:SuffixArray,prefix:string): int =
   let (startIndex,isMatched) = self.lowerBound(prefix)
   if isMatched:
@@ -167,8 +163,6 @@ iterator findMatchedString*(self:SuffixArray,prefix:string): string =
   for i in self.findIndex(prefix): yield self.getString(i)
 proc findAllMatchedString*(self:SuffixArray,prefix:string):seq[string] =
   toSeq(self.findMatchedString(prefix))
-
-
 
 when isMainModule:
   import unittest

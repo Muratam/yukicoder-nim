@@ -38,8 +38,8 @@ proc newBinaryIndexedTree*[T](arr:seq[T],apply:proc(x,y:T):T,unit:T):BinaryIndex
 
 proc `$`*[T](self:BinaryIndexedTree[T]): string =
   result = "["
-  for i in 0..<self.len.min(100): result &= $(self.until(i)) & ", "
-  return result[0..result.len()-2] & (if self.len > 100 : " ...]" else: "]")
+  for i in 0..<self.len: result .add $(self.until(i)) & ", "
+  result .add "]"
 proc newMaxBinaryIndexedTree*[T](size:int) : BinaryIndexedTree[T] = # 区間和のセグツリ(= BIT)
   newBinaryIndexedTree[T](size,proc(x,y:T): T = (if x >= y: x else: y),-1e12.T)
 proc newMinBinaryIndexedTree*[T](size:int) : BinaryIndexedTree[T] = # 最小値のセグツリ

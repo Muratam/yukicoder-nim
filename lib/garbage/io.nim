@@ -1,5 +1,3 @@
-# 呪文
-setStdIoUnbuffered()
 # だめなやつだけど爆速
 proc gets(str: cstring){.header: "<stdio.h>", varargs.}
 # 負の要素がある場合のscan

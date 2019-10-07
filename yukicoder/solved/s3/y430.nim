@@ -1,4 +1,3 @@
-import sequtils,algorithm
 template times*(n:int,body) = (for _ in 0..<n: body)
 template `max=`*(x,y) = x = max(x,y)
 template `min=`*(x,y) = x = min(x,y)
@@ -8,11 +7,10 @@ proc scan(): int =
     let k = getchar_unlocked()
     if k < '0': return
     result = 10 * result + k.ord - '0'.ord
-
-type SuffixArray = ref object
-  S : string
-  SA : seq[int]
-  LCP : seq[int]
+type SuffixArray* = ref object
+  S* : string
+  SA*: seq[int]
+  LCP*: seq[int]
 proc SAIS(inputString:string) : seq[int] =
   proc SAISImpl(S:seq[int], k:int):seq[int] =
     # https://blog.knshnb.com/posts/sa-is/
@@ -31,28 +29,28 @@ proc SAIS(inputString:string) : seq[int] =
         LMSS.add i
     # 2. induced sort
     proc inducedSort(LMSS:var seq[int]):seq[int] =
-      var buckets = newSeq[int](n)
+      result = newSeq[int](n)
       var chars = newSeq[int](k+1)
-      for c in S: chars[c.int+1] += 1
+      for c in S: chars[c+1] += 1
       for i in 0..<k: chars[i + 1] += chars[i]
       var count = newSeq[int](k)
       for i in (LMSS.len - 1).countdown(0):
         let c = S[LMSS[i]].int
-        buckets[chars[c+1]-1-count[c]] = LMSS[i]
+        result[chars[c+1]-1-count[c]] = LMSS[i]
         count[c] += 1
       count = newSeq[int](k)
-      for i in 0..<n:
-        if buckets[i] == 0 or isS[buckets[i]-1] : continue
-        let c = S[buckets[i] - 1].int
-        buckets[chars[c] + count[c]] = buckets[i] - 1
+      for i,r in result:
+        if r == 0 or isS[r-1] : continue
+        let c = S[r-1].int
+        result[chars[c] + count[c]] = r - 1
         count[c] += 1
       count = newSeq[int](k)
       for i in (n-1).countdown(0):
-        if buckets[i] == 0 or not isS[buckets[i]-1] : continue
-        let c = S[buckets[i] - 1].int
-        buckets[chars[c+1] - 1 - count[c]] = buckets[i] - 1
+        let r = result[i]
+        if r == 0 or not isS[r-1] : continue
+        let c = S[r - 1].int
+        result[chars[c+1] - 1 - count[c]] = r - 1
         count[c] += 1
-      return buckets
 
     var pseudoSA = LMSS.inducedSort()
     var orderedLMSS = newSeq[int](LMSS.len)
@@ -97,14 +95,13 @@ proc SAIS(inputString:string) : seq[int] =
   for i in 0..<inputString.len:
     G[i] = inputString[i].int + 1
   return SAISImpl(G,260)
-proc newSuffixArray(S:string):SuffixArray =
+proc newSuffixArray*(S:string):SuffixArray =
   new(result)
   result.S = S
   result.SA = S.SAIS()
   let n = S.len
-  # LCP (最長共通接頭辞)
+  # LCP (最長共通接頭辞) O(|S|)
   # SA格納順に隣同士の最長共通接頭辞の長さ
-  # kasai's algorithm で O(N) にできる
   result.LCP = newSeq[int](n+1)
   var h = 0
   var B = newSeq[int](n+1)
@@ -116,32 +113,48 @@ proc newSuffixArray(S:string):SuffixArray =
       result.LCP[B[i]] = h
     if h > 0 : h -= 1
   result.LCP[0] = -1
-iterator find(self:SuffixArray,target:string): int =
-  var a = -1
-  var b = self.S.len + 1
-  while a + 1 < b:
-    let m = (a + b) shr 1
+# O(Plog|S|)
+proc lowerBound*(self:SuffixArray,prefix:string): tuple[index:int,isMatched:bool] =
+  # i := {S} >= prefix の最小の位置を返却
+  var now = -1..self.S.len + 1
+  while now.a + 1 < now.b:
+    let m = (now.a + now.b) shr 1
     let start = self.SA[m]
-    if cmp(self.S[start..<self.S.len.min(start+target.len)],target) < 0 : a = m
-    else : b = m
-  var already = false
-  while b <= self.S.len :
-    let start = self.SA[b]
-    if already: # 既にマッチしているので更にもっとマッチするかどうか見るだけで良い
-      if self.LCP[b] >= target.len: yield start
-      else: break
-    elif cmp(self.S[start..<self.S.len.min(start+target.len)],target) == 0 :
-      yield start
-      already = true
-    else: break
-    b += 1
-proc getCount(self:SuffixArray,target:string): int =
-  for _ in self.find(target): result += 1
+    if self.S[start..<self.S.len.min(start+prefix.len)].cmp(prefix) < 0 :
+      now.a = m
+    else : now.b = m
+  let found = now.b
+  if found >= self.SA.len: return (found,false)
+  let start = self.SA[found]
+  let isMatched = self.S[start..<self.S.len.min(start+prefix.len)].cmp(prefix) == 0
+  return (found,isMatched)
+# O(Plog|S|+M) (P:prefix, M:iterateを進めた数)
+# prefix にマッチした文字列の最初の位置から順に.辞書順.
+iterator findIndex*(self:SuffixArray,prefix:string): int =
+  let (startIndex,isMatched) = self.lowerBound(prefix)
+  if isMatched:
+    yield self.SA[startIndex]
+    for found in startIndex+1..self.S.len:
+      if self.LCP[found] < prefix.len: break
+      yield self.SA[found]
+# その単語の出現個数. O(Plog|S|)
+proc getCount*(self:SuffixArray,prefix:string): int =
+  let (rawIndex,rawIsMatched) = self.lowerBound(prefix)
+  if not rawIsMatched: return 0
+  if prefix.len == 0: # 全部にマッチしますが...
+    return self.S.len + 1
+  if prefix[^1].ord == 255: # 0xfffffff とかやってらんねーのでしかたなし
+    for _ in self.findIndex(prefix): result += 1
+    return result
+  # abcab*** は [abcab,abcab\0,...abcab\ff\ff\ff\ff] なので lb("abcac") - lb("abcab")
+  var another = prefix
+  another[^1] = chr(another[^1].ord + 1)
+  let (anotherIndex,_) = self.lowerBound(another)
+  return anotherIndex - rawIndex
 
 let S = stdin.readLine()
 let SA = S.newSuffixArray()
 var ans = 0
 scan().times:
-  let T = stdin.readLine()
-  ans += SA.getCount(T)
+  ans += SA.getCount(stdin.readLine())
 echo ans
