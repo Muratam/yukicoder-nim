@@ -110,37 +110,44 @@ proc newSuffixArray*(S:string):SuffixArray =
       result.LCP[B[i]] = h
     if h > 0 : h -= 1
   result.LCP[0] = -1
+
+
 # その文字列の出現位置
-iterator findIndex*(self:SuffixArray,target:string): int =
-  var a = -1
-  var b = self.S.len + 1
-  while a + 1 < b:
-    let m = (a + b) shr 1
+iterator findIndex*(self:SuffixArray,prefix:string): int =
+  # prefix <= {S} となる位置を探す
+  var now = -1..self.S.len + 1
+  while now.a + 1 < now.b:
+    let m = (now.a + now.b) shr 1
     let start = self.SA[m]
-    if cmp(self.S[start..<self.S.len.min(start+target.len)],target) < 0 : a = m
-    else : b = m
-  var already = false
-  while b <= self.S.len :
-    let start = self.SA[b]
-    if already: # 既にマッチしているので更にもっとマッチするかどうか見るだけで良い
-      if self.LCP[b] >= target.len: yield start
-      else: break
-    elif cmp(self.S[start..<self.S.len.min(start+target.len)],target) == 0 :
-      yield start
-      already = true
-    else: break
-    b += 1
-proc findAllIndex*(self:SuffixArray,target:string):seq[int] =
-  toSeq(self.findIndex(target))
-proc findOneIndex*(self:SuffixArray,target:string): int =
-  for i in self.findIndex(target): return i
+    if self.S[start..<self.S.len.min(start+prefix.len)].cmp(prefix) < 0 :
+      now.a = m
+    else : now.b = m
+  # その prefix を完全に内包していたらそこから開始
+  let start = now.b
+  let startIndex = self.SA[start]
+  # if start <= self.S.len: # 実はいらないかも
+  # 既にマッチしているので,残りは更にもっとマッチするかどうか見るだけで良い
+  if self.S[startIndex..<min(startIndex+prefix.len,self.S.len)].cmp(prefix) == 0:
+    yield startIndex
+    for found in start+1..self.S.len:
+      if self.LCP[found] < prefix.len: break
+      yield self.SA[found]
+  else:
+    # 完全に一致しなかったのでそのprefixを持つものは無かったが,
+    # ... banana / [bananaa] /  bananab(startIndex) ... など,とても近いところに居る
+    # つまり i := {S} >= prefix の最小の位置にいる
+    echo "PREFIX:",prefix,"\tFound:",self.S[startIndex..<min(startIndex+prefix.len,self.S.len)]
+proc findAllIndex*(self:SuffixArray,prefix:string):seq[int] =
+  toSeq(self.findIndex(prefix))
+proc findOneIndex*(self:SuffixArray,prefix:string): int =
+  for i in self.findIndex(prefix): return i
   return -1
 # その単語の出現個数.
 # TODO: もっと高速化できる.
 # abcab*** で検索すると [abcab,abcab\0,...abcab\ff\ff\ff\ff] までが対象となるので,
 # upperBound / lowerBound 関数を作り、 at("abcac") - at("abcab") すれば出せる
-proc getCount*(self:SuffixArray,target:string): int =
-  for _ in self.findIndex(target): result += 1
+proc getCount*(self:SuffixArray,prefix:string): int =
+  for _ in self.findIndex(prefix): result += 1
 # 文字列がそのまま欲しいとき用. 文字列なので処理時間に注意！
 proc getString*(S:string,index:int) : string = S[index..^1]
 proc getString*(self:SuffixArray,index:int) : string = self.S[index..^1]
@@ -148,13 +155,13 @@ proc getAllSuffixArrayString*(self:SuffixArray):seq[string] =
   result = newSeq[string](self.SA.len)
   for i in 0..<self.SA.len:
     result[i] = self.getString(self.SA[i])
-iterator findMatchedString*(self:SuffixArray,target:string): string =
-  for i in self.findIndex(target):
+iterator findMatchedString*(self:SuffixArray,prefix:string): string =
+  for i in self.findIndex(prefix):
     yield self.getString(i)
-proc findAllMatchedString*(self:SuffixArray,target:string):seq[string] =
-  toSeq(self.findMatchedString(target))
-proc findOneMatchedString*(self:SuffixArray,target:string):string =
-  for s in self.findMatchedString(target): return s
+proc findAllMatchedString*(self:SuffixArray,prefix:string):seq[string] =
+  toSeq(self.findMatchedString(prefix))
+proc findOneMatchedString*(self:SuffixArray,prefix:string):string =
+  for s in self.findMatchedString(prefix): return s
   return ""
 
 
@@ -176,6 +183,7 @@ when isMainModule:
       let banana = bananaStr.newSuffixArray()
       check: banana.SA == @[6, 5, 3, 1, 0, 4, 2]
       check: banana.LCP == @[-1, 0, 1, 3, 0, 0, 2]
+      echo banana.findAllIndex("x")
       check: banana.getAllSuffixArrayString() == @["","a","ana","anana","banana","na","nana"]
       check: banana.findAllIndex("an") == @[3,1]
       check: banana.findAllIndex("an").mapIt(bananaStr.getString(it)) == @["ana","anana"]
