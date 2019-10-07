@@ -99,7 +99,6 @@ proc `[]=`*[T,R](self:var MappedSegmentTree[T,R],i:int,val:T) =
   self.data[i] = val; self.segtree[i] = self.mapFunc(val)
 proc `[]`*[T,R](self:var MappedSegmentTree[T,R],i:int): T = self.data[i]
 proc `[]`*[T,R](self:var MappedSegmentTree[T,R],slice:Slice[int]): R = self.segtree[slice]
-proc findIndex*[T,R](self:MappedSegmentTree[T,R],slice:Slice[int]): int = self.segtree.findIndex[slice]
 
 when isMainModule:
   import unittest

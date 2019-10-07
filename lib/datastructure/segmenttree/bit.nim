@@ -49,7 +49,7 @@ proc newAddBinaryIndexedTree*[T](n:int):BinaryIndexedTree[T] =
 
 
 when isMainModule:
-  import unittest
+  import unittest,times,"./segmenttree"
   test "binary indexed tree":
     block:
       var bit = newAddBinaryIndexedTree[int](100)
@@ -90,3 +90,22 @@ when isMainModule:
       var S2 = T.newBinaryIndexedTree(proc(x,y:int):int = (if x <= y: x else: y),1e12.int)
       for i in 0..<100:
         check: S1.until(i) == S2.until(i)
+    if false: # bench
+      template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
+      let n = 1e7.int
+      var T = newSeq[int](n)
+      for i in 0..<n: T[i] = abs(i - (n shr 1))
+      stopwatch: # 2443ms
+        echo "SEG"
+        var S1 = newSegmentTree(n,proc(x,y:int):int= (if x >= y:x else: y),-1e12.int)
+        for i,t in T: S1[i] = t
+      stopwatch: # 640ms
+        echo "BIT"
+        var S2 = newBinaryIndexedTree(n,proc(x,y:int):int= (if x >= y:x else: y),-1e12.int)
+        for i,t in T: S2.update(i,t)
+      stopwatch: # 393ms
+        echo "SEG BUILD"
+        S1 = T.newSegmentTree(proc(x,y:int):int= (if x >= y:x else: y),-1e12.int)
+      stopwatch: # 110ms
+        echo "BIT BUILD"
+        S2 = T.newBinaryIndexedTree(proc(x,y:int):int= (if x >= y:x else: y),-1e12.int)
