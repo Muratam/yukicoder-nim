@@ -64,10 +64,10 @@ proc lenIs1*(a:BitSet): bool =  (a > 0) and ((a and (a - 1)) == 0)
 # キーの抽出/マスク
 proc maxKey*(a:BitSet):int = 63 - cast[culonglong](a).countLeadingZeroBits()
 proc minKey*(a:BitSet):int = cast[culonglong](a).countTrailingZeroBits()
-proc onlyMinKeySet*(a:BitSet):BitSet = a and (-a) # 意味的には factorOf2
 proc onlyMaxKeySet*(a:BitSet):BitSet =
   if a == 0 : return 0
   return 1 shl a.maxKey() # 意味的には NextPowerOf2
+proc onlyMinKeySet*(a:BitSet):BitSet = a and (-a) # 意味的には factorOf2
 proc allGreaterThanMaxKeySet*(a:BitSet):BitSet =
   if a == 0 : return -1
   let maxKey = a.onlyMaxKeySet()

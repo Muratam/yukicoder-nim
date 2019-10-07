@@ -82,6 +82,12 @@ when isMainModule:
     for _ in 0..<10: s.erase(1)
     check: s.min() == 2
     check: s == s
+    # string key will be fail...
+    # var ss = initSet[cstring]()
+    # ss.add "ab".cstring
+    # check: "ab".cstring in ss
+    # check: "aba".cstring notin ss
+
   import times,sets,intsets,algorithm,tables,hashes
   template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
   if false: # ベンチ. int->int のNim標準Table との比較
@@ -137,11 +143,11 @@ when isMainModule:
         var S = newSeq[int]()
         for _ in 0..N: S.add randomBit(32)
         S.sort(cmp)
-    block:
-      echo "Hashset"
-      stopwatch: # 60ms / 200ms , つよ
-        var S = initHashSet[int]()
-        for _ in 0..N: S.incl randomBit(32)
+    # block:
+    #   echo "Hashset"
+    #   stopwatch: # 60ms / 200ms , つよ
+    #     var S = initHashSet[int]()
+    #     for _ in 0..N: S.incl randomBit(32)
     block:
       echo "table"
       stopwatch: # 60ms / 200ms , つよ

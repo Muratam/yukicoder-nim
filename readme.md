@@ -7,11 +7,16 @@
 - lib/template.nim :: 競プロテンプレート
 - `lib/datastructure` :: データ構造
   - `queue/` : Deque, Queue, Stack : 末尾・先頭への追加削除 O(1)
-  - `segmenttree/` :: 区間クエリ O(logN). モノイド.
+  - `segmenttree/` :: 区間モノイドクエリ O(logN).
     - セグメントツリー{1D,2D} : 一点更新, 区間取得
-      - セグツリutils (T(生値)->R(集約値)/座標圧縮)
     - StarrySkyTree: 区間更新(可換モノイド演算), 区間取得
-    - BIT : 一点更新, 区間[**0**,T]の取得. 可換など制限がつく分速い.
+    - PatriciaSegmentTree : 2進パトリシア木(キー)+セグツリ(値).
+      - キー : 最大,最小,k番目,検索,{以上,以下}列挙,要素数,xor
+      - 値　 : 一点更新, 区間取得
+    - セグメントツリー亜種
+      - BIT : 制限が多いが速い. 一点更新, 区間[**0**,T]の取得.
+      - Sparse*: 更新点を先読みして座標圧縮.
+      - Mapped*: T(生値)->R(集約値=モノイド)
   - `set/` :: 集合. 動的に要素を追加・削除可能
     - std::{set,multiset} :: 追加・削除・検索・最{小,大}値・{以上,以下}列挙 O(logN)
     - UnionFind : 森のマージ・根の取得 O(1)
@@ -50,11 +55,10 @@
   - 遅延セグツリ : つらい.StarrySkyTreeの加算性が無いと困ることあったらそのとき考えよう
   - `tree` : std::map で全て事足りるので...
     - パトリシア木: 追加・prefix探索 O(S).  verify(y430)に失敗...
-    - 二進パトリシア木 : xorに強い k番目の最小値が取れるheap
+    - パトリシア木 : Nim のやつ.動く. (動的)文字列追加 prefix検索 O(|Q|log|{S}|). prefixの要素を数えることはできないので出番が少ないのではないか.
     - 謎木 / RBST / 赤黒木
     - KDTree: 普通に使いそうだけど書いてる途中で飽きた(wf2016.pdf参照)
   - `cpp` : std::vector / std::priority_queue
-  - パトリシア木 : Nim のやつ.動く. (動的)文字列追加 prefix検索 O(|Q|log|{S}|). prefixの要素を数えることはできないので出番が少ないのではないか.
   - timecost : 演算の速度検証
   - sparsematrix : 疎行列
   - math : フィボナッチ数列の第N項 / 線形回帰(最小二乗法)

@@ -28,13 +28,13 @@ proc `[]=`*[T](self:var SegmentTree[T],i:int,val:T) =
     self.data[i] = self.apply(self.data[i*2+1],self.data[i*2+2])
 proc queryImpl*[T](self:SegmentTree[T],target,now:Slice[int],i:int) : T =
   if now.b <= target.a or target.b <= now.a : return self.unit # 探索範囲外
-  if target.a <= now.a and now.b <= target.b : return self.data[i] # 完全に中に居るのでそれが欲しい値
+  if target.a <= now.a and now.b <= target.b : return self.data[i] # 完全に範囲内
   let next = (now.a + now.b) shr 1
   let vl = self.queryImpl(target, now.a..next, i*2+1) # 左を
   let vr = self.queryImpl(target, next..now.b, i*2+2) # 右を
   return self.apply(vl,vr)
 proc `[]`*[T](self:SegmentTree[T],slice:Slice[int]): T =
-  return self.queryImpl(slice.a..slice.b+1,0..self.n,0) # 全範囲を,根から
+  self.queryImpl(slice.a..slice.b+1,0..self.n,0) # 全範囲を,根から
 proc `[]`*[T](self:SegmentTree[T],i:int): T = self[i..i]
 proc `$`*[T](self:SegmentTree[T]): string =
   var arrs : seq[seq[T]] = @[]
@@ -72,20 +72,20 @@ proc newAddSegmentTree*[T](size:int) : SegmentTree[T] = # 区間和のセグツ�
   newSegmentTree[T](size,proc(x,y:T): T = x + y,0.T)
 
 # T(生値) -> R(集約値) を噛ましてくれるセグツリのラッパー
-type SegmentTreeWrap*[T,R] = ref object
+type MappedSegmentTree*[T,R] = ref object
   data*:seq[T]
   segtree*:SegmentTree[R]
   mapFunc*:proc(base:T):R
-proc newSegmentTreeWrap*[T,R](size:int,mapFunc:proc(x:T):R,apply:proc(x,y:R):R,unit:R) : SegmentTreeWrap[T,R] =
+proc newMappedSegmentTree*[T,R](size:int,mapFunc:proc(x:T):R,apply:proc(x,y:R):R,unit:R) : MappedSegmentTree[T,R] =
   new(result)
   result.mapFunc = mapFunc
   result.segtree = newSegmentTree[R](size,apply,unit)
   result.data = newSeq[T](size)
-proc `[]=`*[T,R](self:var SegmentTreeWrap[T,R],i:int,val:T) =
+proc `[]=`*[T,R](self:var MappedSegmentTree[T,R],i:int,val:T) =
   self.data[i] = val; self.segtree[i] = self.mapFunc(val)
-proc `[]`*[T,R](self:var SegmentTreeWrap[T,R],i:int): T = self.data[i]
-proc `[]`*[T,R](self:var SegmentTreeWrap[T,R],slice:Slice[int]): R = self.segtree[slice]
-proc findIndex*[T,R](self:SegmentTreeWrap[T,R],slice:Slice[int]): int = self.segtree.findIndex[slice]
+proc `[]`*[T,R](self:var MappedSegmentTree[T,R],i:int): T = self.data[i]
+proc `[]`*[T,R](self:var MappedSegmentTree[T,R],slice:Slice[int]): R = self.segtree[slice]
+proc findIndex*[T,R](self:MappedSegmentTree[T,R],slice:Slice[int]): int = self.segtree.findIndex[slice]
 
 when isMainModule:
   import unittest
@@ -118,8 +118,19 @@ when isMainModule:
       check: S[0..<2] == 99
       check: S[0..<3] == 147
       check: S[1..<3] == 97
+    block: # 文字列を全部結合したやつを持ってくれる例
+      var T = newSegmentTree[string](10,proc(x,y:string):string=x&y,"")
+      T[0] = "aiueo"
+      T[3] = "aaaa"
+      T[8] = "aiueoao"
+      check: T[9] == ""
+      check: T[8] == "aiueoao"
+      check: T[8..8] == "aiueoao"
+      check: T[0..2] == "aiueo"
+      check: T[0..3] == "aiueoaaaa"
+      check: T[0..100] == "aiueoaaaaaiueoao"
     block: # 文字列の長さの和を持ってくれる例
-      var T = newSegmentTreeWrap(10,proc(x:string):int=x.len,proc(x,y:int):int=x+y,0)
+      var T = newMappedSegmentTree(10,proc(x:string):int=x.len,proc(x,y:int):int=x+y,0)
       T[0] = "aiueo"
       T[3] = "aaaa"
       T[8] = "aiueoao"
@@ -132,14 +143,17 @@ when isMainModule:
       check: T[0..2] == 5
       check: T[0..3] == 9
       check: T[0..100] == 16
-    block: # 文字列を全部結合したやつを持ってくれる例
-      var T = newSegmentTree[string](10,proc(x,y:string):string=x&y,"")
-      T[0] = "aiueo"
-      T[3] = "aaaa"
-      T[8] = "aiueoao"
-      check: T[9] == ""
-      check: T[8] == "aiueoao"
-      check: T[8..8] == "aiueoao"
-      check: T[0..2] == "aiueo"
-      check: T[0..3] == "aiueoaaaa"
-      check: T[0..100] == "aiueoaaaaaiueoao"
+    block: # 最大値と最小値と総和を持ってくれる例
+      type All = tuple[vsum,vmax,vmin:int]
+      var S = newMappedSegmentTree(
+        100,
+        proc(x:int) : All = (x,x,x),
+        proc(x,y:All) : All = (
+          x.vsum+y.vsum,
+          (if x.vmax > y.vmax:x.vmax else:y.vmax),
+          (if x.vmin < y.vmin:x.vmin else:y.vmin)),
+        (0,-1e12.int,1e12.int))
+      S[10] = 100
+      S[12] = 200
+      S[14] = 500
+      check:S[10..14] == (800,500,100)

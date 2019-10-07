@@ -1,47 +1,44 @@
 import sequtils
-# まず multiset と同じく, 追加・削除・キーの最{大,小}値 ができる
-# 非負整数のときのセグツリと化した 2進パトリシア木.
-type
-  PatriciaSegmentNode[T] = ref object
-    to0,to1 : PatriciaSegmentNode[T]
-    isLeaf : bool
-    count : int32
-    valueOrMask : int # 葉なら value / 枝なら一番下位bitが自身が担当するbit番号.それ以外はprefix
-    data : T
-  PatriciaSegmentTree[T] = object
-    root : PatriciaSegmentNode[T]
-    unit : T
-    apply*:proc(x,y:T):T
-proc newPatriciaSegmentNode*[T](self:PatriciaSegmentTree[T]):PatriciaSegmentNode[T] =
+# 2進パトリシア木 + セグツリ. 全ての操作が O(log N).
+# キー: 最大,最小,k番目,検索,{以上,以下}列挙,xor.
+# 値 :  一点更新, 区間取得
+# 最強だが定数倍が重い.std::setの10倍くらい.
+# 位置が動的でなくてよいなら,SparseSegmentTreeの方が良い.
+type PatriciaSegmentNode[T] = ref object
+  to0,to1 : PatriciaSegmentNode[T]
+  isLeaf : bool
+  count : int32
+  valueOrMask : int # 葉なら value / 枝なら一番下位bitが自身が担当するbit番号.それ以外はprefix
+  data : T
+type PatriciaSegmentTree[T] = object
+  root : PatriciaSegmentNode[T]
+  unit : T
+  apply*:proc(x,y:T):T
+when NimMajor * 100 + NimMinor >= 18: import bitops
+else:
+  proc countLeadingZeroBits(x: culonglong): cint {.importc: "__builtin_clzll", cdecl.}
+  proc countTrailingZeroBits(x: culonglong): cint {.importc: "__builtin_ctzll", cdecl.}
+  proc fastLog2(x:culonglong):cint = 63 - countLeadingZeroBits(x)
+proc newPatriciaSegmentNode[T](self:PatriciaSegmentTree[T]):PatriciaSegmentNode[T] =
   new(result)
   result.data = self.unit
-# 葉を生成
 proc newPatriciaSegmentLeaf[T](self:PatriciaSegmentTree[T],n:int,val:T) : PatriciaSegmentNode[T] =
   new(result)
   result.isLeaf = true
   result.valueOrMask = n
   result.count = 1
   result.data = val
-proc newPatriciaSegmentTree*[T](apply:proc(x,y:T):T,unit:T,bitSize:int = 60):PatriciaSegmentTree[T] =
+proc newPatriciaSegmentTree*[T](apply:proc(x,y:T):T,unit:T,bitSize:int = 62):PatriciaSegmentTree[T] =
   result.unit = unit
   result.apply = apply
   result.root = result.newPatriciaSegmentNode()
   result.root.count = 0
   result.root.isLeaf = false
   result.root.valueOrMask = 1 shl bitSize
-when NimMajor * 100 + NimMinor >= 18: import bitops
-else:
-  proc countLeadingZeroBits(x: culonglong): cint {.importc: "__builtin_clzll", cdecl.}
-  proc countTrailingZeroBits(x: culonglong): cint {.importc: "__builtin_ctzll", cdecl.}
-  proc fastLog2(x:culonglong):cint = 63 - countLeadingZeroBits(x)
-
-proc bitSize*[T](self:PatriciaSegmentNode[T]):int =
+proc bitSize[T](self:PatriciaSegmentNode[T]):int =
   self.valueOrMask.culonglong.countTrailingZeroBits.int
-proc len*[T](self:PatriciaSegmentTree[T]) : int = self.root.count
-proc isTo1*[T](self:PatriciaSegmentNode[T],n:int):bool{.inline.} =
-  let x = self.valueOrMask
-  result = (x and n) == x
-   # 上位bitは同じはずなので
+proc isTo1[T](self:PatriciaSegmentNode[T],n:int):bool{.inline.} =
+  (self.valueOrMask and n) == self.valueOrMask # 上位bitは同じはずなので
 
 # デバッグ用
 import strutils
@@ -73,14 +70,9 @@ proc dump*[T](self:PatriciaSegmentNode[T],indent:int = 0) : string =
   if self.to0 != nil: result.add self.to0.dump(indent + 1)
   if self.to1 != nil: result.add self.to1.dump(indent + 1)
 proc dump*[T](self:PatriciaSegmentTree[T]) : string = self.root.dump()
-
-# 完全一致検索
-var cnt = 0
-# たかだか 2e7 回
 proc `in`*[T](n:int,self:PatriciaSegmentTree[T]) : bool =
   var now = self.root
   while not now.isLeaf:
-    cnt += 1
     if now.isTo1(n):
       if now.to1 == nil : return false
       now = now.to1
@@ -88,8 +80,7 @@ proc `in`*[T](n:int,self:PatriciaSegmentTree[T]) : bool =
       if now.to0 == nil : return false
       now = now.to0
   return now.valueOrMask == n
-
-# 中間点を生成
+proc len*[T](self:PatriciaSegmentTree[T]) : int = self.root.count
 proc createInternalNode[T](self:var PatriciaSegmentTree[T],now:PatriciaSegmentNode,preTree:PatriciaSegmentNode,n:int,val:T) : PatriciaSegmentNode[T] =
   let cross = preTree.valueOrMask xor n
   var bit = 0
@@ -113,8 +104,7 @@ proc createInternalNode[T](self:var PatriciaSegmentTree[T],now:PatriciaSegmentNo
     created.to1 = preTree
     created.to0 = newLeaf
   return created
-
-proc `[]=`[T](self:var PatriciaSegmentTree[T],n:int,val:T) =
+proc `[]=`*[T](self:var PatriciaSegmentTree[T],n:int,val:T) =
   var existsKey = n in self
   var now = self.root
   var target : PatriciaSegmentNode[T] = nil
@@ -163,7 +153,6 @@ proc `[]=`[T](self:var PatriciaSegmentTree[T],n:int,val:T) =
         return
       path.add target
       now = target
-# 完全一致
 proc `[]`*[T](self:PatriciaSegmentTree[T],n:int) : T =
   var now = self.root
   while not now.isLeaf:
@@ -178,28 +167,53 @@ proc `[]`*[T](self:PatriciaSegmentTree[T],n:int) : T =
   if now.valueOrMask == n:
     return now.data
   return self.unit
+# NOTE: とりあえず非負整数のみ
+proc at[T](node:PatriciaSegmentNode[T]):Slice[int] =
+  let v = node.valueOrMask
+  if node.isLeaf: return v..v
+  if v == 0 : return 0..9223372036854775807.int # NOTE: -1 ~ ってちょっとおかしいよね
+  #  1010100 は 1010___ なので [1010000,1010111) を表す
+  # -0000100 ~ +0000100 の範囲を表す
+  let minKey = v and (-v)
+  return (v-minKey)..<(v+minKey)
+proc queryImpl[T](self:PatriciaSegmentTree[T],target:Slice[int],now:PatriciaSegmentNode) : T =
+  let nowat = now.at
+  if nowat.b < target.a or target.b < nowat.a : # 完全に範囲外
+    return self.unit
+  if target.a <= nowat.a and nowat.b <= target.b: # 完全に範囲内
+    return now.data
+  if now.to0 == nil :
+    if now.to1 == nil : return now.data
+    return self.queryImpl(target,now.to1)
+  if now.to1 == nil :
+    return self.queryImpl(target,now.to0)
+  let vl = self.queryImpl(target,now.to0)
+  let vr = self.queryImpl(target,now.to1)
+  return self.apply(vl,vr)
+proc `[]`*[T](self:PatriciaSegmentTree[T],slice:Slice[int]): T =
+  self.queryImpl(slice.a..slice.b,self.root)
 
 
 import times
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
 import "../../mathlib/random"
-block:
-  var T = newPatriciaSegmentTree(proc(x,y:string):string = x&y,"")
-  T[6] = "A"
-  T[3] = "B"
-  T[0] = "C"
-  T[7] = "D"
-  T[7] = "E"
-  T[15] = "F"
-  T[0] = "G"
-  echo T.dump()
-block:
-  # 1e6のランダムケースで
-  # 1000ms: std::set[int]()  なので、
-  # 7倍のコストでセグツリができるならまあよいのでは
-  stopwatch:
-    var T = newPatriciaSegmentTree(proc(x,y:int):int = x+y,0)
-    for i in 0..<1e5.int:
-      T[randomBit(32)] = randomBit(32)
-    echo T[0]
-    echo cnt
+when isMainModule:
+  import unittest
+  test "patricia segment tree":
+    var T = newPatriciaSegmentTree(proc(x,y:string):string = x&y,"")
+    T[6] = "A"
+    T[3] = "B"
+    T[7] = "D"
+    T[7] = "E"
+    T[15] = "F"
+    T[0] = "G"
+    check: T[0..15] == "GBAEF"
+    check: T[4..8] == "AE"
+    check: T[2..3] == "B"
+    check: T[3..3] == "B"
+    T[3] = "X"
+    check: T[3..4] == "X"
+    check: T[4..4] == ""
+    check: T[3..7] == "XAE"
+    check: T[0..15] == "GXAEF"
+    # check: T.dump()
