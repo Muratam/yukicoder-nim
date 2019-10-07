@@ -1,4 +1,5 @@
 import sequtils
+
 # 2進パトリシア木 + セグツリ. 全ての操作が O(log N).
 # キー: 追加,最大,最小,検索,要素数,{以上,以下}列挙,k番目,xor
 # 値 :  一点更新, 区間取得
@@ -19,6 +20,7 @@ type PatriciaSegmentTree[T] = object
   root : PatriciaSegmentNode[T]
   unit : T
   apply*:proc(x,y:T):T
+{.overflowChecks:off.}
 when NimMajor * 100 + NimMinor >= 18: import bitops
 else:
   proc countLeadingZeroBits(x: culonglong): cint {.importc: "__builtin_clzll", cdecl.}
@@ -274,7 +276,8 @@ proc ithKey*[T](self:PatriciaSegmentTree[T],i:int): PatriciaSegmentNode[T] =
         offset += now.to0.count
         now = now.to1
   return now
-# 削除. 多分動くけど無駄な木が残ってやばいかも. やるならちゃんと切ったあとindexを張り替える
+# 削除. 削除した場合無駄な枝(1方向しかない)が残る雑実装.
+# 動作はするがその後の操作に無限に邪魔になって遅くなるがもともと遅いしいいかな...
 proc erase*[T](self:PatriciaSegmentTree[T],n:int) : bool {.discardable.}=
   var path = @[self.root]
   while not path[^1].isLeaf:
@@ -287,7 +290,6 @@ proc erase*[T](self:PatriciaSegmentTree[T],n:int) : bool {.discardable.}=
   if path[^1].keyOrIndex != n : return false
   assert path.len >= 2
   # 葉の一つ上をぶっち切る
-  # NOTE: 木の形がおかしくなりそう.きちんと整形しないと...
   var cutFlag = true
   for i in (path.len-2).countdown(0):
     if cutFlag:
@@ -306,9 +308,12 @@ proc erase*[T](self:PatriciaSegmentTree[T],n:int) : bool {.discardable.}=
       else: path[i].data = path[i].to1.data
       continue
     path[i].count -= 1
-    path[i].data = self.update(path[i].to0,path[i].to1)
-
-
+    if path[i].to0 == nil:
+      path[i].data = path[i].to1.data
+    elif path[i].to1 == nil:
+      path[i].data = path[i].to0.data
+    else:
+      path[i].data = self.apply(path[i].to0.data,path[i].to1.data)
 
 import times
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
@@ -345,3 +350,28 @@ when isMainModule:
     # echo toSeq(T.at(1..15,true))
     # echo toSeq(-1..5).mapIt(T.ithKey(it))
     # check: T.dump()
+  test "patricia segment tree cut":
+    var T = newPatriciaSegmentTree(proc(x,y:string):string = x&y,"")
+    T[6] = "A"
+    check:T.minKey().key == 6
+    T[3] = "B"
+    check:T.minKey().key == 3
+    check:T.maxKey().key == 6
+    T[7] = "D"
+    T[7] = "E"
+    check:T.maxKey().key == 7
+    T[15] = "F"
+    T[0] = "G"
+    # echo T.maxKey()
+    # T.erase(15)
+    # echo T.maxKey()
+    # echo T.minKey()
+    # T.erase(0)
+    # echo T.minKey()
+    # T.erase(15)
+    # echo T.minKey()
+    # T.erase(3)
+    # echo T.minKey()
+    # T[3] = "X"
+    # T[12] = "Y"
+    # echo T.maxKey()
