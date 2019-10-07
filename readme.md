@@ -23,9 +23,9 @@
     - bitset : ビット演算の集合.
     - PriorityQueue : 最小値検索 O(1), 追加・最小値削除　O(logN)
     - SkewHeap : ↑ + マージ O(logN)
-  - `string/` :: 構築 O(S). 文字列検索用.
+  - `string/` :: 構築 O(S). 文字列用.
     - ロリハ(通常/軽量) : 部分文字列同一判定 O(1)
-    - SA-IS : 文字列全検索 O(MlogS)
+    - SA-IS : prefix検索(個数,{上,下}界) O(PlogS)
 - `lib/mathlib` :: 数学
   - matrix :: 行列(転置,乗算,累乗,加算,単位行列)
   - modint :: ModInt (累乗,除算)
