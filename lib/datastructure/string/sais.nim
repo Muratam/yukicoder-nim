@@ -1,15 +1,13 @@
-import nimprof
 # SA-IS :: O(S) で Suffix Array を構築
 # prefix検索(個数,{上,下}界) O(PlogS)
 # 「追加の更新が発生するprefix検索」はTrie木を使うしかないが...
 # SA-IS は ほぼこれ https://blog.knshnb.com/posts/sa-is/
 import sequtils
-import "./../segmenttree/bit"
+import "./../segmenttree/segmenttree"
 type SuffixArray* = ref object
   S* : string
   SA*: seq[int]
   LCP*: seq[int]
-  LCPMin*: BinaryIndexedTree[int]
 import times,strutils
 template stopwatch(body) =
   let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms"
@@ -100,35 +98,26 @@ proc SAIS(inputString:string) : seq[int] =
 proc newSuffixArray*(S:string):SuffixArray =
   new(result)
   result.S = S
-  stopwatch:
-    result.SA = S.SAIS()
+  result.SA = S.SAIS()
   let n = S.len
-  # LCP (最長共通接頭辞)
+  # LCP (最長共通接頭辞) O(|S|)
   # SA格納順に隣同士の最長共通接頭辞の長さ
-  # Kasai法で O(|S|)
-  stopwatch:
-    result.LCP = newSeq[int](n+1)
-    var h = 0
-    var B = newSeq[int](n+1)
-    for i in 0..n: B[result.SA[i]] = i
-    for i in 0..n:
-      if B[i] > 0 :
-        var j = result.SA[B[i]-1]
-        while j + h < n and i + h < n and S[j+h] == S[i+h]: h += 1
-        result.LCP[B[i]] = h
-      if h > 0 : h -= 1
-    result.LCP[0] = -1
-  stopwatch:
-    echo "BIT 1"
-    result.LCPMin = newBinaryIndexedTree(result.LCP.len,proc(x,y:int):int = (if x <= y: x else: y),1e12.int)
-    for i,lcp in result.LCP:
-      result.LCPMin.update(i,lcp)
-  stopwatch:
-    echo "BIT 2"
-    result.LCPMin = result.LCP.newBinaryIndexedTree(proc(x,y:int):int = (if x <= y: x else: y),1e12.int)
+  result.LCP = newSeq[int](n+1)
+  var h = 0
+  var B = newSeq[int](n+1)
+  for i in 0..n: B[result.SA[i]] = i
+  for i in 0..n:
+    if B[i] > 0 :
+      var j = result.SA[B[i]-1]
+      while j + h < n and i + h < n and S[j+h] == S[i+h]: h += 1
+      result.LCP[B[i]] = h
+    if h > 0 : h -= 1
+  result.LCP[0] = -1
+# O(Plog|S|)
+# Pがかなり長い(P>log|S|)場合,セグツリで O((log|S|)^2+P) にできる.
+# https://echizen-tm.hatenadiary.org/entry/20110728/1311871765
 proc lowerBound*(self:SuffixArray,prefix:string): tuple[index:int,isMatched:bool] =
   # i := {S} >= prefix の最小の位置を返却
-
   var now = -1..self.S.len + 1
   while now.a + 1 < now.b:
     let m = (now.a + now.b) shr 1
@@ -141,22 +130,10 @@ proc lowerBound*(self:SuffixArray,prefix:string): tuple[index:int,isMatched:bool
   let start = self.SA[found]
   let isMatched = self.S[start..<self.S.len.min(start+prefix.len)].cmp(prefix) == 0
   return (found,isMatched)
-# MlogN -> M+logN
-# proc fastLowerBound*(self:SuffixArray,prefix:string): tuple[index:int,isMatched:bool] =
-block:
-  # echo "aiueo".repeat(1e4.int).newSuffixArray().LCP[0]
-  # echo "aiueo".repeat(1e5.int).newSuffixArray().LCP[0]
-  echo "aiueo".repeat(2e5.int).newSuffixArray().LCP[0]
-  # quit(0)
-# prefix にマッチした文字列の最初の位置から順に.O(Plog|S|+M) (P:prefix, M:iterateを進めた数)
+# O(Plog|S|+M) (P:prefix, M:iterateを進めた数)
+# prefix にマッチした文字列の最初の位置から順に.
 iterator findIndex*(self:SuffixArray,prefix:string): int =
   let (startIndex,isMatched) = self.lowerBound(prefix)
-  # if allowSubStringMatch:
-  #   # hogeで検索して,hoge*に加えて h,ho,hog も許可する場合.
-  #   # P^2logN
-  #   for i in 0..<prefix.len - 1:
-  #     let T = prefix[0..i]
-  #  実装したくなったらすれば..
   if isMatched:
     yield self.SA[startIndex]
     for found in startIndex+1..self.S.len:

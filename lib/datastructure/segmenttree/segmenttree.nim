@@ -49,7 +49,7 @@ proc queryImpl*[T](self:SegmentTree[T],target,now:Slice[int],i:int) : T =
   return self.apply(vl,vr)
 proc `[]`*[T](self:SegmentTree[T],slice:Slice[int]): T =
   self.queryImpl(slice.a..slice.b+1,0..self.n,0) # 全範囲を,根から
-proc `[]`*[T](self:SegmentTree[T],i:int): T = self[i..i]
+proc `[]`*[T](self:SegmentTree[T],i:int): T = self.data[i+self.n-1]
 proc `$`*[T](self:SegmentTree[T]): string =
   var arrs : seq[seq[T]] = @[]
   var left = 0
