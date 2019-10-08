@@ -63,11 +63,13 @@ proc add*[K,V](self:var Treap[K,V],item: Treap[K,V]) =
     let s = self.split(item.key)
     item.left = s.l
     item.right = s.r
-    self = item
+    self = item.update()
   elif item.key < self.key:
     self.left.add(item)
+    self.left.update()
   else:
     self.right.add(item)
+    self.right.update()
   # left < key <= right になる
 proc excl*[K,V](self:var Treap[K,V],key:K) =
   # 自分にさようなら
@@ -87,6 +89,7 @@ proc newTreapRoot*[K,V](apply:SemiGroup[V]):TreapRoot[K,V] =
   result = TreapRoot[K,V](apply:apply)
 proc `[]=`*[K,V](self:var TreapRoot[K,V],key:K,value:V) =
   self.root.add(newTreap(self.apply,key,value))
+  self.root.update()
 proc excl*[K,V](self:var TreapRoot[K,V],key:K) =
   if self.root == nil : return
   self.root.excl(key)
@@ -96,14 +99,25 @@ proc len*[K,V](self:TreapRoot[K,V]) : int =
 import strutils
 proc dump*[K,V](self:Treap[K,V],indent:int) : string =
   if self == nil : return ""
-  result = " ".repeat(indent) & ":" & ($self.key) & "\n"
+  result = " ".repeat(indent) & "|" & ($self.key) & " -> " & ($self.value) & "(" & ($self.sum)  & ")\n"
   result .add self.left.dump(indent+1)
   result .add self.right.dump(indent+1)
 proc dump*[K,V](self:TreapRoot[K,V]) : string = self.root.dump(0)
 
 import times
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
-
 stopwatch:
   var A = newTreapRoot[int,int](proc(x,y:int):int = x + y)
-  for i in 0..<1e6.int: A[randomBit(32)] = i
+  A[0] = 10
+  A[50] = 10
+  A[100] = 20
+  A[0] = 10
+  A[50] = 10
+  A[100] = 20
+  A[100] = 20
+  A[100] = 20
+  A[100] = 20
+  echo A.dump()
+  echo A.len
+  # for i in 0..<1e6.int: A[randomBit(32)] = i
+  # echo A.len
