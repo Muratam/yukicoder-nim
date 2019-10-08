@@ -58,29 +58,31 @@ proc split*[K,V](self:Treap[K,V],key:K): tuple[l,r:Treap[K,V]] =
     self.right = s.l
     return (self.update(),s.r)
 proc add*[K,V](self:var Treap[K,V],item: Treap[K,V]) =
-  if self == nil: self = item
-  elif item.priority > self.priority:
+  if self == nil:
+    self = item
+    return
+  if item.priority > self.priority:
     let s = self.split(item.key)
     item.left = s.l
     item.right = s.r
-    self = item.update()
+    self = item
   elif item.key < self.key:
     self.left.add(item)
-    self.left.update()
   else:
     self.right.add(item)
-    self.right.update()
-  # left < key <= right になる
+  self.update()
 proc excl*[K,V](self:var Treap[K,V],key:K) =
   # 自分にさようなら
   if self.key == key:
     self = self.left.merge(self.right)
+    return
   elif key < self.key:
     if self.left == nil : return
     self.left.excl(key)
   else:
     if self.right == nil : return
     self.right.excl(key)
+  self.update()
 # Treapの根を指すラッパーを作成することで、いろいろな操作がしやすい.
 type TreapRoot*[K,V] = ref object
   root*:Treap[K,V]
@@ -89,7 +91,6 @@ proc newTreapRoot*[K,V](apply:SemiGroup[V]):TreapRoot[K,V] =
   result = TreapRoot[K,V](apply:apply)
 proc `[]=`*[K,V](self:var TreapRoot[K,V],key:K,value:V) =
   self.root.add(newTreap(self.apply,key,value))
-  self.root.update()
 proc excl*[K,V](self:var TreapRoot[K,V],key:K) =
   if self.root == nil : return
   self.root.excl(key)
