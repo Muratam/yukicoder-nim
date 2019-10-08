@@ -12,35 +12,35 @@ template bench(comment:string, body) =
     stdout.write 27.chr,"[0m"
     stdout.write  T,"ms\n"
 
-# NOTE: Nim1.0.0 のsort がめちゃくちゃ遅くなってる...
-# データ構造ができることは速度とのトレードオフ.
-# データ数 1e6,ランダムケース に対して, (Nim 0.13.0 -d:release)
-# 各データを約1回ずつ追加 or アクセスする
-# ------ O(N) -----------------
-#    3ms: データを舐める
-#    7ms: seq(一括)
-#   20ms: seq(add) / Deque
-# ----- Speedy ---------------
-#   50ms: Union Find / BIT / RollingHash
-#   70ms: SA-IS
-# -------O(NlogN) -------------
-#  100ms: SegmentTree / LowerBound
-#  120ms: HashSet / Priority Queue
-#  150ms: seq(sort) / Table
-# ------ + RMQ -------
-#  700ms: 座標圧縮 SegmentTree
-# ------ + min,max,iterate---------
-#  800ms: Skew Heap
-# 1000ms: std::set
-# ------ + RMQ --
-# 3000ms: Patricia Segment Tree
+#[
+データ構造ができることは速度とのトレードオフ.
+データ数 1e6,ランダムケース に対して, (Nim 0.13.0 -d:release)
+各データを約1回ずつ追加 or アクセスする
+********* 1e8 の壁 **************
+   3ms: データを舐める(理論値)
+******** 1e7 の壁 ***************
+   7ms: seq(一括)
+  20ms: seq(add) / Deque
+  50ms: Union Find / BIT / RollingHash
+  70ms: SA-IS
+********* 1e6 の壁 ***************
+ 100ms: SegmentTree / LowerBound
+ 120ms: HashSet / Priority Queue
+ 150ms: seq(sort) / Table
+********** 1e5の壁 *************
+ 700ms: 座標圧縮 SegmentTree (座標の代償: ST x7倍)
+ 800ms: Skew Heap (マージの代償 : PQ x7倍)
+1000ms: std::set  (min,max,iter: Set x7倍)
+2000ms: Treap     (min,max,iter,kth...: )
+2500ms: Patricia Segment Tree (生の20~30倍)
 
-# まとめ:
-# seq そのまま使えると爆速.
-# logN は実質定数で無視できる.
-# ただし,動的木系から差を無視できないほど遅くなる.
-# - SkewHeap / std::set / Patricia Segment Tree
-
+まとめ:
+seq そのまま使えると爆速. logN は実質定数で無視できる.
+ただし,動的木系から差を無視できないほど遅くなる.
+=> 大人しく最適なデータ構造を使おう！牛刀割鶏！
+また、 1e7 の 64bit で 100MBくらい.
+=> この壁がMLEの壁にもなっている
+]#
 
 
 let n = 1e6.int
@@ -138,6 +138,10 @@ import "./set/set"
 bench "std::set": # 1000ms
   var S = set.initSet[int]()
   for _ in 0..n: S.add randomBit(32)
+import "./set/treap"
+bench "treap":
+  var A = newTreap[int]()
+  for i in 0..<1e6.int: A.add randomBit(32)
 import "./segmenttree/patriciasegmenttree"
 bench "Patricia Segment Tree":
   var A = newPatriciaSegmentTree(proc(x,y:int):int = x+y,0)

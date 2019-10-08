@@ -101,3 +101,25 @@ nimrr() { NIMR_COMPILE_FLAG="-d:release" nimr $@ ; }
 ```
 - 普通に即実行(落ちるとスタックトレースを表示してくれる) : `nimr hoge.nim`
 - デバッグ情報を消して最適化して実行 : `nimrr hoge.nim`
+
+# データ構造の壁
+- ./lib/datastructure/bench.nim
+- この壁を超えて使おうとすると MLE/TLE の危険性が高まる.
+```
+********* 1e8 の壁 **************
+   3ms: データを舐める
+******** 1e7 の壁 ***************
+  20ms: seq / Deque
+  50ms: Union Find / BIT / RollingHash
+  70ms: SA-IS
+********* 1e6 の壁 ***************
+ 100ms: SegmentTree / LowerBound
+ 120ms: HashSet / Priority Queue
+ 150ms: seq(+sort) / Table
+********** 1e5の壁 *************
+ 700ms: 座標圧縮 SegmentTree
+ 800ms: Skew Heap
+1000ms: std::set
+1500ms: Treap
+2500ms: Patricia Segment Tree
+```

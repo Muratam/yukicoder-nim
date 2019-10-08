@@ -35,7 +35,6 @@ proc newBinaryIndexedTree*[T](arr:seq[T],apply:proc(x,y:T):T,unit:T):BinaryIndex
     let x = i or (i+1)
     if x < arr.len:
       result.data[x] = result.apply(result.data[i],result.data[x])
-
 proc `$`*[T](self:BinaryIndexedTree[T]): string =
   result = "["
   for i in 0..<self.len: result .add $(self.until(i)) & ", "
