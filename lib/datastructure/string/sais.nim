@@ -10,7 +10,7 @@ type SuffixArray* = ref object
   S* : string
   SA*: seq[int]
   LCP*: seq[int]
-proc SAIS(inputString:string) : seq[int] =
+proc SAIS*(inputString:string) : seq[int] =
   proc SAISImpl(S:seq[int], k:int):seq[int] =
     # https://blog.knshnb.com/posts/sa-is/
     let n = S.len

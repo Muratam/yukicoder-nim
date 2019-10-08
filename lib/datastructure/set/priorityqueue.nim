@@ -39,7 +39,7 @@ proc len*[T](heap: PriorityQueue[T]): int = heap.data.len
 proc push*[T](heap: var PriorityQueue[T], item: T) =
   heap.data.add(item)
   siftdown(heap, 0, len(heap)-1)
-proc pop*[T](heap: var PriorityQueue[T]): T =
+proc pop*[T](heap: var PriorityQueue[T]): T {.discardable.} =
   let lastelt = heap.data.pop()
   if heap.len > 0:
     result = heap[0]

@@ -315,9 +315,6 @@ proc erase*[T](self:PatriciaSegmentTree[T],n:int) : bool {.discardable.}=
     else:
       path[i].data = self.apply(path[i].to0.data,path[i].to1.data)
 
-import times
-template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
-import "../../mathlib/random"
 when isMainModule:
   import unittest
   test "patricia segment tree":

@@ -88,7 +88,7 @@ proc at[T](arr:seq[T],slice:Slice[T]): Slice[int] =
   if b >= arr.len : b = arr.len - 1
   return a..b
 
-# 座標圧縮.
+# 更新位置を座標圧縮(位置はlowerboundでアクセス).
 import algorithm
 type CompressedPos*[T] = ref object
   data*: seq[T]
@@ -108,6 +108,7 @@ proc `[]`*[T](self:CompressedPos[T],i:Slice[T]): Slice[int] =
   return ia..ib
 proc `$`*[T](self:CompressedPos[T]): string = $self.data
 proc id*[T](x:T):T = x # nim0.13用
+
 
 
 when isMainModule:

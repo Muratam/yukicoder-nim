@@ -1,4 +1,4 @@
-import nimprof
+# import nimprof
 # https://www.slideshare.net/iwiwi/2-12188757
 # 普通は std::set でよい.
 # カスタムの比較関数や,カスタムの木の操作をしたい場合はこちら.
@@ -12,28 +12,27 @@ type TreapNode*[T] = ref object
   key*: T
   priority*: int32
   left*,right*: TreapNode[T] # left: [-∞..key) / right: [key,∞)
-  # count*:int32 # 実は count は不要？
+  count*:int32 # k番目の最小を取るために必要.
   # sum*:int # とりあえず総和のモノイド
 type Treap*[T] = ref object
   root*:TreapNode[T]
-# proc len[T](self:TreapNode[T]) : int32 =
-#   if self == nil: 0 else: self.count
-# proc len*[T](self:Treap[T]) : int =
-#   if self.root = nil : 0 else: self.root.len
 # はい
 proc newTreapNode*[T](key:T):TreapNode[T] =
-  new(result)
-  result.key = key
-  result.priority = randomBit(30).int32
-  # result.count = 1
-  # result.sum = value.T # とりあえずね
+  result = TreapNode[T](
+    key:key,
+    priority:randomBit(30).int32,
+    count:1
+  )
+  # result.sum = unit # とりあえずね
 # モノイド操作をしたければ書く
+proc len[T](self:TreapNode[T]) : int32 =
+  if self == nil: 0 else: self.count
 proc update[T](self:TreapNode[T]) : TreapNode[T] {.discardable.}=
-  # self.count = self.left.len + self.right.len + 1
+  self.count = self.left.len + self.right.len + 1
   # self.sum =
   return self
-# 必ず ∀[left] < ∀[right] の時に呼ばれるという仮定を置いている
 proc merge*[T](left,right:TreapNode[T]) : TreapNode[T] =
+  # 必ず ∀[left] < ∀[right] の時に呼ばれるという仮定を置いている
   if left == nil: return right
   if right == nil : return left
   # 優先度が高い方を根にする
@@ -43,14 +42,9 @@ proc merge*[T](left,right:TreapNode[T]) : TreapNode[T] =
   else:
     right.left = left.merge(right.left)
     return right.update()
-# 再帰的に切るだけ. (子は必ず優先度が低いので)
 proc split*[T](self:TreapNode[T],key:T): tuple[l,r:TreapNode[T]] =
+  # 再帰的に切るだけ. (子は必ず優先度が低いので)
   if self == nil: return (nil,nil)
-  # if self.left == nil
-  #   if self.right == nil:
-  #     if key < self.key : return (nil,self)
-  #     return (self,nil)
-  #   if key < self.key : return (nil,self)
   if key < self.key:
     let s = self.left.split(key)
     self.left = s.r
@@ -59,14 +53,22 @@ proc split*[T](self:TreapNode[T],key:T): tuple[l,r:TreapNode[T]] =
     let s = self.right.split(key)
     self.right = s.l
     return (self.update(),s.r)
-# left < key <= right になる
-proc add*[T](self:var TreapNode[T],key: T)=
-  let s = self.split(key)
-  self = s.l.merge(newTreapNode(key).merge(s.r))
-# 自分にさようなら
+proc add*[T](self:var TreapNode[T],item: TreapNode[T]) =
+  if self == nil: self = item
+  elif item.priority > self.priority:
+    let s = self.split(item.key)
+    item.left = s.l
+    item.right = s.r
+    self = item
+  elif item.key < self.key:
+    self.left.add(item)
+  else:
+    self.right.add(item)
+  # left < key <= right になる
 proc erase*[T](self:var TreapNode[T],key:T) =
+  # 自分にさようなら
   if self.key == key:
-    self = self.merge(self.left,self.right)
+    self = self.left.merge(self.right)
   elif key < self.key:
     if self.left == nil : return
     self.left.erase(key)
@@ -75,11 +77,12 @@ proc erase*[T](self:var TreapNode[T],key:T) =
     self.right.erase(key)
 proc newTreap*[T]():Treap[T] = new(result)
 proc add*[T](self:var Treap[T],key:T) =
-  if self.root == nil :self.root = newTreapNode(key)
-  else: self.root.add(key)
+  self.root.add(newTreapNode(key))
 proc erase*[T](self:var Treap[T],key:T) =
   if self.root == nil : return
   self.root.erase(key)
+proc len*[T](self:Treap[T]) : int =
+  if self.root == nil : 0 else: self.root.len
 
 import strutils
 proc dump*[T](self:TreapNode[T],indent:int) : string =
@@ -94,14 +97,19 @@ template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cp
 
 # データ数 1e6,ランダムケース に対して
 #   20ms: seq[int](add)
-#  200ms: HashSet[int]() / Table[int,int]()
+#  200ms: HashSet[int]() / Table[int,int]() / Treap
+#  320ms: Treap[int]()
 # 1000ms: std::set[int]()
-# 2800ms: Treap[int]()
+# 2000ms: Treap[int]
 stopwatch:
   var A = newTreap[int]()
-  for i in 0..<1e6.int: A.add i
+  for i in 0..<1e6.int: A.add randomBit(32)
   echo A.root.priority
   echo A.root.key
+  echo A.len
+# stopwatch:
+#   for i in 10..<1e6.int: A.erase i
+#   echo A.len
 
 # stopwatch: # 400ms くらい？
 #   var A = newTreapNode(100.0)
