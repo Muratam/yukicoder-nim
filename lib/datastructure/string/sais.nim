@@ -139,14 +139,14 @@ proc findAllIndex*(self:SuffixArray,prefix:string):seq[int] =
   toSeq(self.findIndex(prefix))
 # その単語の出現個数. O(Plog|S|)
 proc getCount*(self:SuffixArray,prefix:string): int =
-  let (rawIndex,rawIsMatched) = self.lowerBound(prefix)
-  if not rawIsMatched: return 0
   if prefix.len == 0: # 全部にマッチしますが...
     return self.S.len + 1
   if prefix[^1].ord == 255: # 0xfffffff とかやってらんねーのでしかたなし
     for _ in self.findIndex(prefix): result += 1
     return result
   # abcab*** は [abcab,abcab\0,...abcab\ff\ff\ff\ff] なので lb("abcac") - lb("abcab")
+  let (rawIndex,rawIsMatched) = self.lowerBound(prefix)
+  if not rawIsMatched: return 0
   var another = prefix
   another[^1] = chr(another[^1].ord + 1)
   let (anotherIndex,_) = self.lowerBound(another)
