@@ -54,3 +54,50 @@
 - with C++: https://qiita.com/sessions/items/96c57a4dad9246d2cd59
 - introduction : https://chy72.hatenablog.com/entry/2017/12/16/214708
 - AtCoder Beginners Selection : https://chy72.hatenablog.com/entry/2019/07/10/212911
+- [競プロでNimを書く時に気をつけるべきこと](./memo.md)
+
+# 個人的 Nim 競プロ用テンプレート
+```nim
+import sequtils,algorithm,math,tables,sets,strutils,times
+template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
+template time(n:int,body) = (for _ in 0..<n: body)
+template `max=`(x,y) = x = max(x,y)
+template `min=`(x,y) = x = min(x,y)
+proc getchar():char {. importc:"getchar_unlocked",header: "<stdio.h>" ,discardable.}
+proc scanf(formatstr: cstring){.header: "<stdio.h>", varargs.}
+proc scan(): int = scanf("%lld\n",addr result)
+#
+let n = scan()
+let A = newSeqWith(n,scan())
+```
+- `import` : 競プロでよく使うのはこの7つ. 特に以下は頻出.
+  - `sequtils` : `newSeqWith`,`toSeq`,`.mapIt`
+  - `algorithm`: `sorted(cmp)`,`sortedByIt`,`lowerBound`,`reversed`,`nextPermutation`
+  - `math` : `n.float.sqrt.int`,`gcd`,`lcm`
+  - `tables`,`sets`: `Table[K,V]`,`HashSet[K]`
+- また,何も import しなくても以下の便利機能が使える
+  - `seq`: `newSeq[T](n)`,`.len`,`.add`,`&`,`x[a..b]`,`.pop`,`in`,`@[1,2]`
+  - iterator : `a..b`, `a..<b`, `(n-1).countdown(0)`
+  - 型変換 : `.int`,`.ord`,`.chr`,`$`,`cast[T](x)`
+  - ほか : `max`,`min`,`abs`,`cmp`,`1e12.int`,`quit`
+- また,以下の関数を定義しています
+  - `stopwatch: ...` で時間を計測できる.結果は標準エラー出力に流れるのでそのまま提出してもAC可能.スコープも変わらないので元のコードから単純にインデントを深くするだけでよい.
+  - `n.time: ...` で n回ループを回せる.forループに比べてループ変数が増えないため,i番目であるという情報が不要ということが把握しやすい.
+  - `.max=`,`.min=` : `dp[i][k] = max(dp[i][k],dp[i][j])` が,`dp[i][k] .max= dp[i][j]` として書ける. 必須.
+  - `getchar` : 一文字だけ入力を進めたいとき. グリッド上の探索系の問題とか
+  - `scanf`と`scan`: intを一つ入力から取る. 例えば配列の入力を受け取る際に普通に書くと `stdin.readLine.split().map(parseInt)` か `newSeqWith(n,stdin.readLine.parseInt)` のように書かなければいけないのが, どちらも `newSeqWith(n,scan())` と書けて便利.
+    - 例えば三次元の入力でも `newSeqWith(n,(x:scan(),y:scan(),z:scan()))` と臨機応変に書けてお得.
+
+# Nimの実行スクリプト
+`nim c -r hoge.nim` でもいいですが,以下を .bashrc にでも書いておくと幸せになれます.
+```bash
+nimcompile() { nim cpp --hints:off --verbosity:0 $@ ; }
+nimr() { # 実行後に邪魔な実行可能ファイルを消してくれる
+  exename="$(echo $1 | sed 's/\.[^\.]*$//')"
+  nimcompile $NIMR_COMPILE_FLAG -r $@
+  [[ -f $exename ]] && rm $exename
+}
+nimrr() { NIMR_COMPILE_FLAG="-d:release" nimr $@ ; }
+```
+- 普通に即実行(落ちるとスタックトレースを表示してくれる) : `nimr hoge.nim`
+- デバッグ情報を消して最適化して実行 : `nimrr hoge.nim`
