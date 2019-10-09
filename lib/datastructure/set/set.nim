@@ -4,6 +4,7 @@ type CSetIter* {.importcpp: "std::set<'0>::iterator", header: "<set>".} [T] = ob
 proc cInitSet(T: typedesc): CSet[T] {.importcpp: "std::set<'*1>()", nodecl.}
 proc erase*[T](self: var CSet[T],x:CSetIter[T]) {.importcpp: "#.erase(@)", nodecl.}
 proc find*[T](self: CSet[T],x:T): CSetIter[T] {.importcpp: "#.find(#)", nodecl.}
+proc count*[T](self: CSet[T],x:T): int {.importcpp: "#.count(#)", nodecl.}
 proc lower_bound*[T](self: CSet[T],x:T): CSetIter[T] {.importcpp: "#.lower_bound(#)", nodecl.}
 proc upper_bound*[T](self: CSet[T],x:T): CSetIter[T] {.importcpp: "#.upper_bound(#)", nodecl.}
 proc begin*[T](self:CSet[T]):CSetIter[T]{.importcpp: "#.begin()", nodecl.}
@@ -13,6 +14,7 @@ proc `++`*[T](self:var CSetIter[T]){.importcpp: "++#", nodecl.}
 proc `--`*[T](self:var CSetIter[T]){.importcpp: "--#", nodecl.}
 proc `==`*[T](x,y:CSetIter[T]):bool{.importcpp: "(#==#)", nodecl.}
 proc initSet*[T](): CSet[T] = cInitSet(T)
+proc initStdSet*[T](): CSet[T] = cInitSet(T)
 proc insert*[T](self: var CSet[T],x:T) {.importcpp: "#.insert(@)", nodecl.}
 proc empty*[T](self: CSet[T]):bool {.importcpp: "#.empty()", nodecl.}
 proc size*[T](self: CSet[T]):int {.importcpp: "#.size()", nodecl.}
@@ -24,7 +26,7 @@ proc add*[T](self:var CSet[T],x:T) = self.insert(x)
 proc len*[T](self:CSet[T]):int = self.size()
 proc min*[T](self:CSet[T]):T = *self.begin()
 proc max*[T](self:CSet[T]):T = (var e = self.`end`();--e; *e)
-proc contains*[T](self:CSet[T],x:T):bool = self.find(x) != self.`end`()
+proc contains*[T](self:CSet[T],x:T): bool = not (self.find(x) == self.`end`())
 iterator items*[T](self:CSet[T]) : T =
   var (a,b) = (self.begin(),self.`end`())
   while a != b : yield *a; ++a
@@ -67,6 +69,7 @@ when isMainModule:
   import unittest,sequtils
   test "C++ set":
     var s = @[3,1,4,1,5,9,2,6,5,3,5].toSet()
+    # echo 1 in s
     check: 8 notin s
     check: s.min() == 1
     check: s.max() == 9

@@ -16,7 +16,7 @@ type
 proc newSegmentTree*[T](size:int,apply:proc(x,y:T):T,unit:T) : SegmentTree[T] =
   new(result)
   result.n = size.nextPowerOfTwo()
-  result.data = newSeq[T](result.n*2)
+  result.data = newSeq[T](result.n*2-1)
   for i in 0..<result.data.len: result.data[i] = unit
   result.unit = unit
   result.apply = apply
@@ -26,11 +26,11 @@ proc newSegmentTree*[T](arr:seq[T],apply:proc(x,y:T):T,unit:T) : SegmentTree[T] 
   result.n = arr.len.nextPowerOfTwo()
   result.unit = unit
   result.apply = apply
-  result.data = newSeq[T](result.n*2)
+  result.data = newSeq[T](result.n*2-1)
   let offset = result.n - 1
   for i,a in arr: result.data[i+offset] = a
-  for i in arr.len..<result.n-1:
-    result.data[i] = unit
+  for i in arr.len..offset:
+    result.data[i+offset] = unit
   for i in (offset-1).countdown(0):
     result.data[i] = apply(result.data[i*2+1],result.data[i*2+2])
   result.data[0] = apply(result.data[1],result.data[2])
@@ -40,15 +40,21 @@ proc `[]=`*[T](self:var SegmentTree[T],i:int,val:T) =
   while i > 0: # 根まで
     i = (i - 1) shr 1
     self.data[i] = self.apply(self.data[i*2+1],self.data[i*2+2])
-proc queryImpl*[T](self:SegmentTree[T],target,now:Slice[int],i:int) : T =
-  if now.b <= target.a or target.b <= now.a : return self.unit # 探索範囲外
-  if target.a <= now.a and now.b <= target.b : return self.data[i] # 完全に範囲内
-  let next = (now.a + now.b) shr 1
-  let vl = self.queryImpl(target, now.a..next, i*2+1) # 左を
-  let vr = self.queryImpl(target, next..now.b, i*2+2) # 右を
-  return self.apply(vl,vr)
+# 葉から見ていく.非再帰
+proc queryImpl*[T](self:SegmentTree[T],slice:Slice[int]): T =
+  result = self.unit
+  var now = 0.max(slice.a)+self.n-1..(self.n-1).min(slice.b)+self.n-1
+  while now.a < now.b:
+    if (now.a and 1) == 0:
+      result = self.apply(result,self.data[now.a])
+    if (now.b and 1) == 0:
+      result = self.apply(self.data[now.b-1],result)
+    now.a = now.a shr 1 # 親のちょっと右より
+    now.b = (now.b-1) shr 1 # 親のちょっと左より
 proc `[]`*[T](self:SegmentTree[T],slice:Slice[int]): T =
-  self.queryImpl(slice.a..slice.b+1,0..self.n,0) # 全範囲を,根から
+  self.queryImpl(slice.a..slice.b+1) # 全範囲を,葉から
+
+
 proc `[]`*[T](self:SegmentTree[T],i:int): T = self.data[i+self.n-1]
 proc `$`*[T](self:SegmentTree[T]): string =
   var arrs : seq[seq[T]] = @[]
@@ -59,24 +65,6 @@ proc `$`*[T](self:SegmentTree[T]): string =
     left = left * 2 + 1
     right = right * 2 + 1
   return $arrs
-# 目的の値を返すindexを返す. apply(x,y) == x or y となる演算にのみ有効
-proc findIndexImpl*[T](self:SegmentTree[T],target,now:Slice[int],i,d:int = 0) : int =
-  if now.b <= target.a or target.b <= now.a : return -1
-  if target.a <= now.a and now.b <= target.b : return i
-  let next = (now.a + now.b) shr 1
-  let vl = self.findIndexImpl(target,now.a..next,i*2+1,d+1)
-  let vr = self.findIndexImpl(target,next..now.b,i*2+2,d+1)
-  if vl == -1: return vr
-  if vr == -1: return vl
-  if self.data[vl] == self.apply(self.data[vl],self.data[vr]): return vl
-  else: return vr
-proc findIndex*[T](self:SegmentTree[T],slice:Slice[int]): int =
-  var index = self.findIndexImpl(slice.a..slice.b+1,0..self.n,0)
-  while index < self.n - 1:
-    let left = index * 2 + 1
-    if self.data[left] == self.data[index] : index = left
-    else: index = left + 1
-  return index - (self.n - 1)
 # 最大値・最小値・和
 proc newMaxSegmentTree*[T](size:int) : SegmentTree[T] = # 最大値のセグツリ
   newSegmentTree[T](size,proc(x,y:T): T = (if x >= y: x else: y),-1e12.T)
@@ -132,18 +120,17 @@ when isMainModule:
       var S = newMaxSegmentTree[int](100)
       for i,t in T: S[i] = t
       var S2 = T.newSegmentTree(proc(x,y:int): int = (if x >= y: x else: y),-1e12.int)
-      for i in 0..<100:
-        for j in i..<100:
-          if S[i..j] != S2[i..j]:
-            echo i..j,@[S[i..j],S2[i..j]]
+      if S.data != S2.data:
+        check: S.data.len == S2.data.len
+        for i in 0..<S.data.len:
+          if S.data[i] != S2.data[i]:
+            echo i,"::",S.data[i],":",S2.data[i]
       check: S[0..<100] == 50
       check: S[25..75] == 25
-      check: S.findIndex(0..<100) == 0
       S[50] = 100
       check: S[25..75] == 100
       check: S[50..50] == 100
       check: S[0..25] == 50
-      check: S.findIndex(0..<100) == 50
 
     block: # min
       var S = newMinSegmentTree[int](100)

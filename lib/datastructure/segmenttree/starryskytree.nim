@@ -89,6 +89,15 @@ when isMainModule:
       check: S[0..<10] == 14
       check: S[0..<5] == 14
       check: S[5..<10] == 5
+    block: # 区間Add,区間Min-IndexFind
+      type WithIndex[T] = tuple[v:T,i:int]
+      let S = newStarrySkyTree(20,
+        proc(x,y:WithIndex[int]):WithIndex[int] = (if x.v <= y.v: x else: y),
+          (-1,1e12.int), # この結果は異なる(indexを持てない単位元なため)
+          proc(x,y:WithIndex[int]):WithIndex[int]=
+          (x.v+y.v,x.i),
+          (0,0))
+
     block: # 区間の更新が min なもの
       proc minImpl(x,y:int):int=(if x <= y: x else: y)
       var S = newStarrySkyTree(10,minImpl,1e12.int,minImpl,1e12.int)
