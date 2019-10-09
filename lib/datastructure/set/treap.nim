@@ -40,6 +40,7 @@ proc update[K,V](self:Treap[K,V])  =
   self.sum = self.value
   if self.left != nil: self.sum = self.apply(self.left.sum,self.sum)
   if self.right != nil: self.sum = self.apply(self.sum,self.right.sum)
+# マージ・スピリット
 proc merge*[K,V](left,right:Treap[K,V]) : Treap[K,V] =
   # 必ず ∀[left] < ∀[right] の時に呼ばれるという仮定を置いている
   if left == nil: return right
@@ -66,6 +67,7 @@ proc split*[K,V](self:Treap[K,V],key:K): tuple[l,r:Treap[K,V]] =
     self.right = s.l
     when V isnot void: self.update()
     return (self,s.r)
+# 挿入・削除
 proc add*[K,V](self:var Treap[K,V],item: Treap[K,V]) =
   if self == nil:
     self = item
@@ -92,6 +94,7 @@ proc excl*[K,V](self:var Treap[K,V],key:K) :bool {.discardable.} =
     if self.right == nil : return false
     result = self.right.excl(key)
   when V isnot void : self.update()
+# キー関係(検索,最小値,最大値)
 proc findByKey*[K,V](self:Treap[K,V],key:K) : Treap[K,V]=
   if self.key == key: return self
   if key < self.key:
@@ -100,13 +103,14 @@ proc findByKey*[K,V](self:Treap[K,V],key:K) : Treap[K,V]=
   else:
     if self.right == nil: return nil
     return self.right.findByKey(key)
-proc findMin*[K,V](self:Treap[K,V]) : Treap[K,V] =
+proc findMinKey*[K,V](self:Treap[K,V]) : Treap[K,V] =
   if self.left == nil: return self
   return self.left.findMin()
-proc findMax*[K,V](self:Treap[K,V]) : Treap[K,V] =
+proc findMaxKey*[K,V](self:Treap[K,V]) : Treap[K,V] =
   if self.right == nil: return self
   return self.right.findMax()
-# 要素を昇順に列挙
+# 列挙系
+# 自身を含むノードを全て列挙(昇順)
 iterator items*[K,V](self:Treap[K,V]) : Treap[K,V] =
   var treaps = @[(self,true)]
   while treaps.len > 0:
@@ -118,11 +122,53 @@ iterator items*[K,V](self:Treap[K,V]) : Treap[K,V] =
     else:
       treaps.add((now,false))
       treaps.add((now.left,true))
-  # if self.left != nil:
-  #   for v in self.left: yield v
-  # yield self
-  # if self.right != nil:
-  #   for v in self.right: yield v
+# 自身を含むノードを全て列挙(降順)
+iterator itemsDesc*[K,V](self:Treap[K,V]) : Treap[K,V] =
+  var treaps = @[(self,true)]
+  while treaps.len > 0:
+    let (now,needRight) = treaps.pop()
+    if not needRight or now.right == nil:
+      yield now
+      if now.left != nil:
+        treaps.add((now.left,true))
+    else:
+      treaps.add((now,false))
+      treaps.add((now.right,true))
+# キー以上のものを全て列挙(昇順)
+iterator over*[K,V](self:Treap[K,V],key:K,including:bool) : Treap[K,V] =
+  var treaps = @[(self,true)]
+  while treaps.len > 0:
+    let (now,needLeft) = treaps.pop()
+    if key > now.key:
+      if including and key == now.key : yield now
+      if now.left != nil:
+        treaps.add((now.right,true))
+    elif not needLeft or now.left == nil:
+      if including and key <= now.key : yield now
+      elif key < now.key: yield now
+      if now.right != nil:
+        treaps.add((now.right,true))
+    else:
+      treaps.add((now,false))
+      treaps.add((now.left,true))
+# キー以下のものを全て列挙(降順)
+iterator under*[K,V](self:Treap[K,V],key:K,including:bool) : Treap[K,V] =
+  var treaps = @[(self,true)]
+  while treaps.len > 0:
+    let (now,needRight) = treaps.pop()
+    if key < now.key:
+      if including and key == now.key : yield now
+      if now.left != nil:
+        treaps.add((now.left,true))
+    elif not needRight or now.right == nil:
+      if including and key >= now.key : yield now
+      elif key > now.key: yield now
+      if now.left != nil:
+        treaps.add((now.left,true))
+    else:
+      treaps.add((now,false))
+      treaps.add((now.right,true))
+
 
 # Treapの根を指すラッパーを作成することで、いろいろな操作がしやすい.
 # 特に,自身は必ず nil ではないので操作がやりやすい.
@@ -175,16 +221,35 @@ proc contains*[K,V](self:TreapRoot[K,V],key:K):bool=
   return self.root.findByKey(key) != nil
 proc findMinKey*[K,V](self:TreapRoot[K,V]):K=
   assert self.root != nil
-  return self.root.findMin().key
+  return self.root.findMinKey().key
 proc findMaxKey*[K,V](self:TreapRoot[K,V]):K=
   assert self.root != nil
-  return self.root.findMax().key
+  return self.root.findMaxKey().key
+iterator items*[V:not void,K](self:TreapRoot[K,V]) : tuple[k:K,v:V] =
+  if self.root != nil :
+    for v in self.root: yield (v.key,v.value)
 iterator items*[K](self:TreapRoot[K,void]) : K =
   if self.root != nil :
     for v in self.root: yield v.key
-iterator items*[K,V](self:TreapRoot[K,V]) : tuple[k:K,v:V] =
+iterator itemsDesc*[V:not void,K](self:TreapRoot[K,V]) : tuple[k:K,v:V] =
   if self.root != nil :
-    for v in self.root: yield (v.key,v.value)
+    for v in self.root.itemsDesc: yield (v.key,v.value)
+iterator itemsDesc*[K](self:TreapRoot[K,void]) : K =
+  if self.root != nil :
+    for v in self.root.itemsDesc: yield v.key
+iterator `<=`*[K](self:TreapRoot[K,void],key:K) : K =
+  if self.root != nil :
+    for v in self.root.under(key,true): yield v.key
+iterator `<`*[K](self:TreapRoot[K,void],key:K) : K =
+  if self.root != nil :
+    for v in self.root.under(key,false): yield v.key
+iterator `>=`*[K](self:TreapRoot[K,void],key:K) : K =
+  if self.root != nil :
+    for v in self.root.over(key,true): yield v.key
+iterator `>`*[K](self:TreapRoot[K,void],key:K) : K =
+  if self.root != nil :
+    for v in self.root.over(key,false): yield v.key
+
 
 import strutils
 proc dump*[K,V](self:Treap[K,V],indent:int) : string =
@@ -223,9 +288,21 @@ when isMainModule:
   import unittest
   import sequtils
   test "Treap":
-    var A = newTreapRoot[int,int](proc(x,y:int):int = x + y)
-    A[10] = 10
-    A[20] = 30
-    A[40] = 100
-    A[0] = 0
-    for a in  A : echo a
+    block:
+      xorShiftVar = 88172645463325252.uint64
+      var A = newTreapRoot[int]()
+      for i in 0..<20:
+        A.add randomBit(5)
+      # echo A.dump()
+      echo toSeq(A.items)
+      echo toSeq(A.itemsDesc)
+      echo toSeq(A >= 18)
+      echo toSeq(A > 18)
+      echo toSeq(A <= 18)
+      echo toSeq(A < 18)
+    # block:
+    #   var A = newTreapRoot[int,int](proc(x,y:int):int = x + y)
+    #   for i in 0..<20:
+    #     A[randomBit(5)] = randomBit(16)
+    #   echo A.dump()
+    #   echo toSeq(A.items)
