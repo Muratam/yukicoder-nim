@@ -1,3 +1,4 @@
+{.checks:off.}
 import sequtils,algorithm,math,tables,sets,strutils,times
 # SA
 type SuffixArray* = ref object

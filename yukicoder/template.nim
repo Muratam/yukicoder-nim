@@ -1,3 +1,4 @@
+# {.checks:off.}
 import sequtils,algorithm,math,tables,sets,strutils,times
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
 template time*(n:int,body) = (for _ in 0..<n: body)

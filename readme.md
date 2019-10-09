@@ -60,6 +60,7 @@
 
 # 個人的 Nim 競プロ用テンプレート
 ```nim
+# {.checks:off.}
 import sequtils,algorithm,math,tables,sets,strutils,times
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
 template time(n:int,body) = (for _ in 0..<n: body)
@@ -79,6 +80,7 @@ let A = newSeqWith(n,scan())
   - `getchar` : 一文字だけ入力を進めたいとき. グリッド上の探索系の問題とか
   - `scanf`と`scan`: intを一つ入力から取る. 例えば配列の入力を受け取る際に普通に書くと `stdin.readLine.split().map(parseInt)` か `newSeqWith(n,stdin.readLine.parseInt)` のように書かなければいけないのが, どちらも `newSeqWith(n,scan())` と書けて便利.
     - 例えば三次元の入力でも `newSeqWith(n,(x:scan(),y:scan(),z:scan()))` と臨機応変に書けてお得.
+  - `{.checks:off.}` : 嘘解法がTLEした時につけると通るかもしれない.
 
 # Nimの実行スクリプト
 `nim c -r hoge.nim` でもいいですが,以下を .bashrc にでも書いておくと幸せになれます.

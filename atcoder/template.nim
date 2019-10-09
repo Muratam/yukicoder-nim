@@ -1,3 +1,4 @@
+# {.checks:off.}
 import sequtils,algorithm,math,tables,sets,strutils,times
 template time*(n:int,body) = (for _ in 0..<n: body)
 template `max=`*(x,y) = x = max(x,y)
