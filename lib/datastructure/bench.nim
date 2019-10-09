@@ -126,6 +126,15 @@ bench "Priority Queue":
   dummy += S.pop()
   for _ in 0..n-10: S.pop()
   dummy += S.pop()
+import "./set/convoqueue"
+bench "Convo Queue":
+  var S = newMinMaxQueue[int](cmp)
+  for _ in 0..n: S.push randomBit(32)
+  dummy += S.minPop()
+  for _ in 0..(n-10) div 2:
+    dummy += S.minPop()
+    dummy += S.maxPop()
+  dummy += S.minPop()
 import "./set/skewheap"
 bench "Skew Heap":
   var S = newSkewHeap[int](cmp)

@@ -22,7 +22,9 @@
     - UnionFind : 森のマージ・根の取得 O(1)
     - bitset : ビット演算の集合.
     - PriorityQueue : 最小値検索 O(1), 追加・最小値削除　O(logN)
-    - SkewHeap : ↑ + マージ O(logN)
+    - PriorityQueue亜種
+      - SkewHeap : ↑ + マージ O(logN)
+      - ConvoQueue : 最大値+最小値 O(1), 中央値 O(1), k番目(BIT) O(logD)
   - `string/` :: 構築 O(S). 文字列用.
     - ロリハ(通常/軽量) : 部分文字列同一判定 O(1)
     - SA-IS : prefix検索(個数,{上,下}界) O(PlogS)

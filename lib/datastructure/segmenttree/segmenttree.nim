@@ -18,7 +18,7 @@ proc newSegmentTree*[T](size:int,apply:proc(x,y:T):T,unit:T) : SegmentTree[T] =
   new(result)
   result.n = size
   result.n2 = size.nextPowerOfTwo()
-  result.data = newSeq[T](result.n2+result.n)
+  result.data = newSeq[T](result.n2+result.n) # 1つは余分に取ってる
   for i in 0..<result.data.len: result.data[i] = unit
   result.unit = unit
   result.apply = apply

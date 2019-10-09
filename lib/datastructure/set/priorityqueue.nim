@@ -48,7 +48,7 @@ proc pop*[T](heap: var PriorityQueue[T]): T {.discardable.} =
     siftup(heap, 0)
   else:
     result = lastelt
-proc top*[T](heap: var PriorityQueue[T]): T = heap.data[0]
+proc top*[T](heap: PriorityQueue[T]): T = heap.data[0]
 proc poppush*[T](heap: var PriorityQueue[T], item: T): T =
   result = heap[0]
   heap.data[0] = item

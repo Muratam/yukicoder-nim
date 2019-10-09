@@ -18,7 +18,7 @@ proc binarySearch[T](slice:Slice[T],f:proc(x:T):bool):T =
   var fok = ok
   when T is int:
     template COND():bool=abs(ng - ok) > 1
-    template MID():T=(ng + ok) div 2
+    template MID():T=(ng + ok) div 2 # 値は負になりうるので
   elif T is float:
     template COND():bool=abs(ng - ok) > 1e-12
     template MID():T=ng * 0.5 + ok * 0.5
