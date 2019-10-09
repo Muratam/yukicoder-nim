@@ -7,8 +7,9 @@
 import algorithm
 type PriorityQueue*[T] = ref object
   data*: seq[T]
-  cmp*:proc(x,y:T):int
-proc revcmp[T](x,y:T):int = cmp[T](y,x)
+  cmp*:proc(x,y:T):int{.noSideEffect.}
+proc ascending*[T](x,y:T):int{.noSideEffect.} = (x - y).int # 最小値
+proc descending*[T](x,y:T):int{.noSideEffect.} = (y - x).int # 最大値
 proc `[]`[T](heap: PriorityQueue[T], i: Natural): T {.inline.}= heap.data[i]
 proc siftdown[T](heap: var PriorityQueue[T], startpos, p: int) =
   var pos = p
@@ -58,11 +59,11 @@ proc pushpop*[T](heap: var PriorityQueue[T], item: T): T =
     siftup(heap, 0)
   return item
 proc clear*[T](heap: var PriorityQueue[T]) = heap.data.setLen(0)
-proc toSeq*[T](heap: PriorityQueue[T]): seq[T] = heap.data.sorted(cmp)
-proc `$`*[T](heap: PriorityQueue[T]): string = $heap.toSeq()
+proc toSequence*[T](heap: PriorityQueue[T]): seq[T] = heap.data.sorted(cmp)
+proc `$`*[T](heap: PriorityQueue[T]): string = $heap.toSequence()
 iterator items*[T](heap:PriorityQueue[T]) : T =
-  for v in heap.toSeq(): yield v
-proc newPriorityQueue*[T](cmp:proc(x,y:T):int) : PriorityQueue[T]=
+  for v in heap.toSequence(): yield v
+proc newPriorityQueue*[T](cmp:proc(x,y:T):int{.noSideEffect.}) : PriorityQueue[T]=
   new(result)
   result.data = @[]
   result.cmp = cmp
@@ -71,7 +72,7 @@ when isMainModule:
   import unittest
   test "Priority Queue":
     block: # 最小値
-      var pq = newPriorityQueue[int](cmp)
+      var pq = newPriorityQueue[int](ascending)
       pq.push(30)
       pq.push(10)
       pq.push(20)
@@ -93,7 +94,7 @@ when isMainModule:
       check: pq2.pop() == 30
 
     block: # 最大値
-      var pq = newPriorityQueue[int](revcmp)
+      var pq = newPriorityQueue[int](descending)
       pq.push(30)
       pq.push(10)
       pq.push(20)

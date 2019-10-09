@@ -32,7 +32,7 @@
   - prime :: 素数(SFF,素数表,素数リスト)
   - arith :: 算術(順列,組み合わせ,累乗,四捨五入)
   - count :: 数え上げ(nCk,カタラン数,第2種スターリング数,x:ベル数,sternBrocotTree(有理数列挙))
-  - random :: 乱数(xorShift)
+  - random :: 高速な乱数(xorShift), shuffleAt
   - geometry :: 二次元(複素数)幾何
 - `lib/graph` :: グラフ理論
   - Tree :: 入力を木に,オイラーツアー,最小共通祖先(LCA:探索O(log(n)))
@@ -46,7 +46,7 @@
   - search : {二,三}分探索 / lowerBound <-> `< <= > >=`  / 座標圧縮
   - LIS : 最長増加部分列
   - slidemin : スライド最小値
-  - sequence : arg{min,max} / deduplicate / 10進数と配列変換
+  - sequence : arg{min,max} / deduplicate / quicksortAt / 10進数と配列変換
   - iteration : 順列 / ペア順列 / 階段
 
 # MEMO
@@ -70,17 +70,7 @@ proc scan(): int = scanf("%lld\n",addr result)
 let n = scan()
 let A = newSeqWith(n,scan())
 ```
-- `import` : 競プロでよく使うのはこの7つ. 特に以下は頻出.
-  - `sequtils` : `newSeqWith`,`toSeq`,`.mapIt`
-  - `algorithm`: `sorted(cmp)`,`sortedByIt`,`lowerBound`,`reversed`,`nextPermutation`
-  - `math` : `n.float.sqrt.int`,`gcd`,`lcm`
-  - `tables`,`sets`: `Table[K,V]`,`HashSet[K]`
-- また,何も import しなくても以下の便利機能が使える
-  - `seq`: `newSeq[T](n)`,`.len`,`.add`,`&`,`x[a..b]`,`.pop`,`in`,`@[1,2]`
-  - iterator : `a..b`, `a..<b`, `(n-1).countdown(0)`
-  - 型変換 : `.int`,`.ord`,`.chr`,`$`,`cast[T](x)`
-  - ほか : `max`,`min`,`abs`,`cmp`,`1e12.int`,`quit`
-- また,以下の関数を定義しています
+- 利便性のため、以下の関数を定義しています
   - `stopwatch: ...` で時間を計測できる.結果は標準エラー出力に流れるのでそのまま提出してもAC可能.スコープも変わらないので元のコードから単純にインデントを深くするだけでよい.
   - `n.time: ...` で n回ループを回せる.forループに比べてループ変数が増えないため,i番目であるという情報が不要ということが把握しやすい.
   - `.max=`,`.min=` : `dp[i][k] = max(dp[i][k],dp[i][j])` が,`dp[i][k] .max= dp[i][j]` として書ける. 必須.
@@ -107,19 +97,16 @@ nimrr() { NIMR_COMPILE_FLAG="-d:release" nimr $@ ; }
 - この壁を超えて使おうとすると MLE/TLE の危険性が高まる.
 ```
 ********* 1e8 の壁 **************
-   3ms: データを舐める
+1: データを舐める
 ******** 1e7 の壁 ***************
-  20ms: seq / Deque
-  50ms: Union Find / BIT / RollingHash
-  70ms: SA-IS
+1: seq / Deque
+2: RollingHash
+3: SA-IS / UnionFind / BIT
 ********* 1e6 の壁 ***************
- 100ms: SegmentTree / LowerBound
- 120ms: HashSet / Priority Queue
- 150ms: seq(+sort) / Table
+1: SegmentTree / sort / HashSet / Table
+2: PriorityQueue / sort+LowerBound
+3: 座標圧縮SegmentTree
 ********** 1e5の壁 *************
- 700ms: 座標圧縮 SegmentTree
- 800ms: Skew Heap
-1000ms: std::set
-1500ms: Treap
-2500ms: Patricia Segment Tree
+1: Skew Heap (マージの代償 : PQ x8倍)
+2: PatriciaSegmentTree (生の20~30倍)
 ```

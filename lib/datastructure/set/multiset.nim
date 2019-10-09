@@ -1,47 +1,54 @@
 # 赤黒木. custom-compareや特殊な木の構築が必要でなければこれで良い.
-type CMultiSet* {.importcpp: "std::multiset", header: "<set>".} [T] = object
-type CMultiSetIter* {.importcpp: "std::multiset<'0>::iterator", header: "<set>".} [T] = object
-proc cInitMultiSet(T: typedesc): CMultiSet[T] {.importcpp: "std::multiset<'*1>()", nodecl.}
-proc initMultiSet*[T](): CMultiSet[T] = cInitMultiSet(T)
-proc insert*[T](self: var CMultiSet[T],x:T) {.importcpp: "#.insert(@)", nodecl.}
-proc empty*[T](self: CMultiSet[T]):bool {.importcpp: "#.empty()", nodecl.}
-proc size*[T](self: CMultiSet[T]):int {.importcpp: "#.size()", nodecl.}
-proc clear*[T](self:var CMultiSet[T]) {.importcpp: "#.clear()", nodecl.}
-proc erase*[T](self: var CMultiSet[T],x:T) {.importcpp: "#.erase(@)", nodecl.}
-proc erase*[T](self: var CMultiSet[T],x:CMultiSetIter[T]) {.importcpp: "#.erase(@)", nodecl.}
-proc find*[T](self: CMultiSet[T],x:T): CMultiSetIter[T] {.importcpp: "#.find(#)", nodecl.}
-proc lower_bound*[T](self: CMultiSet[T],x:T): CMultiSetIter[T] {.importcpp: "#.lower_bound(#)", nodecl.}
-proc upper_bound*[T](self: CMultiSet[T],x:T): CMultiSetIter[T] {.importcpp: "#.upper_bound(#)", nodecl.}
-proc begin*[T](self:CMultiSet[T]):CMultiSetIter[T]{.importcpp: "#.begin()", nodecl.}
-proc `end`*[T](self:CMultiSet[T]):CMultiSetIter[T]{.importcpp: "#.end()", nodecl.}
-proc `*`*[T](self: CMultiSetIter[T]):T{.importcpp: "*#", nodecl.}
-proc `++`*[T](self:var CMultiSetIter[T]){.importcpp: "++#", nodecl.}
-proc `--`*[T](self:var CMultiSetIter[T]){.importcpp: "--#", nodecl.}
+type CMultiSetObj* {.importcpp: "std::multiset", header: "<set>".} [T] = object
+type CMultiSetObjIter* {.importcpp: "std::multiset<'0>::iterator", header: "<set>".} [T] = object
+proc cInitMultiSet(T: typedesc): CMultiSetObj[T] {.importcpp: "std::multiset<'*1>()", nodecl.}
+proc initMultiSetObj*[T](): CMultiSetObj[T] = cInitMultiSet(T)
+proc insert*[T](self: CMultiSetObj[T],x:T) {.importcpp: "#.insert(@)", nodecl.}
+proc empty*[T](self:CMultiSetObj[T]):bool {.importcpp: "#.empty()", nodecl.}
+proc size*[T](self:CMultiSetObj[T]):int {.importcpp: "#.size()", nodecl.}
+proc clear*[T](self:CMultiSetObj[T]) {.importcpp: "#.clear()", nodecl.}
+proc erase*[T](self:CMultiSetObj[T],x:T) {.importcpp: "#.erase(@)", nodecl.}
+proc erase*[T](self:CMultiSetObj[T],x:CMultiSetObjIter[T]) {.importcpp: "#.erase(@)", nodecl.}
+proc find*[T](self:CMultiSetObj[T],x:T): CMultiSetObjIter[T] {.importcpp: "#.find(#)", nodecl.}
+proc lower_bound*[T](self:CMultiSetObj[T],x:T): CMultiSetObjIter[T] {.importcpp: "#.lower_bound(#)", nodecl.}
+proc upper_bound*[T](self:CMultiSetObj[T],x:T): CMultiSetObjIter[T] {.importcpp: "#.upper_bound(#)", nodecl.}
+proc begin*[T](self:CMultiSetObj[T]):CMultiSetObjIter[T]{.importcpp: "#.begin()", nodecl.}
+proc `end`*[T](self:CMultiSetObj[T]):CMultiSetObjIter[T]{.importcpp: "#.end()", nodecl.}
+proc `*`*[T](self: CMultiSetObjIter[T]):T{.importcpp: "*#", nodecl.}
+proc `++`*[T](self: CMultiSetObjIter[T]){.importcpp: "++#", nodecl.}
+proc `--`*[T](self: CMultiSetObjIter[T]){.importcpp: "--#", nodecl.}
 # https://github.com/nim-lang/Nim/issues/12184
-proc `==`*[T](x,y:CMultiSetIter[T]):bool{.importcpp: "(#==#)", nodecl.}
-proc `==`*[T](x,y:CMultiSet[T]):bool{.importcpp: "(#==#)", nodecl.}
-# nim alias
+proc `==`*[T](x,y: CMultiSetObjIter[T]):bool{.importcpp: "(#==#)", nodecl.}
+proc `==`*[T](x,y: CMultiSetObj[T]):bool{.importcpp: "(#==#)", nodecl.}
+# Nim で使うためには ref にしておかないとコピーが走って死ぬ
+type CMultiSet[T] = ref object
+  impl*:CMultiSetObj[T]
 import sequtils
-proc add*[T](self:var CMultiSet[T],x:T) = self.insert(x)
-proc len*[T](self:CMultiSet[T]):int = self.size()
-proc min*[T](self:CMultiSet[T]):T = *self.begin()
-proc max*[T](self:CMultiSet[T]):T = (var e = self.`end`();--e; *e)
-proc contains*[T](self:CMultiSet[T],x:T):bool = self.find(x) != self.`end`()
+proc initMultiSet*[T](): CMultiSet[T] =
+  new(result)
+  result.impl = initMultiSetObj[T]()
+proc iniStdtMultiSet*[T](): CMultiSet[T] = initMultiSet[T]()
+proc add*[T](self:CMultiSet[T],x:T) = self.impl.insert(x)
+proc erase*[T](self:CMultiSet[T],x:T) = self.impl.erase(x)
+proc len*[T](self:CMultiSet[T]):int = self.impl.size()
+proc min*[T](self:CMultiSet[T]):T = *self.impl.begin()
+proc max*[T](self:CMultiSet[T]):T = (var e = self.impl.`end`();--e; *e)
+proc contains*[T](self:CMultiSet[T],x:T):bool = self.impl.find(x) != self.impl.`end`()
 iterator items*[T](self:CMultiSet[T]) : T =
-  var (a,b) = (self.begin(),self.`end`())
+  var (a,b) = (self.impl.begin(),self.impl.`end`())
   while a != b : yield *a; ++a
 iterator `>`*[T](self:CMultiSet[T],x:T) : T =
-  var (a,b) = (self.upper_bound(x),self.`end`())
+  var (a,b) = (self.impl.upper_bound(x),self.impl.`end`())
   while a != b :
     yield *a ;++a
 iterator `>=`*[T](self:CMultiSet[T],x:T) : T =
-  var (a,b) = (self.lower_bound(x),self.`end`())
+  var (a,b) = (self.impl.lower_bound(x),self.impl.`end`())
   while a != b :
     yield *a; ++a
 iterator `<=`*[T](self:CMultiSet[T],x:T) : T =
   # 重複要素を個数分列挙する必要があるので upper_bound
-  var (a,b) = (self.upper_bound(x),self.`begin`())
-  if a != self.`end`():
+  var  (a,b) = (self.impl.upper_bound(x),self.impl.`begin`())
+  if a != self.impl.`end`():
     if *a <= x : yield *a
     if a != b : # 0番だった
       --a
@@ -50,8 +57,8 @@ iterator `<=`*[T](self:CMultiSet[T],x:T) : T =
         --a
       if *a <= x : yield *a
 iterator `<`*[T](self:CMultiSet[T],x:T) : T =
-  var (a,b) = (self.lower_bound(x),self.`begin`())
-  if a != self.`end`():
+  var (a,b) = (self.impl.lower_bound(x),self.impl.`begin`())
+  if a != self.impl.`end`():
     if *a < x : yield *a
     if a != b : # 0番だった
       --a
@@ -63,8 +70,10 @@ iterator getRange*[T](self:CMultiSet[T],slice:Slice[T]) : T =
   for x in self >= slice.a:
     if x > slice.b : break
     yield x
+proc toMultiSet*[T](arr:seq[T]): CMultiSet[T] =
+  result = initMultiSet[T]()
 
-proc toMultiSet*[T](arr:seq[T]): CMultiSet[T] = (result = initMultiSet[T]();for a in arr: result.add(a))
+  for a in arr: result.add(a)
 proc fromMultiSet*[T](self:CMultiSet[T]):seq[T] = self.mapIt(it)
 proc `$`*[T](self:CMultiSet[T]): string = $self.mapIt(it)
 

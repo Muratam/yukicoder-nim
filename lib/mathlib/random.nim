@@ -11,8 +11,12 @@ proc random*(maxIndex: int): int =
   cast[int](xorShift() mod maxIndex.uint64)
 proc randomBit*(maxBit:int):int = # mod が遅い場合
   cast[int](xorShift() and cast[uint64]((1 shl maxBit) - 1))
+proc shuffleAt*[T](x: var openArray[T],at:Slice[int]) =
+  let d = at.b - at.a + 1
+  for i in at.b.countdown(at.a):
+    swap(x[i], x[at.a+random(d)])
 proc shuffle*[T](x: var openArray[T]) =
-  for i in countdown(x.high, 1):
+  for i in x.high.countdown(1):
     swap(x[i], x[random(i)])
 proc randomString*(maxLen:int): string =
   let size = 1 + random(maxLen - 1)
@@ -42,3 +46,7 @@ when isMainModule:
     var S = toSeq(0..10)
     shuffle(S)
     check: S == @[5, 9, 8, 10, 1, 6, 4, 3, 0, 7, 2]
+    xorShiftVar = 88172645463325252.uint64
+    S = toSeq(0..10)
+    S.shuffleAt(3..8)
+    check: S == @[0, 1, 2, 5, 6, 4, 8, 7, 3, 9, 10]

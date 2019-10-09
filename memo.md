@@ -34,6 +34,9 @@ Nimは最強の言語ですが、罠が無いわけではありません.
 - `heapqueue`(優先度付きキュー) モジュールが無い.
   - o : [自分で書く](./lib/datastructure/set/priorityqueue.nim)
 
+## 3. 最新のNim0.20.0以降で気をつけるべきこと
+- `algorithm.sort` が二倍くらい遅くなっている
+  - o : [自分でquicksortを書く](./lib/seq/sequence.nim)
 
 ## 3. その他たまに困ること
 - `sequtils.newSeqWith` は便利だが配列のコピーが余分に発生する.

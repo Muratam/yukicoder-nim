@@ -1,4 +1,5 @@
 import sequtils,algorithm,math,tables,sets,strutils,times
+template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
 template time*(n:int,body) = (for _ in 0..<n: body)
 template `max=`*(x,y) = x = max(x,y)
 template `min=`*(x,y) = x = min(x,y)
@@ -20,7 +21,6 @@ proc puts(str: cstring){.header: "<stdio.h>", varargs.}
 
 # 実行時間 / メモリ使用量
 import times
-template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
 template timeUpSearch*(milliSec:int,body) =
   let startTime = cpuTime() # 時間計測行為は1000倍遅く.1e5 回で100ms.
   while (cpuTime() - startTime) * 1000 < milliSec:

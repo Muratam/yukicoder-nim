@@ -1,5 +1,6 @@
 import algorithm,math,tables,sets,times,sequtils,strutils
 import "../mathlib/random"
+template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
 template bench(comment:string, body) =
   block:
     stdout.write 27.chr,"[32m"
@@ -113,14 +114,14 @@ bench "Sparse Segment Tree": # 650ms
   for i in 0..<n: A[S[i]] = randomBit(32)
   for i in 0..<n: dummy += A[0..<i]
   dummy += A[0..<n]
-import "./set/priorityqueue"
 bench "Sort + LowerBound": # 160ms
   var S = newSeq[int](n+1)
   for i in 0..n: S[i] = randomBit(32)
-  S.sort(cmp)
+  S.sort()
   for i in 0..n: dummy += S.lowerBound(randomBit(32))
+import "./set/priorityqueue"
 bench "Priority Queue":
-  var S = newPriorityQueue[int](cmp)
+  var S = newPriorityQueue[int](ascending)
   for _ in 0..n: S.push randomBit(32)
   dummy += S.pop()
   for _ in 0..n-10: S.pop()
@@ -147,14 +148,15 @@ bench "intset": # 600ms クソ雑魚. ランキングに載せるのがはばか
   for _ in 0..n: S.incl randomBit(32)
   for i in 0..n:
     if randomBit(32) in S: dummy += 1
-# find が めちゃくちゃ遅い
+# コピーが走ってつらい
 # import "./set/set"
 # bench "std::set": # 1000ms
 #   var S = initStdSet[int]()
-#   for i in 0..n div 100: S.add i
-#   for i in 0..n div 100:
-#     # echo i
-#     if i in S: dummy += 1
+#   for i in 0..n:
+#     S.add R[i]
+#   for i in 0..n:
+#     if i in S : dummy += 1
+#     # if S.find(i) != S.`end`(): dummy += 1
 # import "./set/treap"
 # bench "treap":
 #   var A = newTreap[int]()
