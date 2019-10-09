@@ -156,33 +156,19 @@ proc dump*[K,V](self:Treap[K,V],indent:int) : string =
   result .add self.right.dump(indent+1)
 proc dump*[K,V](self:TreapRoot[K,V]) : string = self.root.dump(0)
 
-import times
-template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
-stopwatch:
-  var A = newTreapRoot[int,int](proc(x,y:int):int = x + y)
-  A[0] = 10
-  A[50] = 10
-  A[100] = 20
-  A[0] = 10
-  A[50] = 10
-  A[100] = 20
-  A[100] = 20
-  A[100] = 20
-  A[100] = 20
-  echo A.dump()
-  for x in A.root:
-    echo x.key,":",x.value
-  # echo A.dump()
-  # echo A.len
-  # echo 100 in A
-  # A.excl 100
-  # A.excl 100
-  # A.excl 100
-  # A.excl 100
-  # A.excl 100
-  # A.excl 100
-  # echo 100 in A
-  # echo A.dump()
-  # echo A.len
-  # for i in 0..<1e6.int: A[randomBit(32)] = i
-  # echo A.len
+when isMainModule:
+  import unittest
+  import sequtils
+  import times
+  template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
+  test "Treap":
+    var A = newTreapRoot[int,int](proc(x,y:int):int = x + y)
+    A.add 0
+    a.add 50
+    A.add 100
+    A.add 0
+    A.add 50
+    A.add 130
+    check: 0 in A
+    A.excl 0
+    check: not (0 in A)
