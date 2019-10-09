@@ -8,34 +8,42 @@
 import sequtils,math
 type
   SegmentTree*[T] = ref object
-    n* : int
+    n*  : int # 生
+    n2* : int # 2のべき乗
     data*:seq[T]
     unit*: T
     apply*:proc(x,y:T):T
-# 親は(i-1)/2,子は2i+{1,2}.葉はi+n-1,根は0
+# 親は(i-1)/2,子は2i+{1,2}.葉はi+n2-1,根は0
 proc newSegmentTree*[T](size:int,apply:proc(x,y:T):T,unit:T) : SegmentTree[T] =
   new(result)
-  result.n = size.nextPowerOfTwo()
-  result.data = newSeq[T](result.n*2-1)
+  result.n = size
+  result.n2 = size.nextPowerOfTwo()
+  result.data = newSeq[T](result.n2+result.n)
   for i in 0..<result.data.len: result.data[i] = unit
   result.unit = unit
   result.apply = apply
 # 構築. O(N)
 proc newSegmentTree*[T](arr:seq[T],apply:proc(x,y:T):T,unit:T) : SegmentTree[T] =
   new(result)
-  result.n = arr.len.nextPowerOfTwo()
+  result.n = arr.len
+  result.n2 = arr.len.nextPowerOfTwo()
   result.unit = unit
   result.apply = apply
-  result.data = newSeq[T](result.n*2-1)
-  let offset = result.n - 1
+  result.data = newSeq[T](result.n2+result.n)
+  result.data[^1] = unit
+  let offset = result.n2 - 1
   for i,a in arr: result.data[i+offset] = a
-  for i in arr.len..offset:
-    result.data[i+offset] = unit
   for i in (offset-1).countdown(0):
-    result.data[i] = apply(result.data[i*2+1],result.data[i*2+2])
-  result.data[0] = apply(result.data[1],result.data[2])
+    if i*2+1 >= result.data.len:
+      result.data[i] = unit
+    elif i*2+2 >= result.data.len:
+      result.data[i] = result.data[i*2+1]
+    else:
+      result.data[i] = apply(result.data[i*2+1],result.data[i*2+2])
+  if result.data.len >= 2:
+    result.data[0] = apply(result.data[1],result.data[2])
 proc `[]=`*[T](self:var SegmentTree[T],i:int,val:T) =
-  var i = i + self.n - 1 # 葉から
+  var i = i + self.n2 - 1 # 葉から
   self.data[i] = val
   while i > 0: # 根まで
     i = (i - 1) shr 1
@@ -43,7 +51,7 @@ proc `[]=`*[T](self:var SegmentTree[T],i:int,val:T) =
 # 葉から見ていく.非再帰
 proc queryImpl*[T](self:SegmentTree[T],slice:Slice[int]): T =
   result = self.unit
-  var now = 0.max(slice.a)+self.n-1..(self.n-1).min(slice.b)+self.n-1
+  var now = 0.max(slice.a)+self.n2-1..(self.n-1).min(slice.b)+self.n2-1
   while now.a < now.b:
     if (now.a and 1) == 0:
       result = self.apply(result,self.data[now.a])
@@ -55,7 +63,7 @@ proc `[]`*[T](self:SegmentTree[T],slice:Slice[int]): T =
   self.queryImpl(slice.a..slice.b+1) # 全範囲を,葉から
 
 
-proc `[]`*[T](self:SegmentTree[T],i:int): T = self.data[i+self.n-1]
+proc `[]`*[T](self:SegmentTree[T],i:int): T = self.data[i+self.n2-1]
 proc `$`*[T](self:SegmentTree[T]): string =
   var arrs : seq[seq[T]] = @[]
   var left = 0

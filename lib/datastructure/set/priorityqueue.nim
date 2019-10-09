@@ -7,9 +7,9 @@
 import algorithm
 type PriorityQueue*[T] = ref object
   data*: seq[T]
-  cmp*:proc(x,y:T):int{.noSideEffect.}
-proc ascending*[T](x,y:T):int{.noSideEffect.} = (x - y).int # 最小値
-proc descending*[T](x,y:T):int{.noSideEffect.} = (y - x).int # 最大値
+  cmp*:proc(x,y:T):int
+proc ascending*[T](x,y:T):int = (x - y).int # 最小値
+proc descending*[T](x,y:T):int = (y - x).int # 最大値
 proc `[]`[T](heap: PriorityQueue[T], i: Natural): T {.inline.}= heap.data[i]
 proc siftdown[T](heap: var PriorityQueue[T], startpos, p: int) =
   var pos = p
@@ -63,7 +63,7 @@ proc toSequence*[T](heap: PriorityQueue[T]): seq[T] = heap.data.sorted(cmp)
 proc `$`*[T](heap: PriorityQueue[T]): string = $heap.toSequence()
 iterator items*[T](heap:PriorityQueue[T]) : T =
   for v in heap.toSequence(): yield v
-proc newPriorityQueue*[T](cmp:proc(x,y:T):int{.noSideEffect.}) : PriorityQueue[T]=
+proc newPriorityQueue*[T](cmp:proc(x,y:T):int) : PriorityQueue[T]=
   new(result)
   result.data = @[]
   result.cmp = cmp

@@ -108,7 +108,7 @@ bench "Segment Tree": # 100ms
   for i in 0..<n: A[i] = randomBit(32)
   for i in 0..<n: dummy += A[0..<i]
 bench "Sparse Segment Tree": # 650ms
-  var S = newSeq[int](n+1)
+  var S = newSeq[int](n)
   for i in 0..<n: S[i] = randomBit(32)
   var A = S.newSparceSegmentTree(proc(x,y:int): int = x + y,0)
   for i in 0..<n: A[S[i]] = randomBit(32)
@@ -117,11 +117,11 @@ bench "Sparse Segment Tree": # 650ms
 bench "Sort + LowerBound": # 160ms
   var S = newSeq[int](n+1)
   for i in 0..n: S[i] = randomBit(32)
-  S.sort()
+  S.sort(cmp)
   for i in 0..n: dummy += S.lowerBound(randomBit(32))
 import "./set/priorityqueue"
 bench "Priority Queue":
-  var S = newPriorityQueue[int](ascending)
+  var S = newPriorityQueue[int](cmp)
   for _ in 0..n: S.push randomBit(32)
   dummy += S.pop()
   for _ in 0..n-10: S.pop()
