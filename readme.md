@@ -10,15 +10,15 @@
   - `segmenttree/` :: 区間モノイドクエリ O(logN).
     - セグメントツリー{1D,2D} : 一点更新, 区間取得
     - StarrySkyTree: 区間更新(可換モノイド演算), 区間取得
-    - PatriciaSegmentTree : 2進パトリシア木(キー)+セグツリ(値).
-      - キー : 最大,最小,検索,要素数,{以上,以下}列挙,k番目,xor
-      - 値　 : 一点更新, 区間取得
     - セグメントツリー亜種
       - BIT : 制限が多いが速い. 一点更新, 区間[**0**,T]の取得.
       - Sparse*: 更新点を先読みして座標圧縮.
       - Mapped*: T(生値)->R(集約値=モノイド)
   - `set/` :: 集合. 動的に要素を追加・削除可能
-    - std::{set,multiset} :: 追加・削除・検索・最{小,大}値・{以上,以下}列挙 O(logN)
+    - Treap :: std::{set,map} のNim用の代替.
+      - 追加・削除・検索・最{小,大}値・{以上,以下}列挙 O(logN)
+      - ＋セグツリ (一点更新, 区間取得) O(logN)
+      - ＋マージ・スピリット・K番目
     - UnionFind : 森のマージ・根の取得 O(1)
     - bitset : ビット演算の集合.
     - PriorityQueue : 最小値検索 O(1), 追加・最小値削除　O(logN)
@@ -98,14 +98,13 @@ nimrr() { NIMR_COMPILE_FLAG="-d:release" nimr $@ ; }
 
 # データ構造の壁
 - ./lib/datastructure/bench.nim
-- この壁を超えて使おうとすると MLE/TLE の危険性が高まる.
+- (100ms/100MB) この壁を超えて使おうとすると MLE/TLE の危険性が高まる.
 ```
 ********* 1e8 の壁 **************
 1: データを舐める
 ******** 1e7 の壁 ***************
 1: seq / Deque
-2: RollingHash
-3: SA-IS / UnionFind / BIT
+2: RollingHash / SA-IS / UnionFind / BIT
 ********* 1e6 の壁 ***************
 1: SegmentTree / sort / HashSet / Table
 2: PriorityQueue / sort+LowerBound
