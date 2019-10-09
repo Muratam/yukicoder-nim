@@ -136,11 +136,14 @@ proc dump*[T](self:LightTreapRoot[T]) : string = self.root.dump(0)
 import times
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
 if true:
+  let n = 1e6.int
   stopwatch:
+    var x = 0
     var A = newLightTreapRoot[int]()
-    for i in 0..<1e6.int:
-      A.add randomBit(30)
-    echo A.len
+    for i in 0..<n: A.add randomBit(32)
+    for i in 0..<n:
+      if randomBit(32) in A : x += 1
+    echo x,":",A.len
 when isMainModule:
   import unittest
   import sequtils
