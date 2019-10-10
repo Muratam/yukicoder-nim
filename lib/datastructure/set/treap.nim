@@ -3,26 +3,28 @@
 # 0. key: min,max,find,add,erase,iter,kth
 #    value: RMQ(1点更新/区間モノイド)
 # 1. key には int以外のカスタムの比較関数も取れる
-# 2. 素な区間に対するモノイドができる.
-# 3. 区間の Split / Merge ができる.
+# 2. 区間の Split / Merge ができる.
+# 3. 素な区間に対するモノイドができる.
 # 4. カスタムの木の操作をしたい場合, 書きやすい.
+# 5. 木の構築時の平衡性しか問題ではないので,実装を赤黒木など別のものに差し替えやすい.
 
 import "../../mathlib/random"
 import sequtils
 # 余分な葉が無いので半群(モノイドに比べて単位元が不要)でよい
-type SemiGroup*[K] = proc(x,y:K):K
+type SemiGroup*[V] = proc(x,y:V):V
 type Treap*[K,V] = ref object
   key*: K
   priority*: int32
   left*,right*: Treap[K,V] # left: [-∞..key) / right: [key,∞)
+  count*:int32 # k番目の最小を取るために必要.
   when V isnot void:
-    count*:int32 # k番目の最小を取るために必要.
     value*,sum*: V
     apply*:SemiGroup[V] # 全員が持つのはちょっと無駄かも(あまり変わらないが)
 proc newTreap*[K](key:K):Treap[K,void] =
   result = Treap[K,void](
     key:key,
     priority:randomBit(30).int32,
+    count:1,
   )
 proc newTreap*[K,V](apply:SemiGroup[V],key:K,value:V):Treap[K,V] =
   result = Treap[K,V](
@@ -35,12 +37,14 @@ proc newTreap*[K,V](apply:SemiGroup[V],key:K,value:V):Treap[K,V] =
   )
 proc len[K,V](self:Treap[K,V]) : int32 =
   if self == nil: 0 else: self.count
-proc update[K,V](self:Treap[K,V])  =
+proc update[V:not void,K](self:Treap[K,V]) =
   self.count = self.left.len + 1 + self.right.len
   self.sum = self.value
   if self.left != nil: self.sum = self.apply(self.left.sum,self.sum)
   if self.right != nil: self.sum = self.apply(self.sum,self.right.sum)
-# マージ・スピリット
+proc update[K](self:Treap[K,void]) {.inline.} =
+  self.count = self.left.len + 1 + self.right.len
+# merge / split
 proc merge*[K,V](left,right:Treap[K,V]) : Treap[K,V] =
   # 必ず ∀[left] < ∀[right] の時に呼ばれるという仮定を置いている
   if left == nil: return right
@@ -48,11 +52,11 @@ proc merge*[K,V](left,right:Treap[K,V]) : Treap[K,V] =
   # 優先度が高い方を根にする
   if left.priority > right.priority:
     left.right = left.right.merge(right)
-    when V isnot void: left.update()
+    left.update()
     return left
   else:
     right.left = left.merge(right.left)
-    when V isnot void: right.update()
+    right.update()
     return right
 proc split*[K,V](self:Treap[K,V],key:K): tuple[l,r:Treap[K,V]] =
   # 再帰的に切るだけ. (子は必ず優先度が低いので)
@@ -60,12 +64,12 @@ proc split*[K,V](self:Treap[K,V],key:K): tuple[l,r:Treap[K,V]] =
   if key < self.key:
     let s = self.left.split(key)
     self.left = s.r
-    when V isnot void: self.update()
+    self.update()
     return (s.l,self)
   else:
     let s = self.right.split(key)
     self.right = s.l
-    when V isnot void: self.update()
+    self.update()
     return (self,s.r)
 # 挿入・削除
 proc add*[K,V](self:var Treap[K,V],item: Treap[K,V]) =
@@ -81,7 +85,7 @@ proc add*[K,V](self:var Treap[K,V],item: Treap[K,V]) =
     self.left.add(item)
   else:
     self.right.add(item)
-  when V isnot void: self.update()
+  self.update()
 proc excl*[K,V](self:var Treap[K,V],key:K) :bool {.discardable.} =
   # 自分にさようなら
   if self.key == key:
@@ -94,7 +98,15 @@ proc excl*[K,V](self:var Treap[K,V],key:K) :bool {.discardable.} =
     if self.right == nil : return false
     result = self.right.excl(key)
   when V isnot void : self.update()
-# キー関係(検索,最小値,最大値)
+# セグツリ
+proc `[]`*[V:not void,K](self:Treap[K,V],at:Slice[K]):V =
+  # 単位元は不要！
+  # assert at.a <= self.key and self.key <= at.b
+  if self.left != nil:
+
+
+# キー検索
+# 一致,最小値,最大値
 proc findByKey*[K,V](self:Treap[K,V],key:K) : Treap[K,V]=
   if self.key == key: return self
   if key < self.key:
@@ -109,7 +121,25 @@ proc findMinKey*[K,V](self:Treap[K,V]) : Treap[K,V] =
 proc findMaxKey*[K,V](self:Treap[K,V]) : Treap[K,V] =
   if self.right == nil: return self
   return self.right.findMax()
-# 列挙系
+# (小さい方から)k番目(0-index)のキー取得
+proc findKth*[V,K](self:Treap[K,V],k:int): Treap[K,V] =
+  if self == nil : return nil
+  # 最適化のためにvoid型では不可能になっている(自身が個数を持っていないので)
+  let llen = self.left.len
+  if llen == k : return self
+  if llen > k : return self.left.findKth(k)
+  return self.right.findKth(k - 1 - llen)
+# あるキーが何番目(0-index)のキーなのか
+proc isKth*[V,K](self:Treap[K,V],key:K): int =
+  # 同じキーに複数のnthの可能性がある場合はどれになるかは不明
+  if self == nil : return -1
+  if self.key == key : return self.left.len
+  if key < self.key:
+    if self.left == nil : return -1
+    return self.left.isKth(key)
+  if self.right == nil : return -1
+  return self.left.len + 1 + self.left.isKth(key)
+# 列挙
 # 自身を含むノードを全て列挙(昇順)
 iterator items*[K,V](self:Treap[K,V]) : Treap[K,V] =
   var treaps = @[(self,true)]
@@ -172,6 +202,7 @@ iterator under*[K,V](self:Treap[K,V],key:K,including:bool) : Treap[K,V] =
 
 # Treapの根を指すラッパーを作成することで、いろいろな操作がしやすい.
 # 特に,自身は必ず nil ではないので操作がやりやすい.
+# 木自身(*.root以降)はイテレータとなっているので、そちらを操作するとより多くの情報が得られる
 type TreapRoot*[K,V] = ref object
   root*:Treap[K,V]
   multiAdd*:bool
@@ -179,30 +210,24 @@ type TreapRoot*[K,V] = ref object
     apply*:SemiGroup[V]
   when V is void:
     count*:int
-proc newTreapRootWith[K](self:TreapRoot[K,void],treap:Treap[K,void]):TreapRoot[K,void] =
+# コンストラクタ
+proc newTreapRoot*[K](multiAdd:bool = true):TreapRoot[K,void] =
+  result = TreapRoot[K,void](multiAdd:multiAdd)
+proc newTreapRoot*[K,V](apply:SemiGroup[V]):TreapRoot[K,V] =
+  result = TreapRoot[K,V](apply:apply,multiAdd:false)
+# どこかで見つけた部分木(*.rootを中心にイテレータを回して取る)を根にする
+proc toRoot*[K](self:TreapRoot[K,void],treap:Treap[K,void]):TreapRoot[K,void] =
   result = TreapRoot[K,void](
     multiAdd:self.multiAdd,
     root:treap
   )
-proc newTreapRootWith[K,V](self:TreapRoot[K,V],treap:Treap[K,V]):TreapRoot[K,V] =
+proc toRoot*[K,V](self:TreapRoot[K,V],treap:Treap[K,V]):TreapRoot[K,V] =
   result = TreapRoot[K,V](
     apply:self.apply,
     multiAdd:self.multiAdd,
     root:treap
   )
-proc newTreapRoot*[K](multiAdd:bool = true):TreapRoot[K,void] =
-  result = TreapRoot[K,void](multiAdd:multiAdd)
-proc newTreapRoot*[K,V](apply:SemiGroup[V],multiAdd:bool = true):TreapRoot[K,V] =
-  result = TreapRoot[K,V](apply:apply,multiAdd:multiAdd)
-proc `add`*[K](self:var TreapRoot[K,void],key:K) =
-  # 無ければ追加.とすることで擬似的に multiadd / add を切り替えられる(multiじゃないときはコストだが)
-  if not self.multiAdd and key in self: return
-  self.root.add(newTreap(key))
-  self.count += 1
-proc `[]=`*[K,V](self:var TreapRoot[K,V],key:K,value:V) =
-  # 無ければ追加.とすることで擬似的に multiadd / add を切り替えられる(multiじゃないときはコストだが)
-  if not self.multiAdd and key in self: return
-  self.root.add(newTreap(self.apply,key,value))
+# 基本操作
 proc excl*[K,V](self:var TreapRoot[K,V],key:K) : bool {.discardable.}=
   if self.root == nil : return
   result = self.root.excl(key)
@@ -213,27 +238,36 @@ proc len*[K,V](self:TreapRoot[K,V]) : int =
   else:
     when V is void: return self.count
     else: return self.root.len
-proc findByKey*[K,V](self:TreapRoot[K,V],key:K):TreapRoot[K,V]=
-  if self.root == nil: return nil
-  return self.newTreapRootWith(self.root.findByKey(key))
 proc contains*[K,V](self:TreapRoot[K,V],key:K):bool=
   if self.root == nil : return false
   return self.root.findByKey(key) != nil
-proc findMinKey*[K,V](self:TreapRoot[K,V]):K=
+proc `add`*[K](self:var TreapRoot[K,void],key:K) =
+  # 無ければ追加.とすることで擬似的に multiadd / add を切り替えられる(multiじゃないときはコストだが)
+  if not self.multiAdd and key in self: return
+  self.root.add(newTreap(key))
+  self.count += 1
+proc `[]=`*[V:not void,K](self:var TreapRoot[K,V],key:K,value:V) =
+  # 無ければ追加.とすることで擬似的に multiadd / add を切り替えられる(multiじゃないときはコストだが)
+  if not self.multiAdd and key in self: return
+  self.root.add(newTreap(self.apply,key,value))
+proc `[]`*[V:not void,K](self:TreapRoot[K,V],key:K): V =
+  assert self.root != nil
+  let found = self.root.findByKey(key)
+  assert found != nil
+  return found.value
+# 検索
+# type Result[K,V] =
+#   when V is void: tuple[k:K,v:V]
+#   else: K
+proc findMinKey*[K](self:TreapRoot[K,void]):K=
   assert self.root != nil
   return self.root.findMinKey().key
-proc findMaxKey*[K,V](self:TreapRoot[K,V]):K=
+proc findMaxKey*[K](self:TreapRoot[K,void]):K=
   assert self.root != nil
   return self.root.findMaxKey().key
-iterator items*[V:not void,K](self:TreapRoot[K,V]) : tuple[k:K,v:V] =
-  if self.root != nil :
-    for v in self.root: yield (v.key,v.value)
 iterator items*[K](self:TreapRoot[K,void]) : K =
   if self.root != nil :
     for v in self.root: yield v.key
-iterator itemsDesc*[V:not void,K](self:TreapRoot[K,V]) : tuple[k:K,v:V] =
-  if self.root != nil :
-    for v in self.root.itemsDesc: yield (v.key,v.value)
 iterator itemsDesc*[K](self:TreapRoot[K,void]) : K =
   if self.root != nil :
     for v in self.root.itemsDesc: yield v.key
@@ -249,7 +283,15 @@ iterator `>=`*[K](self:TreapRoot[K,void],key:K) : K =
 iterator `>`*[K](self:TreapRoot[K,void],key:K) : K =
   if self.root != nil :
     for v in self.root.over(key,false): yield v.key
-
+iterator items*[V:not void,K](self:TreapRoot[K,V]) : tuple[k:K,v:V] =
+  if self.root != nil :
+    for v in self.root: yield (v.key,v.value)
+iterator itemsDesc*[V:not void,K](self:TreapRoot[K,V]) : tuple[k:K,v:V] =
+  if self.root != nil :
+    for v in self.root.itemsDesc: yield (v.key,v.value)
+# proc findKth*[K,V](self:Treap[K,V],k:int): K =
+#   if self.root == nil: return
+#   return self.root.findKth(k).key
 
 import strutils
 proc dump*[K,V](self:Treap[K,V],indent:int) : string =

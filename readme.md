@@ -20,7 +20,7 @@
       - ＋セグツリ (一点更新, 区間取得) O(logN)
       - ＋マージ・スピリット・K番目
     - UnionFind : 森のマージ・根の取得 O(1)
-    - bitset : ビット演算の集合.
+    - bitset : ビット演算の集合. + bitDP(全状態,補集合,superset).
     - PriorityQueue : 最小値検索 O(1), 追加・最小値削除　O(logN)
     - PriorityQueue亜種
       - SkewHeap : ↑ + マージ O(logN)
@@ -37,7 +37,7 @@
   - random :: 高速な乱数(xorShift), shuffleAt
   - geometry :: 二次元(複素数)幾何
 - `lib/graph` :: グラフ理論
-  - Tree :: 入力を木に,オイラーツアー,最小共通祖先(LCA:探索O(log(n)))
+  - Tree :: 入力を木に,(全方位)木DP,オイラーツアー,最小共通祖先(LCA:O(logN))
   - DAG :: トポロジカルソート,DAG判定, 強連結成分分解(SCC:O(V+E))
   - MST :: 最小全域木 O(ElogV)
   - ShortestPath :: 最短経路 [ O(ElogE), 負有り:O(EV), 全:O(V^3) ]
@@ -49,7 +49,7 @@
   - LIS : 最長増加部分列
   - slidemin : スライド最小値
   - sequence : arg{min,max} / deduplicate / quicksortAt / 10進数と配列変換
-  - iteration : 順列 / ペア順列 / 階段
+  - iteration : 全順列 / 全ペア順列 / 階段走査
 
 # MEMO
 - Nim 0.13: https://qiita.com/sessions/items/561f8a3aa6eba6d4d7a9

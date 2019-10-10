@@ -1,7 +1,37 @@
+# なにもわからないよー
+# https://lumakernel.github.io/ecasdqina/graph/DP-all-subtree
+# https://ei1333.hateblo.jp/entry/2017/04/10/224413
+# 0-indexed. 森でも可能. 事前に両代入して無向グラフにしておくこと.
+# るま式全方位木DP. O(KNlogN). (K:DPのステート数)
+proc allSubTreeDP[T](
+    E:seq[seq[int]],
+    apply:proc(x,y:T):T,
+    init:proc(i:int):T) : seq[Table[int,T]] =
+  var dp = newSeqWith(E.len,initTable[int,T]())
+  var initial = true
+  proc dfs(src,pre:int) : T {.discardable.} =
+    if pre in dp[src]: return dp[src][pre]
+    result = init(src)
+    if initial or pre == -1:
+      for dst in E[src]:
+        if dst != pre:
+          result = apply(result,dfs(dst,src))
+    else:
+      dfs(src,-1)
+      dfs(pre,src)
+    # let deg = E[src].len + (if pre != -1 : -1 else: 0)
+    dp[src][pre] = result
+  dfs(0,-1)
+  initial = false
+  for i in 0..<E.len: dfs(i,-1)
+  return dp
+
+
+
+# セグツリ
 # 加算なら
 proc findMinKey*[T](self:SegmentTree[T],cond:proc(x:T):bool) : int =
   if not cond(self.data[0]): return -1
-
 # 単純な二部探索を外側に噛ますと O((logN)^2) になるので、セグツリで検索する
 # この木の中に解がある.isRightならなるべく右を,isLeftならなるべく左を探す.
 proc findSubTree*[T](self:SegmentTree[T],cond:proc(x:T):bool,i:int,v:T,isRight:bool) : int =

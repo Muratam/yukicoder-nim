@@ -31,8 +31,9 @@ proc keys*(a:BitSet): seq[int] =
 proc fromKeys*(keys:seq[int]): BitSet =
   for k in keys: result[k] = true
 proc toBinStr*(a:BitSet,maxKey:int=64):string =
-  result = a.toBoolSeq().reversed().mapIt($it.int).join("")
-  result = result[(64-maxKey)..^1]
+  var S = newSeq[string](64)
+  for i in 0..<64: S[63 - i] = $(((a and (1 shl i)) != 0).int)
+  return S.join("")[(64-maxKey)..^1]
 proc fromBinStr*(S:string):BitSet =
   let sLen = 64.min(S.len())
   for i in 0..<sLen:
@@ -86,10 +87,34 @@ proc plusAllKeys*(a:BitSet,x:range[-64..64]) : BitSet =
 proc plusAllKeysMod64*(a:BitSet,x:range[-64..64]) : BitSet =
   if x >= 0 : return cast[int](cast[uint64](a).rotateLeftBits(x))
   return cast[int](cast[uint64](a).rotateRightBits(-x))
-# bitDP用
-proc powerOf2*(i:range[0..63]):int = 1 shl i
-iterator allState*(maxSize:int): BitSet =
-  for a in 0..<(1 shl maxSize): yield a
+
+# 全状態を舐める: O(2^n) 例: n=5 で 0b0000 ~ 0b1111.
+iterator allState*(n:int): int =
+  for i in 0..<(1 shl n): yield i
+# 全状態とその部分集合を舐める: O(3^n)
+# 例: 0101 -> [0101,0100,0001,0000]
+iterator allSubState*(n:int): tuple[i,j:int] =
+  yield (0,0)
+  for i in 1..<(1 shl n):
+    var j = i
+    while j > 0 :
+      yield (i,j)
+      j = (j - 1) and i
+    yield (i,j)
+# 全状態とそのsupersetを全て舐める: O(3^n)
+# 例: 100 -> [100,101,110,111]
+iterator allSuperState*(n:int): tuple[i,j:int] =
+  let n2 = 1 shl n
+  yield (n2 - 1,n2 - 1)
+  for i in (n2 - 2).countdown(0):
+    var j = i
+    while j < n2 :
+      yield (i,j)
+      j = (j + 1) or i
+
+# 一応ね
+proc powerOf2*(x:range[0..63]):int = 1 shl x
+proc fastLog2*(x:int):int = 63 - cast[culonglong](x).countLeadingZeroBits()
 
 # {.inline,noSideEffect.} をつけてもそんなに変わらない.見にくくなるだけ損
 when isMainModule:
@@ -167,5 +192,6 @@ when isMainModule:
     check: @[0,1,62,63].fromKeys().at(1..<63).keys() == @[1,62]
     check: 48.onlyMinKeySet() == 16
     check: 1.powerOf2() == 2
-    for s in 3.allState():
-      check: s.keys() == @[@[],@[0],@[1],@[0, 1],@[2],@[0, 2],@[1, 2],@[0, 1, 2]][s]
+    block:
+      for s in 3.allState():
+        check: s.keys() == @[@[],@[0],@[1],@[0, 1],@[2],@[0, 2],@[1, 2],@[0, 1, 2]][s]

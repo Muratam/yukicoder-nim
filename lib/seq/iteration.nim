@@ -22,6 +22,8 @@ iterator chair(w,h:int): tuple[x,y:int] =
     for x in 0.max(n-h+1)..n.min(w-1):
       yield (x,n-x)
 
+# bitDPの iteration は bitset.nim にあるよ
+
 
 when isMainModule:
   import unittest
