@@ -1,4 +1,5 @@
 {.checks:off.}
+import nimprof
 import sequtils,algorithm,math,tables,sets,strutils,times
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
 template loop*(n:int,body) = (for _ in 0..<n: body)
@@ -169,7 +170,7 @@ iterator itemsDesc*[T](self:Treap[T]) : Treap[T] =
   while chunks.len > 0:
     yield chunks.pop()
 # キー以上のものを全て列挙(昇順)
-iterator over*[T](self:Treap[T],key:T,including:bool) : Treap[T] =
+iterator greater*[T](self:Treap[T],key:T,including:bool) : Treap[T] =
   var treaps = @[self]
   var chunks = newSeq[Treap[T]]() # 親
   while treaps.len > 0:
@@ -186,11 +187,11 @@ iterator over*[T](self:Treap[T],key:T,including:bool) : Treap[T] =
   while chunks.len > 0:
     yield chunks.pop()
 iterator `>=`*[T](self:Treap[T],key:T) : Treap[T] =
-  for v in self.over(key,true): yield v
+  for v in self.greater(key,true): yield v
 iterator `>`*[T](self:Treap[T],key:T) : Treap[T] =
-  for v in self.over(key,false): yield v
+  for v in self.greater(key,false): yield v
 # キー以下のものを全て列挙(降順)
-iterator under*[T](self:Treap[T],key:T,including:bool) : Treap[T] =
+iterator less*[T](self:Treap[T],key:T,including:bool) : Treap[T] =
   var treaps = @[self]
   var chunks = newSeq[Treap[T]]() # 親
   while treaps.len > 0:
@@ -207,9 +208,24 @@ iterator under*[T](self:Treap[T],key:T,including:bool) : Treap[T] =
   while chunks.len > 0:
     yield chunks.pop()
 iterator `<=`*[T](self:Treap[T],key:T) : Treap[T] =
-  for v in self.under(key,true): yield v
+  for v in self.less(key,true): yield v
 iterator `<`*[T](self:Treap[T],key:T) : Treap[T] =
-  for v in self.under(key,false): yield v
+  for v in self.less(key,false): yield v
+# 一つだけ欲しい場合
+proc findGreater*[T](self:Treap[T],key:T,including:bool) : Treap[T] =
+  if self == nil: return nil
+  if including and self.key == key: return self
+  let r = self.left.findGreater(key,including)
+  if r != nil: return r
+  if self.key > key: return self
+  return self.right.findGreater(key,including)
+proc findLess*[T](self:Treap[T],key:T,including:bool) : Treap[T] =
+  if self == nil: return nil
+  if including and self.key == key: return self
+  let r = self.right.findLess(key,including)
+  if r != nil: return r
+  if self.key < key: return self
+  return self.left.findLess(key,including)
 
 # 木自身(*.root以降)はイテレータとなっているので、そちらを操作するとより多くの情報が得られる
 # こちらは情報をfilterすることで使いやすくしたもの
@@ -264,20 +280,20 @@ iterator itemsDesc*[T](self:TreapRoot[T]) : T =
 # キー以上のものを全て列挙(昇順)
 iterator `>=`*[T](self:TreapRoot[T],key:T) : T =
   if self.root != nil :
-    for v in self.root.over(key,true):
+    for v in self.root.greater(key,true):
       for _ in 0..<v.sameCount: yield v.key
 iterator `>`*[T](self:TreapRoot[T],key:T) : T =
   if self.root != nil :
-    for v in self.root.over(key,false):
+    for v in self.root.greater(key,false):
       for _ in 0..<v.sameCount: yield v.key
 # キー以下のものを全て列挙(降順)
 iterator `<=`*[T](self:TreapRoot[T],key:T) : T =
   if self.root != nil :
-    for v in self.root.under(key,true):
+    for v in self.root.less(key,true):
       for _ in 0..<v.sameCount: yield v.key
 iterator `<`*[T](self:TreapRoot[T],key:T) : T =
   if self.root != nil :
-    for v in self.root.under(key,false):
+    for v in self.root.less(key,false):
       for _ in 0..<v.sameCount: yield v.key
 proc dump*[T](self:TreapRoot[T]) : string = self.root.dump(0)
 # 完全な平衡二分探索木を構築する.定数倍速い.
@@ -315,26 +331,14 @@ proc resetWith*[T](self:var TreapRoot[T],arr:seq[T]) =
   self.root.impl(0,mid,offset)
   self.count = S.len
 
-block:
-  type A = ref object
-    a : int
-  var x = A(a:10)
-  echo x.a
-  var y = x
-  y.a = 100
-  y = nil
-  echo x.a
-  quit 0
-
 stopwatch:
   var S = newTreapRoot[int](true)
-  # let n = 18
-  let n = scan()
+  let n = 18
+  # let n = scan()
   let m = 1 shl n
-  # let B = newSeqWith(m,randomBit(30))
-  let B = newSeqWith(m,scan())
+  let B = newSeqWith(m,randomBit(30))
+  # let B = newSeqWith(m,scan())
   S.resetWith(B)
-
   # for b in B: S.add b
   var parent = newSeq[int]()
   block:
@@ -345,13 +349,10 @@ stopwatch:
     var child = newSeq[int]()
     for p in parent:
       # p以下のものを一つだけ削除する
-      var ok = false
-      for found in S < p:
-        child.add found
-        S.erase found
-        ok = true
-        break
-      if not ok:
+      let last = S.root.findLess(p,false)
+      if last == nil:
         quit "No",0
+      child.add last.key
+      S.erase last.key
     parent.add child
   echo "Yes"

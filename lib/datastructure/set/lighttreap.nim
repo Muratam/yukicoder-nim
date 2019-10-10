@@ -205,6 +205,21 @@ iterator `<=`*[T](self:Treap[T],key:T) : Treap[T] =
   for v in self.under(key,true): yield v
 iterator `<`*[T](self:Treap[T],key:T) : Treap[T] =
   for v in self.under(key,false): yield v
+# 一つだけ欲しい場合
+proc findGreater*[T](self:Treap[T],key:T,including:bool) : Treap[T] =
+  if self == nil: return nil
+  if including and self.key == key: return self
+  let r = self.left.findGreater(key,including)
+  if r != nil: return r
+  if self.key > key: return self
+  return self.right.findGreater(key,including)
+proc findLess*[T](self:Treap[T],key:T,including:bool) : Treap[T] =
+  if self == nil: return nil
+  if including and self.key == key: return self
+  let r = self.right.findLess(key,including)
+  if r != nil: return r
+  if self.key < key: return self
+  return self.left.findLess(key,including)
 
 # 木自身(*.root以降)はイテレータとなっているので、そちらを操作するとより多くの情報が得られる
 # こちらは情報をfilterすることで使いやすくしたもの
