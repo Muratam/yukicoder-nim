@@ -16,14 +16,15 @@
       - Mapped*: T(生値)->R(集約値=モノイド)
   - `set/` :: 集合. 動的に要素を追加・削除可能
     - Treap :: std::{set,map} のNim用の代替.
-      - 追加・削除・検索・最{小,大}値・{以上,以下}列挙 O(logN)
-      - ＋セグツリ (一点更新, 区間取得) O(logN)
+      - Light :: 追加・削除・検索・最{小,大}値・{以上,以下}列挙 O(logN)
+      - ＋セグツリ (一点更新, 区間取得)
       - ＋マージ・スピリット・K番目
     - UnionFind : 森のマージ・根の取得 O(1)
     - bitset : ビット演算の集合. + bitDP(全状態,補集合,superset).
     - PriorityQueue : 最小値検索 O(1), 追加・最小値削除　O(logN)
     - PriorityQueue亜種
       - SkewHeap : ↑ + マージ O(logN)
+      - RadixHeap : 高速版 (制約: popした値は以降も最小値)
       - ConvoQueue : 最大値+最小値 O(1), 中央値 O(1), k番目(BIT) O(logD)
   - `string/` :: 構築 O(S). 文字列用.
     - ロリハ(通常/軽量) : 部分文字列同一判定 O(1)
@@ -37,7 +38,7 @@
   - random :: 高速な乱数(xorShift), shuffleAt
   - geometry :: 二次元(複素数)幾何
 - `lib/graph` :: グラフ理論
-  - Tree :: 入力を木に,(全方位)木DP,オイラーツアー,最小共通祖先(LCA:O(logN))
+  - Tree :: 根付き木に変換,(全方位)木DP,オイラーツアー,最小共通祖先(LCA:O(logN))
   - DAG :: トポロジカルソート,DAG判定, 強連結成分分解(SCC:O(V+E))
   - MST :: 最小全域木 O(ElogV)
   - ShortestPath :: 最短経路 [ O(ElogE), 負有り:O(EV), 全:O(V^3) ]
@@ -63,7 +64,7 @@
 # {.checks:off.}
 import sequtils,algorithm,math,tables,sets,strutils,times
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
-template time(n:int,body) = (for _ in 0..<n: body)
+template loop(n:int,body) = (for _ in 0..<n: body)
 template `max=`(x,y) = x = max(x,y)
 template `min=`(x,y) = x = min(x,y)
 proc getchar():char {. importc:"getchar_unlocked",header: "<stdio.h>" ,discardable.}
@@ -75,7 +76,7 @@ let A = newSeqWith(n,scan())
 ```
 - 利便性のため、以下の関数を定義しています
   - `stopwatch: ...` で時間を計測できる.結果は標準エラー出力に流れるのでそのまま提出してもAC可能.スコープも変わらないので元のコードから単純にインデントを深くするだけでよい.
-  - `n.time: ...` で n回ループを回せる.forループに比べてループ変数が増えないため,i番目であるという情報が不要ということが把握しやすい.
+  - `n.loop: ...` で n回ループを回せる.forループに比べてループ変数が増えないため,i番目であるという情報が不要ということが把握しやすい.
   - `.max=`,`.min=` : `dp[i][k] = max(dp[i][k],dp[i][j])` が,`dp[i][k] .max= dp[i][j]` として書ける. 必須.
   - `getchar` : 一文字だけ入力を進めたいとき. グリッド上の探索系の問題とか
   - `scanf`と`scan`: intを一つ入力から取る. 例えば配列の入力を受け取る際に普通に書くと `stdin.readLine.split().map(parseInt)` か `newSeqWith(n,stdin.readLine.parseInt)` のように書かなければいけないのが, どちらも `newSeqWith(n,scan())` と書けて便利.

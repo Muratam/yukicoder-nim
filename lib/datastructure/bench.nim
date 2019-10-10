@@ -31,8 +31,8 @@ template bench(comment:string, body) =
  320ms: PriorityQueue / sort+LowerBound /
  640ms: 座標圧縮SegmentTree
 ********** 1e5の壁 *************
-1280ms:
 2560ms: Skew Heap (マージの代償 : PQ x8倍)
+      : Patricia Tree / Treap
 
 まとめ: 牛刀割鶏！
 - seq そのまま使えると爆速. logN は実質定数.
@@ -90,11 +90,11 @@ bench "UnionFind":
   for i in 0..<n:
     if S.same(randomBit(bitSize),randomBit(bitSize)):
       dummy += 1
-bench "seq[int] + sort": # 140ms ~ 280ms
-  var S = newSeq[int]()
-  for _ in 0..n: S.add randomBit(32)
+bench "seq[int] + sort": # 140ms
+  var S = newSeq[int](n)
+  for i in 0..<n: S[i] = randomBit(32)
   S.sort(cmp)
-  for i in 0..n: dummy += S[i]
+  for i in 0..<n: dummy += S[i]
 import "./segmenttree/bit"
 bench "Binary Indexed Tree": # 60ms
   var A = newAddBinaryIndexedTree[int](n)
@@ -155,8 +155,17 @@ bench "intset": # 600ms クソ雑魚. ランキングに載せるのがはばか
   for _ in 0..n: S.incl randomBit(32)
   for i in 0..n:
     if randomBit(32) in S: dummy += 1
-# import "./set/treap"
-# bench "treap":
-#   var A = newTreap[int]()
-#   for i in 0..<1e6.int: A.add randomBit(32)
+import "./set/patriciatree"
+bench "Patricia Tree":
+  var A = newPatriciaSegmentTree(proc(x,y:bool):bool=x,false)
+  for i in 0..n: A[randomBit(32)] = true
+  for i in 0..n:
+    if randomBit(32).int in A: dummy += 1
+import "./set/lighttreap"
+bench "Light Treap":
+  var A = newTreapRoot[int]()
+  for i in 0..n: A.add randomBit(32)
+  for i in 0..n:
+    if randomBit(32) in A: dummy += 1
+#
 echo dummy

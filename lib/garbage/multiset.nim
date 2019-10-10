@@ -27,7 +27,7 @@ import sequtils
 proc initMultiSet*[T](): CMultiSet[T] =
   new(result)
   result.impl = initMultiSetObj[T]()
-proc iniStdtMultiSet*[T](): CMultiSet[T] = initMultiSet[T]()
+proc initStdMultiSet*[T](): CMultiSet[T] = initMultiSet[T]()
 proc add*[T](self:CMultiSet[T],x:T) = self.impl.insert(x)
 proc erase*[T](self:CMultiSet[T],x:T) = self.impl.erase(x)
 proc len*[T](self:CMultiSet[T]):int = self.impl.size()

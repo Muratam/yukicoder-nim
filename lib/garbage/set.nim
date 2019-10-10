@@ -63,7 +63,7 @@ iterator getRange*[T](self: var CSet[T],slice:Slice[T]) : T =
     yield x
 proc toSet*[T](arr:seq[T]): CSet[T] = (result = initSet[T]();for a in arr: result.add(a))
 proc fromSet*[T](self: var CSet[T]):seq[T] = self.mapIt(it)
-proc `$`*[T](self: var CSet[T]): string = $self.mapIt(it)
+proc `$`*[T](self: CSet[T]): string = $self.mapIt(it)
 
 when isMainModule:
   import unittest,sequtils

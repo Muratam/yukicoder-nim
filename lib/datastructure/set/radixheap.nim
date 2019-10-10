@@ -1,8 +1,13 @@
+{.checks:off.}
 import sequtils
-# 定数倍が軽いPriority Queue. 2倍くらい速い
+# 定数倍が軽いPriority Queue. 2倍くらい速い.
 # 制約 : 最後にpopした値よりも小さな値を入れられない
 # O(logD)
 # ダイクストラとかが高速化できる
+
+# ちょうど2倍速くらいの関係になっている
+# seq + sort < radixHeap < PriorityQueue
+
 type KeyValue[T] = tuple[key:int,value:T]
 type RadixHeap[T] = ref object
   size,last: int
@@ -107,10 +112,15 @@ when isMainModule:
       var R = newAllRangeRadixHeap[string](false)
       for x in @["aiueo","kaki","sasas","aa"]:
         R.push(x.len,x)
-      while R.len > 0:
-        echo R.pop()
-  if true:
-    template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
+      for i in 0..<4:
+        check:R.pop() == @[
+          (key: 5, value: "sasas"),
+          (key: 5, value: "aiueo"),
+          (key: 4, value: "kaki"),
+          (key: 2, value: "aa"),
+          ][i]
+  template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
+  if false:
     stopwatch:
       let n = 1e6.int
       var S = newAllRangeRadixHeap[void](true)
@@ -118,3 +128,10 @@ when isMainModule:
       S.pop()
       for _ in 0..n-10: S.pop()
       echo S.pop()
+  if true:
+    stopwatch:
+      let n = 1e6.int
+      var S = newSeq[int](n)
+      var R = newAllRangeRadixHeap[void](true)
+      for _ in 0..<n: R.push randomBit(32)
+      for i in 0..<n: S[i] = R.pop()

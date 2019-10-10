@@ -1,6 +1,7 @@
 # {.checks:off.}
 import sequtils,algorithm,math,tables,sets,strutils,times
-template time*(n:int,body) = (for _ in 0..<n: body)
+template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
+template loop*(n:int,body) = (for _ in 0..<n: body)
 template `max=`*(x,y) = x = max(x,y)
 template `min=`*(x,y) = x = min(x,y)
 proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" ,discardable.}

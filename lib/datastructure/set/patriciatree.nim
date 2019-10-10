@@ -76,7 +76,7 @@ proc dump*[T](self:PatriciaSegmentNode[T],indent:int = 0) : string =
   if self.to1 != nil: result.add self.to1.dump(indent + 1)
 proc dump*[T](self:PatriciaSegmentTree[T]) : string = self.root.dump()
 # キー が 存在するか
-proc `in`*[T](n:int,self:PatriciaSegmentTree[T]) : bool =
+proc contains*[T](self:PatriciaSegmentTree[T],n:int) : bool =
   var now = self.root
   while not now.isLeaf:
     if now.isTo1(n):

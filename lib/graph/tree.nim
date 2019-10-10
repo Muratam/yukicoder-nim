@@ -16,6 +16,7 @@ proc eulerTour(E:seq[seq[int]]):tuple[toured:seq[Slice[int]],rev:seq[int]] =
   dfs(0)
   return (toured,rev)
 
+# 根付き木にする
 # (親も子も同一視して)双方向になっている木を,(0 番を)根として子のノードだけ持つように変更する
 proc asTree(E:seq[seq[int]],root:int = 0):seq[seq[int]] =
   var answer = newSeq[seq[int]](E.len)
