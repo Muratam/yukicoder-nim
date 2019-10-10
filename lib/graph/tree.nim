@@ -27,6 +27,7 @@ proc asTree(E:seq[seq[int]],root:int = 0):seq[seq[int]] =
       impl(now,dst)
   impl(-1,root)
   return answer
+
 # 全方位木DP. 0-indexed. 可換モノイド.
 # Eは事前に両方向に代入して無向グラフにしておくこと.
 import sets,tables
@@ -120,8 +121,8 @@ when isMainModule:
     check: lca.find(0,3) == 0
     check: lca.find(1,2) == 0
   test "alltreedp":
-    let E = @[@[1], @[0, 2, 3], @[1], @[1]]
     # 例: 全頂点から最も遠い位置(同じ場合はindexが小さい方)までの距離
+    let E = @[@[1], @[0, 2, 3], @[1], @[1]]
     type WithIndex[T] = tuple[i:int,val:T]
     let dp = E.allTreeDP(
       proc(x,y:WithIndex[int]):WithIndex[int] =

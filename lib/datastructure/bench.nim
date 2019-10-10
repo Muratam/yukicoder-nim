@@ -33,14 +33,11 @@ template bench(comment:string, body) =
 ********** 1e5の壁 *************
 1280ms:
 2560ms: Skew Heap (マージの代償 : PQ x8倍)
-5120ms: PatriciaSegmentTree (生の20~30倍)
 
-まとめ:
-seq そのまま使えると爆速. logN は実質定数で無視できる.
-ただし,動的木系から差を無視できないほど遅くなる.
-=> 大人しく最適なデータ構造を使おう！牛刀割鶏！
-また、 1e7 の 64bit で 100MBくらい.
-=> この壁がMLEの壁にもなっている
+まとめ: 牛刀割鶏！
+- seq そのまま使えると爆速. logN は実質定数.
+- 動的木は遅い.
+- 1e7 の 64bit で 100MBくらい => 壁 ≒ MLEの壁
 ]#
 
 
@@ -158,22 +155,8 @@ bench "intset": # 600ms クソ雑魚. ランキングに載せるのがはばか
   for _ in 0..n: S.incl randomBit(32)
   for i in 0..n:
     if randomBit(32) in S: dummy += 1
-# コピーが走ってつらい
-# import "./set/set"
-# bench "std::set": # 1000ms
-#   var S = initStdSet[int]()
-#   for i in 0..n:
-#     S.add R[i]
-#   for i in 0..n:
-#     if i in S : dummy += 1
-#     # if S.find(i) != S.`end`(): dummy += 1
 # import "./set/treap"
 # bench "treap":
 #   var A = newTreap[int]()
 #   for i in 0..<1e6.int: A.add randomBit(32)
-import "./segmenttree/patriciasegmenttree"
-bench "Patricia Segment Tree":
-  var A = newPatriciaSegmentTree(proc(x,y:int):int = x+y,0)
-  for i in 0..n: A[R[i]] = i
-  for i in 0..n: dummy += A[R[i]]
 echo dummy
