@@ -1,5 +1,5 @@
+# import nimprof
 {.checks:off.}
-import nimprof
 import sequtils,algorithm,math,tables,sets,strutils,times
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
 template loop*(n:int,body) = (for _ in 0..<n: body)
@@ -11,6 +11,8 @@ proc scan(): int =
     let k = getchar_unlocked()
     if k < '0' or k > '9': return
     result = 10 * result + k.ord - '0'.ord
+
+
 
 import sequtils
 import times
@@ -296,15 +298,67 @@ iterator `<`*[T](self:TreapRoot[T],key:T) : T =
     for v in self.root.less(key,false):
       for _ in 0..<v.sameCount: yield v.key
 proc dump*[T](self:TreapRoot[T]) : string = self.root.dump(0)
-# 完全な平衡二分探索木を構築する.定数倍速い.
+# 完全な平衡二分探索木を構築する.定数倍速いしこれからも速くなる.
 import math
 proc resetWith*[T](self:var TreapRoot[T],arr:seq[T]) =
+  proc countTrailingZeroBits(x: culonglong): cint {.importc: "__builtin_ctzll", cdecl.}
+  proc quickSortAt[T](arr:var seq[T], at:Slice[int],isDescending:bool = false) =
+    if arr.len <= 1 : return
+    var l = at.a
+    var r = at.b
+    let d = r - l + 1
+    let ctlz = cast[culonglong](d).countTrailingZeroBits()
+    if d > 16: #
+      var s = 1 shl ctlz
+      let l2 = 0.max(l + (r - s))
+      while s >= d: s = s shr 1
+      for i in s.countdown(0):
+        swap arr[l+i], arr[l+randomBit(ctlz)]
+      for i in s.countdown(0):
+        swap arr[l2+i], arr[l2+randomBit(ctlz)]
+    var ls = newSeq[int](ctlz+50)
+    var rs = newSeq[int](ctlz+50)
+    ls[0] = 0
+    rs[0] = arr.len - 1
+    var p = 1
+    while p > 0:
+      p -= 1
+      var pl = ls[p]
+      var pr = rs[p]
+      var x = arr[(pl+pr) shr 1] # pivot
+      l = pl
+      r = pr
+      var once = true
+      while pl <= pr or once:
+        while arr[pl] < x : pl += 1 # cmp
+        while x < arr[pr] : pr -= 1 # cmp
+        if pl <= pr:
+          if pl < pr:
+            swap arr[pl],arr[pr]
+          pl += 1
+          pr -= 1
+        once = false
+      if l < pr:
+        ls[p] = l
+        rs[p] = pr
+        p += 1
+      if pl < r:
+        ls[p] = pl
+        rs[p] = r
+        p += 1
+    if isDescending:
+      for i in 0..<arr.len shr 1:
+        swap arr[i] , arr[arr.len-1-i]
+  proc quickSort[T](arr:var seq[T],isDescending:bool = false) =
+    arr.quickSortAt(0..<arr.len,isDescending)
   self.root = nil
   self.count = 0
   if arr.len <= 0 : return
   var S = newSeq[T]()
   var counts = newSeq[int32]()
-  for a in arr.sorted(cmp[T]):
+  var arr2 = arr
+  arr2.quickSort()
+  for a in arr2:
     if S.len > 0 and S[^1] == a :
       if self.allowMulti:
         counts[^1] += 1
@@ -312,14 +366,15 @@ proc resetWith*[T](self:var TreapRoot[T],arr:seq[T]) =
     S.add a
     counts.add 1
   var R = newSeq[int32]((10+S.len).nextPowerOfTwo())
-  for i in 0..<R.len:
-    R[i] = randomBit(30).int32
-  R.sort(cmp)
-  var cnt = 0
+  var interval = (1 shl 30) div R.len
+  for i in 0..<R.len: R[i] = (i * interval).int32
+  var treaps = newSeq[Treap[T]](S.len)
+  for i in 0..<S.len:
+    treaps[i] = Treap[T](key:S[i],sameCount:counts[i])
   proc impl(now:var Treap[T],ri,si,offset:int) =
     if ri < R.len and si < S.len and si >= 0:
-      now = Treap[T](key:S[si],priority:R[ri],sameCount:counts[si])
-      cnt += 1
+      now = treaps[si]
+      now.priority = R[ri]
     if offset != 0 :
       if now == nil:
         now.impl(ri*2+1,si-offset,offset shr 1)
@@ -333,13 +388,15 @@ proc resetWith*[T](self:var TreapRoot[T],arr:seq[T]) =
 
 stopwatch:
   var S = newTreapRoot[int](true)
-  let n = 18
-  # let n = scan()
+  # let n = 18
+  let n = scan()
   let m = 1 shl n
-  let B = newSeqWith(m,randomBit(30))
-  # let B = newSeqWith(m,scan())
-  S.resetWith(B)
-  # for b in B: S.add b
+  # var B = newSeq[int](m)
+  # for i in 0..<m:B[i] = randomBit(30)
+  # for i in 0..<m:B[i] = scan()
+  # S.resetWith(B)
+  # for b in B:S.add b
+  m.loop: S.add scan()
   var parent = newSeq[int]()
   block:
     let last = S.max()
@@ -348,8 +405,8 @@ stopwatch:
   n.loop:
     var child = newSeq[int]()
     for p in parent:
-      # p以下のものを一つだけ削除する
-      let last = S.root.findLess(p,false)
+      # p未満のものを一つだけ削除する
+      let last = S.root.findLess(p-1,true)
       if last == nil:
         quit "No",0
       child.add last.key

@@ -4,9 +4,7 @@
 # 1. key には int以外のカスタムの比較関数も取れる
 # verified : https://atcoder.jp/contests/abc140/tasks/abc140_f
 # std::map の 3 ~ 5倍遅い...
-
 import sequtils
-# 余分な葉が無いので半群(モノイドに比べて単位元が不要)でよい
 import times
 type Treap*[T] = ref object
   key*: T
@@ -164,7 +162,7 @@ iterator itemsDesc*[T](self:Treap[T]) : Treap[T] =
   while chunks.len > 0:
     yield chunks.pop()
 # キー以上のものを全て列挙(昇順)
-iterator over*[T](self:Treap[T],key:T,including:bool) : Treap[T] =
+iterator greater*[T](self:Treap[T],key:T,including:bool) : Treap[T] =
   var treaps = @[self]
   var chunks = newSeq[Treap[T]]() # 親
   while treaps.len > 0:
@@ -181,11 +179,11 @@ iterator over*[T](self:Treap[T],key:T,including:bool) : Treap[T] =
   while chunks.len > 0:
     yield chunks.pop()
 iterator `>=`*[T](self:Treap[T],key:T) : Treap[T] =
-  for v in self.over(key,true): yield v
+  for v in self.greater(key,true): yield v
 iterator `>`*[T](self:Treap[T],key:T) : Treap[T] =
-  for v in self.over(key,false): yield v
+  for v in self.greater(key,false): yield v
 # キー以下のものを全て列挙(降順)
-iterator under*[T](self:Treap[T],key:T,including:bool) : Treap[T] =
+iterator less*[T](self:Treap[T],key:T,including:bool) : Treap[T] =
   var treaps = @[self]
   var chunks = newSeq[Treap[T]]() # 親
   while treaps.len > 0:
@@ -202,9 +200,9 @@ iterator under*[T](self:Treap[T],key:T,including:bool) : Treap[T] =
   while chunks.len > 0:
     yield chunks.pop()
 iterator `<=`*[T](self:Treap[T],key:T) : Treap[T] =
-  for v in self.under(key,true): yield v
+  for v in self.less(key,true): yield v
 iterator `<`*[T](self:Treap[T],key:T) : Treap[T] =
-  for v in self.under(key,false): yield v
+  for v in self.less(key,false): yield v
 # 一つだけ欲しい場合
 proc findGreater*[T](self:Treap[T],key:T,including:bool) : Treap[T] =
   if self == nil: return nil
@@ -274,31 +272,83 @@ iterator itemsDesc*[T](self:TreapRoot[T]) : T =
 # キー以上のものを全て列挙(昇順)
 iterator `>=`*[T](self:TreapRoot[T],key:T) : T =
   if self.root != nil :
-    for v in self.root.over(key,true):
+    for v in self.root.greater(key,true):
       for _ in 0..<v.sameCount: yield v.key
 iterator `>`*[T](self:TreapRoot[T],key:T) : T =
   if self.root != nil :
-    for v in self.root.over(key,false):
+    for v in self.root.greater(key,false):
       for _ in 0..<v.sameCount: yield v.key
 # キー以下のものを全て列挙(降順)
 iterator `<=`*[T](self:TreapRoot[T],key:T) : T =
   if self.root != nil :
-    for v in self.root.under(key,true):
+    for v in self.root.less(key,true):
       for _ in 0..<v.sameCount: yield v.key
 iterator `<`*[T](self:TreapRoot[T],key:T) : T =
   if self.root != nil :
-    for v in self.root.under(key,false):
+    for v in self.root.less(key,false):
       for _ in 0..<v.sameCount: yield v.key
 proc dump*[T](self:TreapRoot[T]) : string = self.root.dump(0)
-# 完全な平衡二分探索木を構築する.定数倍速い.
+# 完全な平衡二分探索木を構築する.定数倍速いしこれからも速くなる.
 import math
 proc resetWith*[T](self:var TreapRoot[T],arr:seq[T]) =
+  proc countTrailingZeroBits(x: culonglong): cint {.importc: "__builtin_ctzll", cdecl.}
+  proc quickSortAt[T](arr:var seq[T], at:Slice[int],isDescending:bool = false) =
+    if arr.len <= 1 : return
+    var l = at.a
+    var r = at.b
+    let d = r - l + 1
+    let ctlz = cast[culonglong](d).countTrailingZeroBits()
+    if d > 16: #
+      var s = 1 shl ctlz
+      let l2 = 0.max(l + (r - s))
+      while s >= d: s = s shr 1
+      for i in s.countdown(0):
+        swap arr[l+i], arr[l+randomBit(ctlz)]
+      for i in s.countdown(0):
+        swap arr[l2+i], arr[l2+randomBit(ctlz)]
+    var ls = newSeq[int](ctlz+50)
+    var rs = newSeq[int](ctlz+50)
+    ls[0] = 0
+    rs[0] = arr.len - 1
+    var p = 1
+    while p > 0:
+      p -= 1
+      var pl = ls[p]
+      var pr = rs[p]
+      var x = arr[(pl+pr) shr 1] # pivot
+      l = pl
+      r = pr
+      var once = true
+      while pl <= pr or once:
+        while arr[pl] < x : pl += 1 # cmp
+        while x < arr[pr] : pr -= 1 # cmp
+        if pl <= pr:
+          if pl < pr:
+            swap arr[pl],arr[pr]
+          pl += 1
+          pr -= 1
+        once = false
+      if l < pr:
+        ls[p] = l
+        rs[p] = pr
+        p += 1
+      if pl < r:
+        ls[p] = pl
+        rs[p] = r
+        p += 1
+    if isDescending:
+      for i in 0..<arr.len shr 1:
+        swap arr[i] , arr[arr.len-1-i]
+  proc quickSort[T](arr:var seq[T],isDescending:bool = false) =
+    arr.quickSortAt(0..<arr.len,isDescending)
   self.root = nil
   self.count = 0
   if arr.len <= 0 : return
   var S = newSeq[T]()
   var counts = newSeq[int32]()
-  for a in arr.sorted(cmp[T]):
+  var arr2 = arr
+  arr2.quickSort()
+  for a in arr2:
     if S.len > 0 and S[^1] == a :
       if self.allowMulti:
         counts[^1] += 1
@@ -306,14 +356,15 @@ proc resetWith*[T](self:var TreapRoot[T],arr:seq[T]) =
     S.add a
     counts.add 1
   var R = newSeq[int32]((10+S.len).nextPowerOfTwo())
-  for i in 0..<R.len:
-    R[i] = randomBit(30).int32
-  R.sort(cmp)
-  var cnt = 0
+  var interval = (1 shl 30) div R.len
+  for i in 0..<R.len: R[i] = (i * interval).int32
+  var treaps = newSeq[Treap[T]](S.len)
+  for i in 0..<S.len:
+    treaps[i] = Treap[T](key:S[i],sameCount:counts[i])
   proc impl(now:var Treap[T],ri,si,offset:int) =
     if ri < R.len and si < S.len and si >= 0:
-      now = Treap[T](key:S[si],priority:R[ri],sameCount:counts[si])
-      cnt += 1
+      now = treaps[si]
+      now.priority = R[ri]
     if offset != 0 :
       if now == nil:
         now.impl(ri*2+1,si-offset,offset shr 1)

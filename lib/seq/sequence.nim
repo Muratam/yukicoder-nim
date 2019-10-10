@@ -29,10 +29,8 @@ proc quickSortAt*[T](arr:var seq[T], at:Slice[int],isDescending:bool = false) =
   var r = at.b
   let d = r - l + 1
   let ctlz = cast[culonglong](d).countTrailingZeroBits()
-  if d <= 32: # 普通に
-    for i in r.countdown(l):
-      swap arr[i], arr[l+random(d)]
-  else: # random() の mod が激遅なのでそれは辞める
+  if d > 16: #
+    # random() の mod が激遅なのでそれは辞める
     # length が 0b10101001 なら
     # 前と後ろを 0b10000000 回やる
     # 範囲がちょっと被るけどそんなに困らない
