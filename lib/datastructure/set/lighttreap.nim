@@ -3,7 +3,9 @@
 # 0. min,max,find,add,erase,iter
 # 1. key には int以外のカスタムの比較関数も取れる
 # verified : https://atcoder.jp/contests/abc140/tasks/abc140_f
-# std::map の 3 ~ 5倍遅い...
+# 平衡度が緩いため,std::map の2~3倍遅い.
+# 取得クエリが来るまでに時間がかかるならresetWithすれば勝てる.
+
 import sequtils
 import times
 type Treap*[T] = ref object
@@ -289,6 +291,7 @@ iterator `<`*[T](self:TreapRoot[T],key:T) : T =
       for _ in 0..<v.sameCount: yield v.key
 proc dump*[T](self:TreapRoot[T]) : string = self.root.dump(0)
 # 完全な平衡二分探索木を構築する.定数倍速いしこれからも速くなる.
+{.checks:off.}
 import math
 proc resetWith*[T](self:var TreapRoot[T],arr:seq[T]) =
   proc countTrailingZeroBits(x: culonglong): cint {.importc: "__builtin_ctzll", cdecl.}
@@ -355,16 +358,15 @@ proc resetWith*[T](self:var TreapRoot[T],arr:seq[T]) =
       continue
     S.add a
     counts.add 1
-  var R = newSeq[int32]((10+S.len).nextPowerOfTwo())
-  var interval = (1 shl 30) div R.len
-  for i in 0..<R.len: R[i] = (i * interval).int32
+  let n30 = 1 shl 30
+  var interval = n30 div (10+S.len).nextPowerOfTwo()
   var treaps = newSeq[Treap[T]](S.len)
   for i in 0..<S.len:
     treaps[i] = Treap[T](key:S[i],sameCount:counts[i])
   proc impl(now:var Treap[T],ri,si,offset:int) =
-    if ri < R.len and si < S.len and si >= 0:
+    if si < S.len and si >= 0:
       now = treaps[si]
-      now.priority = R[ri]
+      now.priority = (n30 - ri * interval).int32
     if offset != 0 :
       if now == nil:
         now.impl(ri*2+1,si-offset,offset shr 1)

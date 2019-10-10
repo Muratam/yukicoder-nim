@@ -365,16 +365,15 @@ proc resetWith*[T](self:var TreapRoot[T],arr:seq[T]) =
       continue
     S.add a
     counts.add 1
-  var R = newSeq[int32]((10+S.len).nextPowerOfTwo())
-  var interval = (1 shl 30) div R.len
-  for i in 0..<R.len: R[i] = (i * interval).int32
+  let n30 = 1 shl 30
+  var interval = n30 div (10+S.len).nextPowerOfTwo()
   var treaps = newSeq[Treap[T]](S.len)
   for i in 0..<S.len:
     treaps[i] = Treap[T](key:S[i],sameCount:counts[i])
   proc impl(now:var Treap[T],ri,si,offset:int) =
-    if ri < R.len and si < S.len and si >= 0:
+    if si < S.len and si >= 0:
       now = treaps[si]
-      now.priority = R[ri]
+      now.priority = (n30 - ri * interval).int32
     if offset != 0 :
       if now == nil:
         now.impl(ri*2+1,si-offset,offset shr 1)
@@ -391,12 +390,12 @@ stopwatch:
   # let n = 18
   let n = scan()
   let m = 1 shl n
-  # var B = newSeq[int](m)
+  var B = newSeq[int](m)
   # for i in 0..<m:B[i] = randomBit(30)
-  # for i in 0..<m:B[i] = scan()
-  # S.resetWith(B)
+  for i in 0..<m:B[i] = scan()
+  S.resetWith(B)
   # for b in B:S.add b
-  m.loop: S.add scan()
+  # m.loop: S.add scan()
   var parent = newSeq[int]()
   block:
     let last = S.max()

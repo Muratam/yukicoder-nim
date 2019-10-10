@@ -1,4 +1,4 @@
-import nimprof
+# import nimprof
 # van Emde Boas tree
 # あらゆる操作が O(loglogu)
 # 追加 / 削除 / 最小値 / 最大値 / x以上 / x以下
