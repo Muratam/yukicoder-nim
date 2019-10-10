@@ -1,3 +1,4 @@
+# Radix Heap を使うと更に高速化できる！
 import "../datastructure/set/priorityqueue"
 import sequtils
 when NimMajor * 100 + NimMinor < 19:import queues

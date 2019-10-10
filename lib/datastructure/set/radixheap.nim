@@ -2,12 +2,14 @@ import sequtils
 # 定数倍が軽いPriority Queue. 2倍くらい速い
 # 制約 : 最後にpopした値よりも小さな値を入れられない
 # O(logD)
+# ダイクストラとかが高速化できる
+type KeyValue[T] = tuple[key:int,value:T]
 type RadixHeap[T] = ref object
   size,last: int
   avalableMin:int
   saveMin:bool
   when T is void: data: seq[seq[int]]
-  else: data: seq[seq[tuple[k:int,v:T]]]
+  else: data: seq[seq[KeyValue[T]]]
 proc countLeadingZeroBits(x: culonglong): cint {.importc: "__builtin_clzll", cdecl.}
 # 非負整数範囲版
 proc newRadixHeap*[T](avalableMin:int = 0):RadixHeap[T] =
@@ -19,7 +21,7 @@ proc newRadixHeap*[T](avalableMin:int = 0):RadixHeap[T] =
   when T is void:
     result.data = newSeqWith(64,newSeq[int]())
   else:
-    result.data = newSeqWith(64,newSeq[tuple[k:int,v:T]]())
+    result.data = newSeqWith(64,newSeq[KeyValue[T]]())
 # 全範囲版(ほんのり速度が落ちる)
 proc newAllRangeRadixHeap*[T](saveMin:bool):RadixHeap[T] =
   result = newRadixHeap[T](-1152921504606846976.int)
@@ -28,14 +30,22 @@ proc len*[T](self:RadixHeap[T]) : int = self.size
 proc getBit(x:int):int =
   if x > 0 : return 64 - cast[culonglong](x).countLeadingZeroBits()
   return 0
-proc push*(self:RadixHeap[void],key:int) =
+proc pushImpl*[T](self:RadixHeap[T],key:var int) : int =
   self.size += 1
-  var key = key
   if not self.saveMin: key = -key
   key = key - self.avalableMin
   let last = self.last
   let bit = getBit(key xor last)
+  return bit
+proc push*(self:RadixHeap[void],key:int) =
+  var key = key
+  let bit = self.pushImpl(key)
   self.data[bit].add key
+proc push*[T](self:RadixHeap[T],key:int,value:T) =
+  var key = key
+  let bit = self.pushImpl(key)
+  self.data[bit].add((key,value))
+
 proc top*(self:RadixHeap[void]) : int =
   if self.data[0].len == 0:
     var i = 1
@@ -50,7 +60,28 @@ proc top*(self:RadixHeap[void]) : int =
   result = self.data[0][^1]
   result += self.avalableMin
   if not self.saveMin: result *= -1
+
+proc top*[T](self:RadixHeap[T]) : KeyValue[T] =
+  if self.data[0].len == 0:
+    var i = 1
+    while self.data[i].len == 0 : i += 1
+    self.last = self.data[i][0].key
+    for j in 1..<self.data[i].len:
+      if self.data[i][j].key < self.last:
+        self.last = self.data[i][j].key
+    for d in self.data[i]:
+      self.data[getBit(d.key xor self.last)].add d
+    self.data[i].setLen(0)
+  result = self.data[0][^1]
+  result.key += self.avalableMin
+  if not self.saveMin: result.key *= -1
+
 proc pop*(self:RadixHeap[void]) : int {.discardable.} =
+  result = self.top()
+  self.size -= 1
+  discard self.data[0].pop()
+
+proc pop*[T](self:RadixHeap[T]) : KeyValue[T] {.discardable.} =
   result = self.top()
   self.size -= 1
   discard self.data[0].pop()
@@ -60,17 +91,24 @@ when isMainModule:
   import times
   import "../../mathlib/random"
   test "Radix Heap":
-    var R = newAllRangeRadixHeap[void](true)
-    for x in @[43,23,43,-44,-11,-130,20]:
-      R.push(x)
-    while R.len > 0:
-      echo R.pop()
-    # var last = 1e12.int
-    # while R.len > 0:
-    #   let p = R.pop()
-    #   echo p
-    #   check: last >= p
-    #   last = p
+    block:
+      var R = newAllRangeRadixHeap[void](true)
+      for x in @[43,23,43,-44,-11,-130,20]:
+        R.push(x)
+      for i in 0..<7:
+        check:R.pop() == @[-130,-44,-11,20,23,43,43][i]
+    block:
+      var R = newAllRangeRadixHeap[void](false)
+      for x in @[43,23,43,-44,-11,-130,20]:
+        R.push(x)
+      for i in 0..<7:
+        check:R.pop() == @[43,43,23,20,-11,-44,-130][i]
+    block:
+      var R = newAllRangeRadixHeap[string](false)
+      for x in @["aiueo","kaki","sasas","aa"]:
+        R.push(x.len,x)
+      while R.len > 0:
+        echo R.pop()
   if true:
     template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
     stopwatch:

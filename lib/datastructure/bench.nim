@@ -27,7 +27,7 @@ template bench(comment:string, body) =
   40ms: RollingHash
   80ms: SA-IS / UnionFind / BIT
 ********* 1e6 の壁 ***************
- 160ms: SegmentTree / sort / HashSet / Table
+ 160ms: SegmentTree / sort / HashSet / Table / RadixHeap
  320ms: PriorityQueue / sort+LowerBound /
  640ms: 座標圧縮SegmentTree
 ********** 1e5の壁 *************

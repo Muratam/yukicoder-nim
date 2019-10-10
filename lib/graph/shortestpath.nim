@@ -1,4 +1,5 @@
 import sequtils
+# Radix Heap を使うと更に高速化できる！
 import "../datastructure/set/priorityqueue"
 const INF = 1e10.int
 # 最短経路 O(ElogE) / 負有り:O(EV) / 全:O(V^3)
