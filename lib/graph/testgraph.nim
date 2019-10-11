@@ -130,6 +130,6 @@ proc graphviz*(E:seq[seq[int]],filename:string = "",layout:string = "dot") =
 when isMainModule:
   let E = createRandomTree(10,0.5)
   # E.graphviz()
-  for x in benchGraph(20,100,1):
-    x.graphviz(layout="neato")
+  # for x in benchGraph(20,100,1):
+  #   x.graphviz(layout="neato")
   # createRandomGraph(10,3.0).graphviz(layout="neato")
