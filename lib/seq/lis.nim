@@ -1,30 +1,24 @@
 import sequtils
-import "../datastructure/set/multiset"
-iterator `>`[T](self:CMultiSet[T],x:T) : T = # Nim0.13.0のバグで,これを書かないと解決できない
-  var (a,b) = (self.upper_bound(x),self.`end`()); while a != b : yield *a ;++a
-
+import "../datastructure/set/treap"
+# verify https://chokudai_s001.contest.atcoder.jp/tasks/chokudai_S001_h
+# std::map
 # 最長広義増加部分列 O(NlogN)
+proc longestIncreasingSubsequence[T](arr:seq[T],multi:bool) : seq[T] =
+  var S = newTreapSet[T](true)
+  for a in arr:
+    # a より大きいものを一つ削除する
+    let (ok,value) = S.findGreater(a,not multi)
+    if ok: S.erase value
+    S.add a
+  result = newSeq[T](S.len)
+  var i = 0
+  for x in S.items:
+    result[i] = x
+    i += 1
 proc LMIS[T](arr:seq[T]) : seq[T] =
-  var S = initMultiSet[T]()
-  for a in arr:
-    for up in S > a:
-      S.erase(up)
-      break
-    S.insert a
-  return S.mapIt(it)
-
-
-import "../datastructure/set/set"
-# 最長増加部分列 O(NlogN)
+  arr.longestIncreasingSubsequence(true)
 proc LIS[T](arr:seq[T]) : seq[T] =
-  var S = initSet[T]()
-  for a in arr:
-    for up in S > a:
-      S.erase(up)
-      break
-    S.insert a
-  return S.mapIt(it)
-
+  arr.longestIncreasingSubsequence(false)
 
 
 when isMainModule:

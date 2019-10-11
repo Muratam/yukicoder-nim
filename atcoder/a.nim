@@ -1,11 +1,3 @@
-# 参考 : https://www.slideshare.net/iwiwi/2-12188757
-# verified : https://atcoder.jp/contests/abc140/tasks/abc140_f
-
-# Treap
-# std::{,multi}set の代替.
-# key には int以外のカスタムの比較関数も取れる
-# 平衡度が緩いため,std::map の2~3倍遅い.
-# 要素が先に分かっている場合は完全な平衡木を作れてstd::mapより速くなる.
 
 import sequtils
 import times
@@ -191,21 +183,9 @@ proc max[T](self:Treap[T]) : Treap[T] =
   if self == nil : return nil
   if self.right == nil: return self
   return self.right.max()
-proc findGreater[T](self:Treap[T],key:T,including:bool) : Treap[T] =
-  if self == nil: return nil
-  if including and self.key == key: return self
-  if self.key < key:
-    return self.right.findGreater(key,including)
-  let l = self.left.findGreater(key,including)
-  if l != nil: return l
-  if self.key > key: return self
-  return self.right.findGreater(key,including)
-
 proc findLess[T](self:Treap[T],key:T,including:bool) : Treap[T] =
   if self == nil: return nil
   if including and self.key == key: return self
-  if self.key > key:
-    return self.left.findGreater(key,including)
   let r = self.right.findLess(key,including)
   if r != nil: return r
   if self.key < key: return self
@@ -255,11 +235,6 @@ proc min*[T](self:TreapSet[T]): T =
   return self.root.min().key
 proc max*[T](self:TreapSet[T]): T =
   return self.root.max().key
-proc findGreater*[T](self:TreapSet[T],key:T,including:bool) : tuple[ok:bool,val:T] =
-  let found = self.root.findGreater(key,including)
-  if found != nil:
-    result.ok = true
-    result.val = found.key
 proc findLess*[T](self:TreapSet[T],key:T,including:bool) : tuple[ok:bool,val:T] =
   let found = self.root.findLess(key,including)
   if found != nil:
@@ -291,132 +266,39 @@ iterator `<`*[T](self:TreapSet[T],key:T) : T =
     for v in self.root.less(key,false):
       for _ in 0..<v.sameCount: yield v.key
 proc `$`*[T](self:TreapSet[T]):string = $toSeq(self.items)
-# 完全な平衡二分探索木を構築する.全てが2倍くらい速くなる.
-{.checks:off.}
-import math
-proc resetWith*[T](self:var TreapSet[T],arr:seq[T]) =
-  proc countTrailingZeroBits(x: culonglong): cint {.importc: "__builtin_ctzll", cdecl.}
-  proc quickSortAt[T](arr:var seq[T], at:Slice[int],isDescending:bool = false) =
-    if arr.len <= 1 : return
-    var l = at.a
-    var r = at.b
-    let d = r - l + 1
-    let ctlz = cast[culonglong](d).countTrailingZeroBits()
-    if d > 16: #
-      var s = 1 shl ctlz
-      let l2 = 0.max(l + (r - s))
-      while s >= d: s = s shr 1
-      for i in s.countdown(0):
-        swap arr[l+i], arr[l+randomBit(ctlz)]
-      for i in s.countdown(0):
-        swap arr[l2+i], arr[l2+randomBit(ctlz)]
-    var ls = newSeq[int](ctlz+50)
-    var rs = newSeq[int](ctlz+50)
-    ls[0] = 0
-    rs[0] = arr.len - 1
-    var p = 1
-    while p > 0:
-      p -= 1
-      var pl = ls[p]
-      var pr = rs[p]
-      var x = arr[(pl+pr) shr 1] # pivot
-      l = pl
-      r = pr
-      var once = true
-      while pl <= pr or once:
-        while arr[pl] < x : pl += 1 # cmp
-        while x < arr[pr] : pr -= 1 # cmp
-        if pl <= pr:
-          if pl < pr:
-            swap arr[pl],arr[pr]
-          pl += 1
-          pr -= 1
-        once = false
-      if l < pr:
-        ls[p] = l
-        rs[p] = pr
-        p += 1
-      if pl < r:
-        ls[p] = pl
-        rs[p] = r
-        p += 1
-    if isDescending:
-      for i in 0..<arr.len shr 1:
-        swap arr[i] , arr[arr.len-1-i]
-  proc quickSort[T](arr:var seq[T],isDescending:bool = false) =
-    arr.quickSortAt(0..<arr.len,isDescending)
-  self.root = nil
-  self.count = 0
-  if arr.len <= 0 : return
-  var S = newSeq[T]()
-  var counts = newSeq[int32]()
-  var arr2 = arr
-  arr2.quickSort()
-  for a in arr2:
-    if S.len > 0 and S[^1] == a :
-      if self.allowMulti:
-        counts[^1] += 1
-      continue
+
+
+proc findGreater[T](self:Treap[T],key:T,including:bool) : Treap[T] =
+  if self == nil: return nil
+  if including and self.key == key: return self
+  if self.key < key:
+    return self.right.findGreater(key,including)
+  let l = self.left.findGreater(key,including)
+  if l != nil: return l
+  if self.key > key: return self
+  return self.right.findGreater(key,including)
+
+proc longestIncreasingSubsequence[T](arr:seq[T],multi:bool) : int =
+  var S = newTreapSet[T](true)
+  for a in arr:
+    # a より大きいものを一つ削除する
+    let found = S.root.findGreater(a,not multi)
+    if found != nil : S.erase found.key
     S.add a
-    counts.add 1
-  let n30 = 1 shl 30
-  var interval = n30 div (10+S.len).nextPowerOfTwo()
-  var treaps = newSeq[Treap[T]](S.len)
-  for i in 0..<S.len:
-    treaps[i] = Treap[T](key:S[i],sameCount:counts[i])
-  proc impl(now:var Treap[T],ri,si,offset:int) =
-    if si < S.len and si >= 0:
-      now = treaps[si]
-      now.priority = (n30 - ri * interval).int32
-    if offset != 0 :
-      if now == nil:
-        now.impl(ri*2+1,si-offset,offset shr 1)
-      else:
-        now.left.impl(ri*2+1,si-offset,offset shr 1)
-        now.right.impl(ri*2+2,si+offset,offset shr 1)
-  let offset = (S.len + 2).nextPowerOfTwo() shr 2
-  let mid = offset * 2 - 1
-  self.root.impl(0,mid,offset)
-  self.count = S.len
+  return S.len
 
-import times
+import sequtils,algorithm,math,tables,sets,strutils,times
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
-when isMainModule:
-  let n = 1e6.int
-  stopwatch:
-    var A = newTreapSet[int]()
-    # for i in 0..<100: A.add i
-    # echo A.dump()
-
-    # for i in 0..<n: A.add randomBit(32)
-    # for i in 0..<n:
-    #   if randomBit(32) in A : x += 1
-    # echo x,":",A.len
-when isMainModule:
-  import unittest
-  import sequtils
-  test "Treap":
-    block:
-      xorShiftVar = 88172645463325252.uint64
-      for k in 0..<1:
-        var A = newTreapSet[int]()
-        for i in 0..<20:
-          A.add randomBit(5)
-        # echo A.min()
-        # echo A.max()
-        # echo A
-        # echo toSeq(A.items)
-        # echo toSeq(A.itemsDesc)
-        # let n = 18
-        # echo toSeq(A >= n)
-        # echo toSeq(A > n)
-        # let x = toSeq(A < n)
-        # echo x
-        # echo toSeq(A <= n)
-        # for xi in 1..<x.len:
-        #   if x[xi-1] < x[xi] :
-        #     echo x
-        #     echo A
-        #     quit 0
-        # for i in 0..<10:
-        #   A.erase randomBit(5)
+template loop*(n:int,body) = (for _ in 0..<n: body)
+template `max=`*(x,y) = x = max(x,y)
+template `min=`*(x,y) = x = min(x,y)
+proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" ,discardable.}
+proc scan(): int =
+  while true:
+    let k = getchar_unlocked()
+    if k < '0' or k > '9': return
+    result = 10 * result + k.ord - '0'.ord
+stopwatch:
+  let n = scan()
+  let A = newSeqWith(n,scan())
+  echo A.longestIncreasingSubsequence(true)
