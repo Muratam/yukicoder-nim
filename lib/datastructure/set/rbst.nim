@@ -387,21 +387,21 @@ when isMainModule:
     let RI = @[0,0,1,1,1,2,3,4,4,4,5,6,7,7,8,8,9]
     for i in RI: R.add i
     # for i in 0..<100: R.add i
-    for i in -2..10:
-      echo i,":",R.isKth(i)
-    var L = newRbst[int]()
-    let LI = @[0,0,1,1,1,2,3,4,4,4,5,6,8,8,9]
-    for i in LI: L.add i + 10
-    for i in -2..20:
-      let found = L.findKth(i)
-      if found != nil:
-        echo i,":",found.key
-    echo R
-    echo L
-    let S = R.merge(L)
-    echo S
-    let (S1,S2) = S.split(15)
-    echo S1
-    echo S2
-    echo S1.eraseAt(4..11)
-    echo S1.dump()
+    # for i in -2..10:
+    #   echo i,":",R.isKth(i)
+    # var L = newRbst[int]()
+    # let LI = @[0,0,1,1,1,2,3,4,4,4,5,6,8,8,9]
+    # for i in LI: L.add i + 10
+    # for i in -2..20:
+    #   let found = L.findKth(i)
+    #   if found != nil:
+    #     echo i,":",found.key
+    # echo R
+    # echo L
+    # let S = R.merge(L)
+    # echo S
+    # let (S1,S2) = S.split(15)
+    # echo S1
+    # echo S2
+    # echo S1.eraseAt(4..11)
+    # echo S1.dump()

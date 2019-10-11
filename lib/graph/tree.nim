@@ -38,7 +38,7 @@ proc allTreeDP[T](
     init:proc(i:int):T,
     final:proc(i:int,sum:T):T) : seq[T] =
   var dp = newSeqWith(E.len,initTable[int,T]())
-  proc dfs(src,pre:int) : T {.discardable.} =
+  proc dfs(src,pre:int) : T =
     if pre in dp[src]: return dp[src][pre]
     result = init(src)
     for dst in E[src]:
@@ -56,11 +56,11 @@ proc treeDP[T](
     init:proc(i:int):T) : seq[T] =
   var E = E.asTree(root)
   var dp = newSeq[T](E.len)
-  proc dfs(src:int) : T {.discardable.} =
+  proc dfs(src:int) : T  =
     result = init(src)
     for dst in E[src]:
       result = apply(result,dfs(dst,src))
-  dfs(root)
+  discard dfs(root)
   return dp
 
 # 最小共通祖先(LCA)
