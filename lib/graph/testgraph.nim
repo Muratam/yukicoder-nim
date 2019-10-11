@@ -5,7 +5,7 @@ import "../datastructure/set/unionfind"
 # p : [0.0,1.0] : 新しい点をつなぐ場所が昔のものになるか最近のものになるか.
 #   0.0:スターグラフ - 0.5:平衡な木 - 1:直線
 proc createRandomTree*(n:int,p:float = 0.5) : seq[seq[int]] =
-  echo "SEED:",xorShiftVar
+  echo "SEED: ",xorShiftVar
   result = newSeqWith(n,newSeq[int]())
   if n <= 1 : return
   var p = 0.0.max(1.0.min(p))
@@ -31,7 +31,7 @@ iterator benchTree*(n:int,loopTime:int): seq[seq[int]] =
 # 0.0: 1ノード1本の遷移 - 0.5 割とランダムに 1.0:限界まで
 import tables
 proc createRandomDAG*(n:int,p:float = 0.5,q:float = 0.5): seq[seq[int]] =
-  echo "SEED:",xorShiftVar
+  echo "SEED: ",xorShiftVar
   result = newSeqWith(n,newSeq[int]())
   if n <= 1 : return
   var p = 0.0.max(1.0.min(p))
@@ -62,7 +62,7 @@ iterator benchDAG*(maxVertexNum:int,loopTime:int): seq[seq[int]] =
 #  : 1だと1ノードから1本しかつながらない, v だとほぼ完全グラフに
 # connected: 連結グラフの必要があるか
 proc createRandomGraph*(v:int,e:float,connected:bool=true): seq[seq[int]] =
-  echo "SEED:",xorShiftVar
+  echo "SEED: ",xorShiftVar
   result = newSeqWith(v,newSeq[int]())
   if v <= 1 : return
   var cn = newSeq[Table[int,bool]](v)
@@ -119,7 +119,7 @@ proc graphviz*(E:seq[seq[int]],filename:string = "",layout:string = "dot") =
   graph.add "}"
   var filename = filename
   if filename.len == 0: filename = randomStringFast(3,3)
-  echo "SAVETO:",filename
+  echo "SAVETO: ",filename
   let f = open(filename&".dot",FileMode.fmWrite)
   f.writeLine graph
   f.close()
