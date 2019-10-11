@@ -1,16 +1,16 @@
 # verified : https://atcoder.jp/contests/abc140/tasks/abc140_f
 
-# Randomized Binary Search Tree
-# Treap ＋ split・merge・kth.
-# Treapより2~3倍遅いが,build可能ならstd::mapより速い.
-# 生の木を扱う書き方なので,都合に応じて使い分ける.
-# 要素の重複が不許可 => singleAdd
+# RBST に セグツリを乗っけたもの. 重複不可.
 
-type Rbst*[T] = ref object
-  key*: T
+type Monoid*[V] = ref object
+  apply:proc(x,y:V):V
+  unit:V
+type SegRBST*[K,V] = ref object
+  key*: K
+  value*,sum*:V
   count*: int32 # 自分を含む要素の和
-  left*,right*: Rbst[T] # (left: [-∞..key) / right: (key,∞))
-  sameCount*:int32 # 自身と同一の要素数
+  left*,right*: SegRBST[K,V] # (left: [-∞..key) / right: (key,∞))
+  monoid*:Monoid[V]
 import sequtils,math,times,algorithm,strutils
 var xorShiftVar* = 88172645463325252.uint64
 xorShiftVar = cast[uint64](cpuTime()) # 初期値を固定しない場合
@@ -21,21 +21,28 @@ proc xorShift() : uint64 =
   return xorShiftVar
 proc randomBit(maxBit:int):int =
   cast[int](xorShift() and cast[uint64]((1 shl maxBit) - 1))
-proc dump[T](self:Rbst[T],indent:int = 0,mark:string="^") : string =
+proc dump[K,V](self:SegRBST[K,V],indent:int = 0,mark:string="^") : string =
   if self == nil : return ""
-  result = "|".repeat(indent) & " " & mark & " " & ($self.key) & " (x" & $self.sameCount & ") - (" & $self.len & ")\n"
+  result = "|".repeat(indent) & " " & mark & " " & ($self.key) & " - (" & $self.len & ")\n"
   result .add self.right.dump(indent+1,"<")
   result .add self.left.dump(indent+1,">")
-proc len*[T](self:Rbst[T]):int {.inline.} =
+proc len*[K,V](self:SegRBST[K,V]):int {.inline.} =
   if self == nil : 0
   else: self.count.int
-proc update[T](self:Rbst[T]) : Rbst[T] {.discardable.} =
+proc update[K,V](self:SegRBST[K,V]) : SegRBST[K,V] {.discardable.} =
   if self == nil: return
-  self.count = self.sameCount
-  if self.left != nil: self.count += self.left.count
-  if self.right != nil: self.count += self.right.count
+  self.count = 0
+  self.sum = self.monoid.unit
+  if self.left != nil:
+    self.count += self.left.count
+    self.sum = self.left.sum
+  self.count += 1
+  self.sum = self.monoid.apply(self.sum,self.value)
+  if self.right != nil:
+    self.count += self.right.count
+    self.sum = self.monoid.apply(self.sum,self.right.sum)
   return self
-proc findOrAdd[T](self:Rbst[T],key:T) : bool =
+proc findOrAdd[K,V](self:SegRBST[K,V],key:K) : bool =
   if self == nil : return false
   if self.key == key:
     self.sameCount += 1
@@ -49,7 +56,7 @@ proc findOrAdd[T](self:Rbst[T],key:T) : bool =
     if self.right == nil: return false
     result = self.right.findOrAdd(key)
     self.update()
-proc mergeImpl[T](left,right:Rbst[T]) : Rbst[T] =
+proc mergeImpl[K,V](left,right:SegRBST[K,V]) : SegRBST[K,V] =
   if left == nil: return right
   if right == nil : return left
   # 優先度が高い方を根にする
@@ -60,14 +67,14 @@ proc mergeImpl[T](left,right:Rbst[T]) : Rbst[T] =
     right.left = left.mergeImpl(right.left)
     return right.update()
 # 構築
-proc newRbst*[T]():Rbst[T] = nil
-proc toRbst*[T](key:T):Rbst[T] =
-  result = Rbst[T](
+proc newSegRBST*[K,V]():SegRBST[K,V] = nil
+proc toSegRBST*[K,V](key:K):SegRBST[K,V] =
+  result = SegRBST[K,V](
     key:key,
     sameCount:1,
     count:1,
   )
-proc split*[T](self:Rbst[T],key:T): tuple[l,r:Rbst[T]] =
+proc split*[K,V](self:SegRBST[K,V],key:K): tuple[l,r:SegRBST[K,V]] =
   # 再帰的に切るだけ. (子は必ず優先度が低いので)
   if self == nil: return (nil,nil)
   if key < self.key:
@@ -79,7 +86,7 @@ proc split*[T](self:Rbst[T],key:T): tuple[l,r:Rbst[T]] =
     self.right = s.l
     return (self.update(),s.r)
 # 検索・重複{あり,なし}挿入・削除
-proc find*[T](self:Rbst[T],key:T) : Rbst[T]=
+proc find*[K,V](self:SegRBST[K,V],key:K) : SegRBST[K,V]=
   if self == nil : return nil
   if self.key == key: return self
   if key < self.key:
@@ -88,12 +95,12 @@ proc find*[T](self:Rbst[T],key:T) : Rbst[T]=
   else:
     if self.right == nil: return nil
     return self.right.find(key)
-proc contains*[T](self:Rbst[T],key:T):bool=
+proc contains*[K,V](self:SegRBST[K,V],key:K):bool=
   if self == nil : false
   else: self.find(key) != nil
-proc add*[T](self:var Rbst[T],key:T) =
+proc add*[K,V](self:var SegRBST[K,V],key:K) =
   if self == nil:
-    self = key.toRbst()
+    self = key.toSegRBST()
   elif self.key == key:
     self.sameCount += 1
     self.update()
@@ -102,22 +109,22 @@ proc add*[T](self:var Rbst[T],key:T) =
     let found = self.findOrAdd(key)
     if found: return
     let s = self.split(key)
-    self = s.l.mergeImpl(key.toRbst()).mergeImpl(s.r)
-proc addSingle*[T](self:var Rbst[T],key: T): bool {.discardable.}=
+    self = s.l.mergeImpl(key.toSegRBST()).mergeImpl(s.r)
+proc addSingle*[K,V](self:var SegRBST[K,V],key: K): bool {.discardable.}=
   if self == nil:
-    self = toRbst(key)
+    self = toSegRBST(key)
   elif key == self.key:
     return false
   else:
     let found = self.find(key)
     if found != nil: return false
     let s = self.split(key)
-    self = toRbst(key)
+    self = toSegRBST(key)
     self.left = s.l
     self.right = s.r
     self.update()
   return true
-proc erase*[T](self:var Rbst[T],key:T,all:bool = false) :bool {.discardable.} =
+proc erase*[K,V](self:var SegRBST[K,V],key:K,all:bool = false) :bool {.discardable.} =
   if self == nil : return false
   # 自分にさようなら
   if self.key == key:
@@ -135,7 +142,7 @@ proc erase*[T](self:var Rbst[T],key:T,all:bool = false) :bool {.discardable.} =
     if self.right == nil : return false
     result = self.right.erase(key,all)
     self.update()
-proc eraseAt*[T](self:Rbst[T],slice:Slice[int]): Rbst[T] =
+proc eraseAt*[K,V](self:SegRBST[K,V],slice:Slice[int]): SegRBST[K,V] =
   # 指定した [x..y] を O(logN)で 取り除く
   if self == nil : return nil
   var sl = self.split(slice.a)
@@ -145,25 +152,25 @@ proc eraseAt*[T](self:Rbst[T],slice:Slice[int]): Rbst[T] =
   return sl.l.mergeImpl(sr.r)
 
 # 要素数・最小値・最大値・範囲
-proc min*[T](self:Rbst[T]) : Rbst[T] =
+proc min*[K,V](self:SegRBST[K,V]) : SegRBST[K,V] =
   if self == nil : return nil
   if self.left == nil: return self
   return self.left.min()
-proc max*[T](self:Rbst[T]) : Rbst[T] =
+proc max*[K,V](self:SegRBST[K,V]) : SegRBST[K,V] =
   if self == nil : return nil
   if self.right == nil: return self
   return self.right.max()
-proc at*[T](self:Rbst[T]): Slice[T] =
+proc at*[K,V](self:SegRBST[K,V]): Slice[K] =
   assert self != nil
   if self.left == nil : result.a = self.key
   else: result.a = self.min().key
   if self.right == nil: result.b = self.key
   else: result.b = self.max().key
 # {昇順,降順}に全列挙 (自身を含む)
-iterator items*[T](self:Rbst[T]) : Rbst[T] =
+iterator items*[K,V](self:SegRBST[K,V]) : SegRBST[K,V] =
   if self != nil:
     var rbsts = @[self]
-    var chunks = newSeq[Rbst[T]]() # 親
+    var chunks = newSeq[SegRBST[K,V]]() # 親
     while rbsts.len > 0:
       let now = rbsts.pop()
       if now == nil : continue
@@ -176,10 +183,10 @@ iterator items*[T](self:Rbst[T]) : Rbst[T] =
       chunks.add now
     while chunks.len > 0:
       yield chunks.pop()
-iterator itemsDesc*[T](self:Rbst[T]) : Rbst[T] =
+iterator itemsDesc*[K,V](self:SegRBST[K,V]) : SegRBST[K,V] =
   if self != nil:
     var rbsts = @[self]
-    var chunks = newSeq[Rbst[T]]() # 親
+    var chunks = newSeq[SegRBST[K,V]]() # 親
     while rbsts.len > 0:
       let now = rbsts.pop()
       if now == nil : continue
@@ -192,19 +199,19 @@ iterator itemsDesc*[T](self:Rbst[T]) : Rbst[T] =
       chunks.add now
     while chunks.len > 0:
       yield chunks.pop()
-proc `$`[T](self:Rbst[T]):string = $toSeq(self.items).mapIt(it.key)
+proc `$`[K,V](self:SegRBST[K,V]):string = $toSeq(self.items).mapIt(it.key)
 # キー以上のものを昇順に{一つ取得,全列挙}. 同じ要素はまとまっているので注意！
-proc findGreater*[T](self:Rbst[T],key:T,including:bool) : Rbst[T] =
+proc findGreater*[K,V](self:SegRBST[K,V],key:K,including:bool) : SegRBST[K,V] =
   if self == nil: return nil
   if including and self.key == key: return self
   let r = self.left.findGreater(key,including)
   if r != nil: return r
   if self.key > key: return self
   return self.right.findGreater(key,including)
-iterator greater*[T](self:Rbst[T],key:T,including:bool) : Rbst[T] =
+iterator greater*[K,V](self:SegRBST[K,V],key:K,including:bool) : SegRBST[K,V] =
   if self != nil:
     var rbsts = @[self]
-    var chunks = newSeq[Rbst[T]]() # 親
+    var chunks = newSeq[SegRBST[K,V]]() # 親
     while rbsts.len > 0:
       let now = rbsts.pop()
       if now == nil : continue
@@ -218,24 +225,24 @@ iterator greater*[T](self:Rbst[T],key:T,including:bool) : Rbst[T] =
         chunks.add now
     while chunks.len > 0:
       yield chunks.pop()
-iterator `>=`*[T](self:Rbst[T],key:T) : Rbst[T] =
+iterator `>=`*[K,V](self:SegRBST[K,V],key:K) : SegRBST[K,V] =
   if self != nil:
     for v in self.greater(key,true): yield v
-iterator `>`*[T](self:Rbst[T],key:T) : Rbst[T] =
+iterator `>`*[K,V](self:SegRBST[K,V],key:K) : SegRBST[K,V] =
   if self != nil:
     for v in self.greater(key,false): yield v
 # キー以下のものを降順に{一つ取得,全列挙}. 同じ要素はまとまっているので注意！
-proc findLess*[T](self:Rbst[T],key:T,including:bool) : Rbst[T] =
+proc findLess*[K,V](self:SegRBST[K,V],key:K,including:bool) : SegRBST[K,V] =
   if self == nil: return nil
   if including and self.key == key: return self
   let r = self.right.findLess(key,including)
   if r != nil: return r
   if self.key < key: return self
   return self.left.findLess(key,including)
-iterator less*[T](self:Rbst[T],key:T,including:bool) : Rbst[T] =
+iterator less*[K,V](self:SegRBST[K,V],key:K,including:bool) : SegRBST[K,V] =
   if self != nil:
     var rbsts = @[self]
-    var chunks = newSeq[Rbst[T]]() # 親
+    var chunks = newSeq[SegRBST[K,V]]() # 親
     while rbsts.len > 0:
       let now = rbsts.pop()
       if now == nil : continue
@@ -249,104 +256,14 @@ iterator less*[T](self:Rbst[T],key:T,including:bool) : Rbst[T] =
         chunks.add now
     while chunks.len > 0:
       yield chunks.pop()
-iterator `<=`*[T](self:Rbst[T],key:T) : Rbst[T] =
+iterator `<=`*[K,V](self:SegRBST[K,V],key:K) : SegRBST[K,V] =
   if self != nil:
     for v in self.less(key,true): yield v
-iterator `<`*[T](self:Rbst[T],key:T) : Rbst[T] =
+iterator `<`*[K,V](self:SegRBST[K,V],key:K) : SegRBST[K,V] =
   if self != nil:
     for v in self.less(key,false): yield v
-# 完全な平衡二分探索木を構築する.定数倍速いしこれからも速くなる.
-{.checks:off.}
-proc build*[T](arr:seq[T],allowMulti:bool = true) : Rbst[T] =
-  proc countTrailingZeroBits(x: culonglong): cint {.importc: "__builtin_ctzll", cdecl.}
-  proc quickSortAt[T](arr:var seq[T], at:Slice[int],isDescending:bool = false) =
-    if arr.len <= 1 : return
-    var l = at.a
-    var r = at.b
-    let d = r - l + 1
-    let ctlz = cast[culonglong](d).countTrailingZeroBits()
-    if d > 16: #
-      var s = 1 shl ctlz
-      let l2 = 0.max(l + (r - s))
-      while s >= d: s = s shr 1
-      for i in s.countdown(0):
-        swap arr[l+i], arr[l+randomBit(ctlz)]
-      for i in s.countdown(0):
-        swap arr[l2+i], arr[l2+randomBit(ctlz)]
-    var ls = newSeq[int](ctlz+50)
-    var rs = newSeq[int](ctlz+50)
-    ls[0] = 0
-    rs[0] = arr.len - 1
-    var p = 1
-    while p > 0:
-      p -= 1
-      var pl = ls[p]
-      var pr = rs[p]
-      var x = arr[(pl+pr) shr 1] # pivot
-      l = pl
-      r = pr
-      var once = true
-      while pl <= pr or once:
-        while arr[pl] < x : pl += 1 # cmp
-        while x < arr[pr] : pr -= 1 # cmp
-        if pl <= pr:
-          if pl < pr:
-            swap arr[pl],arr[pr]
-          pl += 1
-          pr -= 1
-        once = false
-      if l < pr:
-        ls[p] = l
-        rs[p] = pr
-        p += 1
-      if pl < r:
-        ls[p] = pl
-        rs[p] = r
-        p += 1
-    if isDescending:
-      for i in 0..<arr.len shr 1:
-        swap arr[i] , arr[arr.len-1-i]
-  proc quickSort[T](arr:var seq[T],isDescending:bool = false) =
-    arr.quickSortAt(0..<arr.len,isDescending)
-  if arr.len <= 0 : return
-  var S = newSeq[T]()
-  var counts = newSeq[int32]()
-  var arr2 = arr
-  arr2.quickSort()
-  for a in arr2:
-    if S.len > 0 and S[^1] == a :
-      if allowMulti: counts[^1] += 1
-      continue
-    S.add a
-    counts.add 1
-  let n30 = 1 shl 30
-  var rbsts = newSeq[Rbst[T]](S.len)
-  for i in 0..<S.len:
-    rbsts[i] = Rbst[T](key:S[i],sameCount:counts[i])
-  proc impl(now:var Rbst[T],si,offset:int) =
-    if si < S.len and si >= 0:
-      now = rbsts[si]
-    if offset != 0 :
-      if now == nil:
-        now.impl(si-offset,offset shr 1)
-      else:
-        now.left.impl(si-offset,offset shr 1)
-        now.right.impl(si+offset,offset shr 1)
-  let offset = (S.len + 2).nextPowerOfTwo() shr 2
-  let mid = offset * 2 - 1
-  result.impl(mid,offset)
-  proc updateCount(now:var Rbst[T])  : int =
-    if now == nil: return 0
-    now.count = int32(
-      now.left.updateCount() +
-      now.right.updateCount() +
-      now.sameCount)
-    return now.count.int
-  discard updateCount(result)
-
-# 以下 RBST の機能 ----------------------------------------
 # (小さい方から)k番目(0-index)のキー取得
-proc findKth*[T](self:Rbst[T],k:int): Rbst[T] =
+proc findKth*[K,V](self:SegRBST[K,V],k:int): SegRBST[K,V] =
   if self == nil : return nil
   let llen = self.left.len
   if llen + self.sameCount <= k:
@@ -354,7 +271,7 @@ proc findKth*[T](self:Rbst[T],k:int): Rbst[T] =
   if k < llen : return self.left.findKth(k)
   return self
 # あるキーが何番目(0-index)のキーなのか
-proc isKth*[T](self:Rbst[T],key:T): Slice[int] =
+proc isKth*[K,V](self:SegRBST[K,V],key:K): Slice[int] =
   if self == nil : return -1.. -1
   if self.key == key :
     return self.left.len..self.left.len+self.sameCount-1
@@ -366,7 +283,7 @@ proc isKth*[T](self:Rbst[T],key:T): Slice[int] =
   let r = self.right.isKth(key)
   return llen+r.a..llen+r.b
 # 範囲がかぶっていない場合のマージ.マージしたら前の木は使えない.
-proc merge*[T](x,y:Rbst[T]): Rbst[T] =
+proc merge*[K,V](x,y:SegRBST[K,V]): SegRBST[K,V] =
   if x == nil : return y
   if y == nil : return x
   let xAt = x.at
@@ -382,14 +299,14 @@ template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cp
 when isMainModule:
   import unittest
   import sequtils
-  test "Rbst":
-    var R = newRbst[int]()
+  test "SegRBST":
+    var R = newSegRBST[int]()
     let RI = @[0,0,1,1,1,2,3,4,4,4,5,6,7,7,8,8,9]
     for i in RI: R.add i
     # for i in 0..<100: R.add i
     for i in -2..10:
       echo i,":",R.isKth(i)
-    var L = newRbst[int]()
+    var L = newSegRBST[int]()
     let LI = @[0,0,1,1,1,2,3,4,4,4,5,6,8,8,9]
     for i in LI: L.add i + 10
     for i in -2..20:
