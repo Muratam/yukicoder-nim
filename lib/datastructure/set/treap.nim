@@ -115,12 +115,6 @@ proc erase[T](self:var Treap[T],key:T,all:bool=false) :bool {.discardable.} =
   else:
     if self.right == nil : return false
     result = self.right.erase(key,all)
-proc at[T](self:Treap[T]): Slice[T] =
-  if self == nil : return nil
-  if self.left == nil : result.a = self.key
-  else: result.a = self.min()
-  if self.right == nil: result.b = self.key
-  else: result.b = self.max()
 iterator items[T](self:Treap[T]) : Treap[T] =
   var treaps = @[self]
   var chunks = newSeq[Treap[T]]() # 親
@@ -191,6 +185,12 @@ proc max[T](self:Treap[T]) : Treap[T] =
   if self == nil : return nil
   if self.right == nil: return self
   return self.right.max()
+proc at[T](self:Treap[T]): Slice[T] =
+  if self == nil : return nil
+  if self.left == nil : result.a = self.key
+  else: result.a = self.min()
+  if self.right == nil: result.b = self.key
+  else: result.b = self.max()
 proc findGreater[T](self:Treap[T],key:T,including:bool) : Treap[T] =
   if self == nil: return nil
   if including and self.key == key: return self
@@ -200,7 +200,6 @@ proc findGreater[T](self:Treap[T],key:T,including:bool) : Treap[T] =
   if l != nil: return l
   if self.key > key: return self
   return self.right.findGreater(key,including)
-
 proc findLess[T](self:Treap[T],key:T,including:bool) : Treap[T] =
   if self == nil: return nil
   if including and self.key == key: return self
