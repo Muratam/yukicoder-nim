@@ -1,3 +1,29 @@
+# 木の同型判定
+# http://chocobaby-aporo.hatenablog.com/entry/2017/12/05/233027
+import "./testgraph"
+# createRandomTree*(n:int,p:float = 0.5)
+# sort[string] / critbits / SA-IS
+import algorithm,strutils
+proc treeToString(E:seq[seq[int]]) : string =
+  var T = E.toRootedTree(0)
+  proc impl(src:int):string =
+    var strs = newSeq[string](T[src].len)
+    for i,dst in T[src]: strs[i] = impl(dst)
+    echo strs
+    strs.sort(cmp)
+    echo strs
+    result = "(" & strs.join("") & ")"
+  for i in 0..<E.len:
+    T = E.toRootedTree(i)
+    echo impl(i)
+  return impl(0)
+echo createRandomTree(10,0.5).treeToString()
+# block:
+#   var F = newSeq[seq[int]](1e5.int)
+#   for i in 0..<F.len - 1: F[i] = @[i + 1]
+#   echo F.treeDP(0,proc(x,y:int64):int64 = x + y,proc(i:int):int64 = 1.int64)
+
+
 # iterator版(1/1,1/2,1/3,2/3,2/1... となり)
 iterator sternBrocotTreeIter(maxNum:int): tuple[u,d:int] =
   type State = tuple[au,ad,bu,bd:int]

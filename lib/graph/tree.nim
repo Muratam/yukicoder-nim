@@ -18,7 +18,7 @@ proc eulerTour(E:seq[seq[int]]):tuple[toured:seq[Slice[int]],rev:seq[int]] =
 
 # 根付き木にする
 # (親も子も同一視して)双方向になっている木を,(0 番を)根として子のノードだけ持つように変更する
-proc asTree(E:seq[seq[int]],root:int = 0):seq[seq[int]] =
+proc toRootedTree(E:seq[seq[int]],root:int = 0):seq[seq[int]] =
   var answer = newSeq[seq[int]](E.len)
   for i in 0..<E.len: answer[i] = newSeq[int]()
   proc impl(pre,now:int) =
@@ -55,14 +55,15 @@ proc treeDP[T](
     root:int,
     apply:proc(x,y:T):T,
     init:proc(i:int):T) : seq[T] =
-  var E = E.asTree(root)
+  var E = E.toRootedTree(root)
   var dp = newSeq[T](E.len)
   proc dfs(src:int) : T  =
     result = init(src)
     for dst in E[src]:
-      result = apply(result,dfs(dst,src))
+      result = apply(result,dfs(dst))
   discard dfs(root)
   return dp
+
 
 # 最小共通祖先(LCA)
 # 構築:O(n),探索:O(log(n)) (深さに依存しない)
@@ -115,9 +116,9 @@ when isMainModule:
   import unittest
   test "tree":
     let E = @[@[1,2],@[0,3],@[0],@[1]]
-    check: E.asTree == @[@[1, 2], @[3], @[], @[]]
-    check: E.asTree.eulerTour().toured == @[(0..<4),(1..<3),(3..<4),(2..<3)]
-    check: E.asTree.eulerTour().rev == @[0,1,3,2]
+    check: E.toRootedTree == @[@[1, 2], @[3], @[], @[]]
+    check: E.toRootedTree.eulerTour().toured == @[(0..<4),(1..<3),(3..<4),(2..<3)]
+    check: E.toRootedTree.eulerTour().rev == @[0,1,3,2]
     let lca = E.newLowestCommonAnsestor()
     check: lca.find(1,3) == 1
     check: lca.find(0,3) == 0
