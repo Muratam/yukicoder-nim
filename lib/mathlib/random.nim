@@ -31,6 +31,7 @@ proc randomStringFast*(maxBit:int,kindBit:int=4):string =
   return cast[string](S)
 
 
+# メモ: 実は XOR-SHIFT は ^ << 7 ; ^ >> 9 だけでもいいらしい.
 when isMainModule:
   import unittest
   import sequtils
