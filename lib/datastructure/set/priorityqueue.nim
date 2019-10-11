@@ -1,8 +1,9 @@
-# PriorityQueue :
+# PriorityQueue (BinaryHeap実装)
 # O(log(N)): 追加 / 最小値Pop
 # O(1) : 最小値取得
 # https://github.com/nim-lang/Nim/blob/version-1-0/lib/pure/collections/heapqueue.nim#L58
-# pop を１回遅らせる実装の方が速いが(var が付いて)使いにくいのでこちら
+
+
 
 import algorithm
 type PriorityQueue*[T] = ref object
