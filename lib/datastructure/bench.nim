@@ -139,17 +139,17 @@ bench "intset": # 600ms クソ雑魚. ランキングに載せるのがはばか
   for _ in 0..n: S.incl randomBit(32)
   for i in 0..n:
     if randomBit(32) in S: dummy += 1
-import "./set/stdset"
-bench "std::set":
-  var A = initStdSet[int]()
-  for i in 0..n: A.add randomBit(32)
-  for i in 0..n:
-    if randomBit(32) in A: dummy += 1
-bench "std::multiset":
-  var A = initStdMultiSet[int]()
-  for i in 0..n: A.add randomBit(32)
-  for i in 0..n:
-    if randomBit(32) in A: dummy += 1
+# import "./set/stdset"
+# bench "std::set":
+#   var A = initStdSet[int]()
+#   for i in 0..n: A.add randomBit(32)
+#   for i in 0..n:
+#     if randomBit(32) in A: dummy += 1
+# bench "std::multiset":
+#   var A = initStdMultiSet[int]()
+#   for i in 0..n: A.add randomBit(32)
+#   for i in 0..n:
+#     if randomBit(32) in A: dummy += 1
 import "./set/treap"
 bench "Treap":
   var A = newTreapSet[int]()

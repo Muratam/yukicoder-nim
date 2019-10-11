@@ -64,23 +64,30 @@ proc termarySearch[T,S](slice:Slice[T],f:proc(x:T):S,searchType:static[SearchTyp
       when T is int: return if CMP(f(a),f(b)) : a else: b
       elif T is float: return m
 
-
-# lowerBound をわかりやすく
+# Lower Bound
+#     > <=           >=  <
+#  ... [lowerBound ... ][upperBound ...
+#  ... [x:         ... ][succ(x):   ...
 import algorithm
-# 条件を満たす最大のindex(満たすものがなければarr.lenになる)
-proc `<=`[T](a:T,arr:seq[T]): int =
-  arr.lowerBound(a)
-proc `<`[T](a:T,arr:seq[T]): int = # == upperBound
-  let i = a <= arr
-  if i >= arr.len or a < arr[i]: return i
-  return arr.lowerBound(a + 1)
-# 条件を満たす最小のindex(無い時は-1)
-proc `>`[T](a:T,arr:seq[T]): int =
-  arr.lowerBound(a) - 1
-proc `>=`[T](a:T,arr:seq[T]): int =
-  let i = arr.lowerBound(a) - 1
-  if i + 1 < arr.len and a >= arr[i+1]:return i + 1
-  return i
+when not defined(upperBound) : # Nim0.13.0には無いため
+  proc upperBound[T](a: openArray[T], key: T): int =
+    result = a.low
+    var count = a.high - a.low + 1
+    var step, pos: int
+    while count != 0:
+      step = count shr 1
+      pos = result + step
+      if cmp(a[pos], key) <= 0:
+        result = pos + 1
+        count -= step + 1
+      else:
+        count = step
+# 指定キー{以上,超過}のうちの最小のindex(満たすものがなければarr.lenになる)
+proc `<=`[T](a:T,arr:seq[T]): int = arr.lowerBound(a)
+proc `<`[T](a:T,arr:seq[T]): int = arr.upperBound(a)
+# 指定キー{未満,以下}のうちの最大のindex(無い時は-1)
+proc `>`[T](a:T,arr:seq[T]): int = arr.lowerBound(a) - 1
+proc `>=`[T](a:T,arr:seq[T]): int = arr.upperBound(a) - 1
 proc at[T](arr:seq[T],slice:Slice[T]): Slice[int] =
   var a = slice.a >= arr
   var b = slice.b <= arr
@@ -166,10 +173,10 @@ when isMainModule:
     let A = @[1,2,3,4,5,5,5,5,2,0]
     check:termarySearch(0..<A.len,proc(x:int):int= A[x],SearchMax) notin [4,7]
   test "<= > < >= at":
-    check: @[1,2,3,4,5,10].mapIt(it <= @[2,4,6,8]) == @[0, 0, 1, 1, 2, 4]
-    check: @[1,2,3,4,5,10].mapIt(it < @[2,4,6,8]) == @[0, 1, 1, 2, 2, 4]
-    check: @[1,2,3,4,5,10].mapIt(it > @[2,4,6,8]) == @[-1, -1, 0, 0, 1, 3]
-    check: @[1,2,3,4,5,10].mapIt(it >= @[2,4,6,8]) == @[-1, 0, 0, 1, 1, 3]
+    check: @[1,2,3,4,5,7,8,10].mapIt(it <= @[2,4,6,8]) == @[0, 0, 1, 1, 2, 3, 3, 4]
+    check: @[1,2,3,4,5,7,8,10].mapIt(it < @[2,4,6,8]) == @[0, 1, 1, 2, 2, 3, 4, 4]
+    check: @[1,2,3,4,5,7,8,10].mapIt(it > @[2,4,6,8]) == @[-1, -1, 0, 0, 1, 2, 2, 3]
+    check: @[1,2,3,4,5,7,8,10].mapIt(it >= @[2,4,6,8]) == @[-1, 0, 0, 1, 1, 2, 3, 3]
     check: @[1,2,3,4,5,10].at(2..4) == 1..3
     check: @[1,2,3,4,5,10].at(5..11) == 4..5
     check: @[1,2,3,4,5,10].at(0..11) == 0..5

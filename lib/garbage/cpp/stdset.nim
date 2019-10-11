@@ -72,7 +72,7 @@ proc toMultiSet*[T](arr:seq[T]): CMultiSet[T] =
   result = initStdMultiSet[T]()
   for a in arr: result.add(a)
 proc fromMultiSet*[T](self:var CMultiSet[T]):seq[T] = toSeq(self.items)
-proc `$`*[T](self:var CMultiSet[T]): string = $self.mapIt(it)
+proc `$`*[T](self:var CMultiSet[T]): string = $self.fromMultiSet()
 
 # ############################################################################
 # std::set
@@ -141,7 +141,7 @@ iterator at*[T](self:var CSet[T],slice:Slice[T]) : T =
     yield *a; ++a
 proc toSet*[T](arr:seq[T]): CSet[T] = (result = initStdSet[T]();for a in arr: result.add(a))
 proc fromSet*[T](self:var CSet[T]):seq[T] = toSeq(self.items)
-proc `$`*[T](self:var CSet[T]): string = $self.mapIt(it)
+proc `$`*[T](self:var CSet[T]): string = $self.fromSet()
 
 {.checks:off.}
 when isMainModule:
