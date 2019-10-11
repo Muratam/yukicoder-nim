@@ -197,6 +197,8 @@ proc `$`[T](self:Rbst[T]):string = $toSeq(self.items).mapIt(it.key)
 proc findGreater*[T](self:Rbst[T],key:T,including:bool) : Rbst[T] =
   if self == nil: return nil
   if including and self.key == key: return self
+  if self.key < key:
+    return self.right.findGreater(key,including)
   let r = self.left.findGreater(key,including)
   if r != nil: return r
   if self.key > key: return self
@@ -228,6 +230,8 @@ iterator `>`*[T](self:Rbst[T],key:T) : Rbst[T] =
 proc findLess*[T](self:Rbst[T],key:T,including:bool) : Rbst[T] =
   if self == nil: return nil
   if including and self.key == key: return self
+  if self.key > key:
+    return self.left.findLess(key,including)
   let r = self.right.findLess(key,including)
   if r != nil: return r
   if self.key < key: return self
