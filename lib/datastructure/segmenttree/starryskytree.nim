@@ -57,12 +57,10 @@ proc newMaxStarrySkyTree[T](size:int) : StarrySkyTree[T] =
 proc newMinStarrySkyTree[T](size:int) : StarrySkyTree[T] =
   newStarrySkyTree[T](size,proc(x,y:T):T=(if x <= y: x else: y),1e12.T,proc(x,y:T):T=x+y,0.T)
 
-
-
 when isMainModule:
   import unittest
   import math
-  test "segmenttree lazy":
+  test "Starry Sky Tree":
     block:
       var S = newMinStarrySkyTree[int](10)
       S.update(0..<5 , 10)
@@ -90,13 +88,15 @@ when isMainModule:
       check: S[0..<5] == 14
       check: S[5..<10] == 5
     block: # 区間Add,区間Min-IndexFind
-      type WithIndex[T] = tuple[v:T,i:int]
-      let S = newStarrySkyTree(20,
-        proc(x,y:WithIndex[int]):WithIndex[int] = (if x.v <= y.v: x else: y),
-          (-1,1e12.int), # この結果は異なる(indexを持てない単位元なため)
-          proc(x,y:WithIndex[int]):WithIndex[int]=
-          (x.v+y.v,x.i),
-          (0,0))
+      # type WithIndex[T] = ... と書くと最新のNimは落ちる
+      let S = newStarrySkyTree[tuple[v,i:int]](
+          20,
+          proc(x,y:tuple[v,i:int]):tuple[v,i:int] =
+            (if x.v <= y.v: x else: y),
+          (v:1e12.int,i: -1), # この結果は異なる(indexを持てない単位元なため)
+          proc(x,y:tuple[v,i:int]):tuple[v,i:int]=
+          (v:x.v+y.v,i:x.i),
+          (v:0,i: -1))
 
     block: # 区間の更新が min なもの
       proc minImpl(x,y:int):int=(if x <= y: x else: y)
