@@ -45,6 +45,7 @@
   - Flow :: 最小費用流 [ O(FElogV) , 最大流/最小カット O(FE),O(EV^2) , 二部グラフの最大マッチング O(E) ]
   - Link :: 橋,関節点
   - AdjMatrix :: 隣接行列, 補グラフ | 彩色数 O(2^N N) | 最大{クリーク,独立集合} O(N * √2^N)
+  - TestGraph :: テスト用のグラフを生成
 - `lib/seq/` :: seqを操作
   - search : {二,三}分探索 / lowerBound <-> `< <= > >=`  / 座標圧縮
   - LIS : 最長増加部分列

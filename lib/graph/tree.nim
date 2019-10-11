@@ -37,7 +37,8 @@ proc allTreeDP[T](
     apply:proc(x,y:T):T,
     init:proc(i:int):T,
     final:proc(i:int,sum:T):T) : seq[T] =
-  var dp = newSeqWith(E.len,initTable[int,T]())
+  var dp = newSeq[Table[int,T]](E.len)
+  for i in 0..<E.len: dp[i] = initTable[int,T]()
   proc dfs(src,pre:int) : T =
     if pre in dp[src]: return dp[src][pre]
     result = init(src)

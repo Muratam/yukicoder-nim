@@ -1,19 +1,26 @@
 {.checks:off.}
-if true: quit 0
+# if true: quit 0
 import algorithm,math,tables,sets,times,sequtils,strutils
 import "../mathlib/random"
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
+var registArray = newSeq[tuple[str:string,time:int]]()
+proc regist(str:string,time:int) =
+  registArray.add((str,time))
+proc output() =
+  registArray = registArray.sortedByIt(it.time)
+  for r in registArray:
+    echo r.time,"ms\t",r.str
 template bench(comment:string, body) =
   block:
-    stdout.write 27.chr,"[32m"
-    stdout.write comment
+    stdout.write 27.chr , "[32m" , comment
     let t1 = cpuTime()
     body
-    let T = $ int((cpuTime() - t1) * 1000)
+    let t = int((cpuTime() - t1) * 1000)
+    let T = $t
     const commentMaxLen = 26
     stdout.write " ".repeat(commentMaxLen - comment.len - T.len)
-    stdout.write 27.chr,"[0m"
-    stdout.write  T,"ms\n"
+    stdout.write 27.chr , "[0m" , T , "ms\n"
+    regist comment,t
 
 #[
 データ構造ができることは速度とのトレードオフ.
@@ -79,6 +86,10 @@ import "./string/loliha"
 bench "Loliha":
   var LH = str.newLoliha()
   for i in 0..<n-10: dummy += LH.hash(i..i.max(randomBit(bitSize)))
+import "./string/rollinghash"
+bench "Rolling Hash":
+  var LH = rollinghash.newRollingHash(str)
+  for i in 0..<n-10: dummy += LH.hash(i..i.max(randomBit(bitSize)))[0]
 import "./string/sais"
 bench "SA-IS":
   var SA = str.newSuffixArray()
@@ -176,5 +187,12 @@ bench "RBST":
   for i in 0..n: A.add randomBit(32)
   for i in 0..n:
     if randomBit(32) in A: dummy += 1
+bench "Perfect RBST": # 2倍くらい速い！
+  var B = newSeq[int]()
+  for i in 0..n: B.add randomBit(32)
+  var A = B.buildRBST()
+  for i in 0..n:
+    if randomBit(32) in A: dummy += 1
 #
 echo dummy
+output()

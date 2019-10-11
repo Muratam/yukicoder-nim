@@ -2,7 +2,7 @@
 
 # Randomized Binary Search Tree
 # Treap ＋ split・merge・kth.
-# Treapより2~3倍遅いが,build可能ならstd::mapより速い.
+# Treapより2~3倍遅いが,buildRBST可能ならstd::mapより速い.
 # 生の木を扱う書き方なので,都合に応じて使い分ける.
 # 要素の重複が不許可 => singleAdd
 
@@ -261,69 +261,18 @@ iterator `<`*[T](self:Rbst[T],key:T) : Rbst[T] =
     for v in self.less(key,false): yield v
 # 完全な平衡二分探索木を構築する.定数倍速いしこれからも速くなる.
 {.checks:off.}
-proc build*[T](arr:seq[T],allowMulti:bool = true) : Rbst[T] =
-  proc countTrailingZeroBits(x: culonglong): cint {.importc: "__builtin_ctzll", cdecl.}
-  proc quickSortAt[T](arr:var seq[T], at:Slice[int],isDescending:bool = false) =
-    if arr.len <= 1 : return
-    var l = at.a
-    var r = at.b
-    let d = r - l + 1
-    let ctlz = cast[culonglong](d).countTrailingZeroBits()
-    if d > 16: #
-      var s = 1 shl ctlz
-      let l2 = 0.max(l + (r - s))
-      while s >= d: s = s shr 1
-      for i in s.countdown(0):
-        swap arr[l+i], arr[l+randomBit(ctlz)]
-      for i in s.countdown(0):
-        swap arr[l2+i], arr[l2+randomBit(ctlz)]
-    var ls = newSeq[int](ctlz+50)
-    var rs = newSeq[int](ctlz+50)
-    ls[0] = 0
-    rs[0] = arr.len - 1
-    var p = 1
-    while p > 0:
-      p -= 1
-      var pl = ls[p]
-      var pr = rs[p]
-      var x = arr[(pl+pr) shr 1] # pivot
-      l = pl
-      r = pr
-      var once = true
-      while pl <= pr or once:
-        while arr[pl] < x : pl += 1 # cmp
-        while x < arr[pr] : pr -= 1 # cmp
-        if pl <= pr:
-          if pl < pr:
-            swap arr[pl],arr[pr]
-          pl += 1
-          pr -= 1
-        once = false
-      if l < pr:
-        ls[p] = l
-        rs[p] = pr
-        p += 1
-      if pl < r:
-        ls[p] = pl
-        rs[p] = r
-        p += 1
-    if isDescending:
-      for i in 0..<arr.len shr 1:
-        swap arr[i] , arr[arr.len-1-i]
-  proc quickSort[T](arr:var seq[T],isDescending:bool = false) =
-    arr.quickSortAt(0..<arr.len,isDescending)
+import algorithm
+proc buildRBST*[T](arr:seq[T],allowMulti:bool = true) : Rbst[T] =
   if arr.len <= 0 : return
   var S = newSeq[T]()
   var counts = newSeq[int32]()
-  var arr2 = arr
-  arr2.quickSort()
+  var arr2 = arr.sorted()
   for a in arr2:
     if S.len > 0 and S[^1] == a :
       if allowMulti: counts[^1] += 1
       continue
     S.add a
     counts.add 1
-  let n30 = 1 shl 30
   var rbsts = newSeq[Rbst[T]](S.len)
   for i in 0..<S.len:
     rbsts[i] = Rbst[T](key:S[i],sameCount:counts[i])

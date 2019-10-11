@@ -294,63 +294,12 @@ proc `$`*[T](self:TreapSet[T]):string = $toSeq(self.items)
 {.checks:off.}
 import math
 proc resetWith*[T](self:var TreapSet[T],arr:seq[T]) =
-  proc countTrailingZeroBits(x: culonglong): cint {.importc: "__builtin_ctzll", cdecl.}
-  proc quickSortAt[T](arr:var seq[T], at:Slice[int],isDescending:bool = false) =
-    if arr.len <= 1 : return
-    var l = at.a
-    var r = at.b
-    let d = r - l + 1
-    let ctlz = cast[culonglong](d).countTrailingZeroBits()
-    if d > 16: #
-      var s = 1 shl ctlz
-      let l2 = 0.max(l + (r - s))
-      while s >= d: s = s shr 1
-      for i in s.countdown(0):
-        swap arr[l+i], arr[l+randomBit(ctlz)]
-      for i in s.countdown(0):
-        swap arr[l2+i], arr[l2+randomBit(ctlz)]
-    var ls = newSeq[int](ctlz+50)
-    var rs = newSeq[int](ctlz+50)
-    ls[0] = 0
-    rs[0] = arr.len - 1
-    var p = 1
-    while p > 0:
-      p -= 1
-      var pl = ls[p]
-      var pr = rs[p]
-      var x = arr[(pl+pr) shr 1] # pivot
-      l = pl
-      r = pr
-      var once = true
-      while pl <= pr or once:
-        while arr[pl] < x : pl += 1 # cmp
-        while x < arr[pr] : pr -= 1 # cmp
-        if pl <= pr:
-          if pl < pr:
-            swap arr[pl],arr[pr]
-          pl += 1
-          pr -= 1
-        once = false
-      if l < pr:
-        ls[p] = l
-        rs[p] = pr
-        p += 1
-      if pl < r:
-        ls[p] = pl
-        rs[p] = r
-        p += 1
-    if isDescending:
-      for i in 0..<arr.len shr 1:
-        swap arr[i] , arr[arr.len-1-i]
-  proc quickSort[T](arr:var seq[T],isDescending:bool = false) =
-    arr.quickSortAt(0..<arr.len,isDescending)
   self.root = nil
   self.count = 0
   if arr.len <= 0 : return
   var S = newSeq[T]()
   var counts = newSeq[int32]()
-  var arr2 = arr
-  arr2.quickSort()
+  var arr2 = arr.sorted(cmp)
   for a in arr2:
     if S.len > 0 and S[^1] == a :
       if self.allowMulti:
