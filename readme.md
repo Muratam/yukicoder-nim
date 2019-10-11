@@ -17,7 +17,7 @@
   - `set/` :: 集合. 動的に要素を追加・削除可能
     - Treap :: std::{multi,}set のNim用の代替.
       - 追加・削除・検索・最{小,大}値・{以上,以下}列挙 O(logN)
-      - NO_TEST: ＋マージ・スピリット・K番目
+    - RBST :: ↑ + 結合・分割・K番目
       - NO_TEST: ＋セグツリ (一点更新, 区間取得)
     - UnionFind : 森のマージ・根の取得 O(1)
     - bitset : ビット演算の集合. + bitDP(全状態,補集合,superset).
@@ -99,18 +99,15 @@ nimrr() { NIMR_COMPILE_FLAG="-d:release" nimr $@ ; }
 
 # データ構造の壁
 - ./lib/datastructure/bench.nim
-- (100ms/100MB) この壁を超えて使おうとすると MLE/TLE の危険性が高まる.
+- (1000ms/1000MB) この壁を超えて使おうとすると MLE/TLE の危険性が高まる.
 ```
-********* 1e8 の壁 **************
-1: データを舐める
-******** 1e7 の壁 ***************
+******** 1e8 の壁 ***************
 1: seq / Deque
 2: RollingHash / SA-IS / UnionFind / BIT
-********* 1e6 の壁 ***************
+********* 1e7 の壁 ***************
 1: SegmentTree / sort / HashSet / Table
 2: PriorityQueue / sort+LowerBound
 3: 座標圧縮SegmentTree
-********** 1e5の壁 *************
-1: Skew Heap (マージの代償 : PQ x8倍)
-2: PatriciaSegmentTree (生の20~30倍)
+********** 1e6の壁 *************
+1: 動的木(Treap,RBST,SkewHeap)
 ```

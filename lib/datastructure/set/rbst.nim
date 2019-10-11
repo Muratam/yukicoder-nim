@@ -1,16 +1,10 @@
 # verified : https://atcoder.jp/contests/abc140/tasks/abc140_f
 
-# Treap
-# std::{,multi}set の代替.
-# key には int以外のカスタムの比較関数も取れる
-# 実装を優先.平衡度が緩いため,std::map の2~3倍遅い.
-# 要素が先に分かっている場合は完全な平衡木を作れてstd::mapより速くなる.
-
 # Randomized Binary Search Tree
 # Treap ＋ split・merge・kth.
-# Treapと違い,こちらは生の木を扱う実装.
+# Treapより2~3倍遅いが,build可能ならstd::mapより速い.
+# 生の木を扱う書き方なので,都合に応じて使い分ける.
 # 要素の重複が不許可 => singleAdd
-# 追加がTreapより2~3倍遅い.しかしbuildすればstd::mapより速い.
 
 type Rbst*[T] = ref object
   key*: T
