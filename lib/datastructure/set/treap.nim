@@ -205,7 +205,7 @@ proc findLess[T](self:Treap[T],key:T,including:bool) : Treap[T] =
   if self == nil: return nil
   if including and self.key == key: return self
   if self.key > key:
-    return self.left.findGreater(key,including)
+    return self.left.findLess(key,including)
   let r = self.right.findLess(key,including)
   if r != nil: return r
   if self.key < key: return self
