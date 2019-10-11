@@ -95,34 +95,6 @@ proc at[T](arr:seq[T],slice:Slice[T]): Slice[int] =
   if b >= arr.len : b = arr.len - 1
   return a..b
 
-when not defined(upperBound) :
-  proc upperBound*[T](arr:seq[T],a:T): int = # `<`
-    let i = arr.lowerBound(a)
-    if i >= arr.len or a < arr[i]: return i
-    return arr.lowerBound(a + 1)
-
-
-# 更新位置を座標圧縮(位置はlowerboundでアクセス).
-import algorithm
-type CompressedPos*[T] = ref object
-  data*: seq[T]
-proc len*[T](self:CompressedPos[T]):int = self.data.len
-proc newCompressedPos*[T](poses:seq[T]):CompressedPos[T] =
-  new(result)
-  result.data = @[]
-  for p in poses.sorted(cmp[T]):
-    if result.data.len > 0 and result.data[^1] == p: continue
-    result.data.add p
-proc `[]`*[T](self:CompressedPos[T],i:T):int =
-  self.data.lowerBound(i)
-proc `[]`*[T](self:CompressedPos[T],i:Slice[T]): Slice[int] =
-  let ia = self.data.lowerBound(i.a)
-  var ib = self.data.lowerBound(i.b) - 1
-  if ib + 1 < self.data.len and i.b >= self.data[ib+1]: ib += 1
-  return ia..ib
-proc `$`*[T](self:CompressedPos[T]): string = $self.data
-proc id*[T](x:T):T = x # nim0.13用
-
 
 
 when isMainModule:
@@ -180,16 +152,3 @@ when isMainModule:
     check: @[1,2,3,4,5,10].at(2..4) == 1..3
     check: @[1,2,3,4,5,10].at(5..11) == 4..5
     check: @[1,2,3,4,5,10].at(0..11) == 0..5
-  test "compressed Position":
-    let poses = @[1,10,100,1000,10000]
-    var T = poses.newCompressedPos()
-    check: T[0] == 0 and T[1] == 0
-    check: T[2] == 1 and T[9] == 1 and T[10] == 1
-    check: T[11] == 2 and T[50] == 2 and T[100] == 2
-    check: T[100..999] == 2..2
-    check: T[100..1000] == 2..3
-    check: T[100..1001] == 2..3
-    check: T[99..1001] == 2..3
-    check: T[101..1001] == 3..3
-    check: T[101..102] == 3..2 # 区間が反転している時は 区間内に存在するものが無かった！
-    check: T[id(-100)..1000] == 0..3

@@ -99,7 +99,7 @@ proc `[]`*[T,R](self:var MappedSegmentTree[T,R],slice:Slice[int]): R = self.segt
 # 範囲がスパースな場合. クエリ先読み+座標圧縮のセグツリ
 # 更新クエリ箇所は先読みが必要だが、検索クエリは先読みしなくてよい
 import algorithm
-import "../../seq/search"
+import "../../seq/filter"
 type SparseSegmentTree*[T,I] = ref object
   segtree*:SegmentTree[T]
   compressed*:CompressedPos[I]

@@ -45,12 +45,11 @@
   - Flow :: 最小費用流 [ O(FElogV) , 最大流/最小カット O(FE),O(EV^2) , 二部グラフの最大マッチング O(E) ]
   - Link :: 橋,関節点
   - AdjMatrix :: 隣接行列, 補グラフ | 彩色数 O(2^N N) | 最大{クリーク,独立集合} O(N * √2^N)
-  - TestGraph :: テスト用のグラフを生成
+  - TestGraph :: テスト用のグラフ(木・DAG・制限なし)を生成・可視化.
 - `lib/seq/` :: seqを操作
-  - search : {二,三}分探索 / lowerBound <-> `< <= > >=`  / 座標圧縮
-  - LIS : 最長増加部分列
-  - slidemin : スライド最小値
-  - sequence : arg{min,max} / deduplicate / quicksortAt / 10進数と配列変換
+  - search : {二,三}分探索 / {lower,upper}Bound(`< <= > >=`)
+  - filter : 最長増加部分列 / 座標圧縮 / deduplicate / スライド最小値
+  - sequence : arg{min,max} / quicksortAt / 10進数と配列変換
   - iteration : 全順列 / 全ペア順列 / 階段走査
 
 # MEMO
@@ -104,11 +103,11 @@ nimrr() { NIMR_COMPILE_FLAG="-d:release" nimr $@ ; }
 ```
 ******** 1e8 の壁 ***************
 1: seq / Deque
-2: RollingHash / SA-IS / UnionFind / BIT
+2: BIT / SA-IS / Loliha
 ********* 1e7 の壁 ***************
-1: SegmentTree / sort / HashSet / Table
-2: PriorityQueue / sort+LowerBound
+1: UnionFind / sort / Segment Tree / HashSet / Table
+2: PriorityQueue / sort+LowerBound / Convo Queue
 3: 座標圧縮SegmentTree
 ********** 1e6の壁 *************
-1: 動的木(Treap,RBST,SkewHeap)
+1: SkewHeap / Treap / RBST
 ```
