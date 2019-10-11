@@ -3,6 +3,8 @@
 # O(√N) だがメモリがキャッシュに乗りやすいのと、~1e6程度の問題しかでないのとで悪くても1000倍.普通に10倍くらいの差で済む
 # 変なクエリに対して臨機応変に対応しやすい.
 # https://kujira16.hateblo.jp/entry/2016/12/15/000000
+
+# verify 用のコードが無いとやる気が起きないね！
 import math
 type SquareDecomposition*[T] = ref object
   n,bucketLen,bucketNum*:int # bucketLen:バケットの長さ, bucketNum: バケットの個数

@@ -273,21 +273,13 @@ iterator itemsDesc*[T](self:TreapSet[T]) : T =
   if self.root != nil :
     for v in self.root.itemsDesc:
       for _ in 0..<v.sameCount: yield v.key
-iterator `>=`*[T](self:TreapSet[T],key:T) : T =
+iterator greater[T](self:TreapSet[T],key:T,including:bool) : T =
   if self.root != nil :
-    for v in self.root.greater(key,true):
+    for v in self.root.greater(key,including):
       for _ in 0..<v.sameCount: yield v.key
-iterator `>`*[T](self:TreapSet[T],key:T) : T =
+iterator less[T](self:TreapSet[T],key:T,including:bool) : T =
   if self.root != nil :
-    for v in self.root.greater(key,false):
-      for _ in 0..<v.sameCount: yield v.key
-iterator `<=`*[T](self:TreapSet[T],key:T) : T =
-  if self.root != nil :
-    for v in self.root.less(key,true):
-      for _ in 0..<v.sameCount: yield v.key
-iterator `<`*[T](self:TreapSet[T],key:T) : T =
-  if self.root != nil :
-    for v in self.root.less(key,false):
+    for v in self.root.less(key,including):
       for _ in 0..<v.sameCount: yield v.key
 proc `$`*[T](self:TreapSet[T]):string = $toSeq(self.items)
 # 完全な平衡二分探索木を構築する.全てが2倍くらい速くなる.

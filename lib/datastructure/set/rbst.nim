@@ -220,12 +220,6 @@ iterator greater*[T](self:Rbst[T],key:T,including:bool) : Rbst[T] =
         chunks.add now
     while chunks.len > 0:
       yield chunks.pop()
-iterator `>=`*[T](self:Rbst[T],key:T) : Rbst[T] =
-  if self != nil:
-    for v in self.greater(key,true): yield v
-iterator `>`*[T](self:Rbst[T],key:T) : Rbst[T] =
-  if self != nil:
-    for v in self.greater(key,false): yield v
 # キー以下のものを降順に{一つ取得,全列挙}. 同じ要素はまとまっているので注意！
 proc findLess*[T](self:Rbst[T],key:T,including:bool) : Rbst[T] =
   if self == nil: return nil
@@ -253,12 +247,6 @@ iterator less*[T](self:Rbst[T],key:T,including:bool) : Rbst[T] =
         chunks.add now
     while chunks.len > 0:
       yield chunks.pop()
-iterator `<=`*[T](self:Rbst[T],key:T) : Rbst[T] =
-  if self != nil:
-    for v in self.less(key,true): yield v
-iterator `<`*[T](self:Rbst[T],key:T) : Rbst[T] =
-  if self != nil:
-    for v in self.less(key,false): yield v
 # 完全な平衡二分探索木を構築する.定数倍速いしこれからも速くなる.
 {.checks:off.}
 import algorithm
