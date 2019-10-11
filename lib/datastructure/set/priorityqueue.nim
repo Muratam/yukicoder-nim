@@ -103,9 +103,3 @@ when isMainModule:
       pq.push(0)
       check: pq.pop() == 10
       check: pq.pop() == 0
-    block: # 直接構築
-      var P = @[1,4,2,4,3243,4234,2342,1231,413123,4231,412,41,411,414,1413545,212,431412].buildPriorityQueue(ascending)
-      var i = 0
-      while P.len > 0:
-        check: P.pop == @[1,2,4,4,41,212,411,412,414,1231,2342,3243,4231,4234,413123,431412,1413545][i]
-        i += 1

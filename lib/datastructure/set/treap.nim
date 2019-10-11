@@ -380,8 +380,8 @@ if true:
   let n = 1e6.int
   stopwatch:
     var A = newTreapSet[int]()
-    for i in 0..<100: A.add i
-    echo A.dump()
+    # for i in 0..<100: A.add i
+    # echo A.dump()
 
     # for i in 0..<n: A.add randomBit(32)
     # for i in 0..<n:
@@ -397,21 +397,21 @@ when isMainModule:
         var A = newTreapSet[int]()
         for i in 0..<20:
           A.add randomBit(5)
-        echo A.min()
-        echo A.max()
-        echo A
-        echo toSeq(A.items)
-        echo toSeq(A.itemsDesc)
-        let n = 18
-        echo toSeq(A >= n)
-        echo toSeq(A > n)
-        let x = toSeq(A < n)
-        echo x
-        echo toSeq(A <= n)
-        for xi in 1..<x.len:
-          if x[xi-1] < x[xi] :
-            echo x
-            echo A
-            quit 0
-        for i in 0..<10:
-          A.erase randomBit(5)
+        # echo A.min()
+        # echo A.max()
+        # echo A
+        # echo toSeq(A.items)
+        # echo toSeq(A.itemsDesc)
+        # let n = 18
+        # echo toSeq(A >= n)
+        # echo toSeq(A > n)
+        # let x = toSeq(A < n)
+        # echo x
+        # echo toSeq(A <= n)
+        # for xi in 1..<x.len:
+        #   if x[xi-1] < x[xi] :
+        #     echo x
+        #     echo A
+        #     quit 0
+        # for i in 0..<10:
+        #   A.erase randomBit(5)

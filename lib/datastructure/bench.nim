@@ -1,4 +1,5 @@
 {.checks:off.}
+if true: quit 0
 import algorithm,math,tables,sets,times,sequtils,strutils
 import "../mathlib/random"
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
@@ -157,7 +158,7 @@ bench "intset": # 600ms クソ雑魚. ランキングに載せるのがはばか
     if randomBit(32) in S: dummy += 1
 import "./set/treap"
 bench "Treap":
-  var A = newTreapRoot[int]()
+  var A = newTreapSet[int]()
   for i in 0..n: A.add randomBit(32)
   for i in 0..n:
     if randomBit(32) in A: dummy += 1
@@ -165,8 +166,14 @@ import "./set/treap"
 bench "Perfect Treap": # 2倍くらい速い！
   var B = newSeq[int]()
   for i in 0..n: B.add randomBit(32)
-  var A = newTreapRoot[int]()
+  var A = newTreapSet[int]()
   A.resetWith(B)
+  for i in 0..n:
+    if randomBit(32) in A: dummy += 1
+import "./set/rbst"
+bench "RBST":
+  var A = newRbst[int]()
+  for i in 0..n: A.add randomBit(32)
   for i in 0..n:
     if randomBit(32) in A: dummy += 1
 #
