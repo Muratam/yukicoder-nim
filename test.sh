@@ -4,7 +4,7 @@ allresult=0
 
 trytest(){
   rmnimcache
-  dirs=`ls -l | grep d | awk '{print $9}'`
+  dirs=`ls -l | grep drwxr | awk '{print $9}'`
   for dir in $dirs; do
     [[ $dir == "garbage" ]] && continue
     echo "test : [" $dir "]"
