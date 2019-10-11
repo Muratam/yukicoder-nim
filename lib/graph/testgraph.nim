@@ -1,4 +1,5 @@
 import sequtils
 import "../mathlib/random"
 
-proc createRandomTree
+# (双方向の) ランダムな
+proc createRandomTree()

@@ -1,5 +1,5 @@
 {.checks:off.}
-# if true: quit 0
+if true: quit 0
 import algorithm,math,tables,sets,times,sequtils,strutils
 import "../mathlib/random"
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
@@ -21,34 +21,6 @@ template bench(comment:string, body) =
     stdout.write " ".repeat(commentMaxLen - comment.len - T.len)
     stdout.write 27.chr , "[0m" , T , "ms\n"
     regist comment,t
-
-#[
-データ構造ができることは速度とのトレードオフ.
-データ数 1e6,ランダムケース に対して, (Nim 0.13.0 -d:release)
-各データを約1回ずつ追加 or アクセスする
-操作の数え方に差があるため, 目安の値. 1/2~2倍は普通にあって,10倍違うことは殆どないくらいの信憑性.
-********* 1e8 の壁 **************
-   5ms: データを舐める(理論値)
-  10ms: seq(一括)
-******** 1e7 の壁 ***************
-  20ms: seq(add) / Deque
-  40ms: RollingHash
-  80ms: SA-IS / UnionFind / BIT
-********* 1e6 の壁 ***************
- 160ms: SegmentTree / sort / HashSet / Table / RadixHeap
- 320ms: PriorityQueue / sort+LowerBound /
- 640ms: 座標圧縮SegmentTree
-********** 1e5の壁 *************
-2560ms: Skew Heap (マージの代償 : PQ x8倍)
-      : Patricia Tree / Treap
-
-まとめ: 牛刀割鶏！
-- seq そのまま使えると爆速. logN は実質定数.
-- 動的木は遅い.
-- 1e7 の 64bit で 100MBくらい => 壁 ≒ MLEの壁
-]#
-
-
 let n = 1e6.int
 let bitSize = 19
 let R = newSeqWith(n+100,randomBit(32))
@@ -167,6 +139,17 @@ bench "intset": # 600ms クソ雑魚. ランキングに載せるのがはばか
   for _ in 0..n: S.incl randomBit(32)
   for i in 0..n:
     if randomBit(32) in S: dummy += 1
+import "./set/stdset"
+bench "std::set":
+  var A = initStdSet[int]()
+  for i in 0..n: A.add randomBit(32)
+  for i in 0..n:
+    if randomBit(32) in A: dummy += 1
+bench "std::multiset":
+  var A = initStdMultiSet[int]()
+  for i in 0..n: A.add randomBit(32)
+  for i in 0..n:
+    if randomBit(32) in A: dummy += 1
 import "./set/treap"
 bench "Treap":
   var A = newTreapSet[int]()
@@ -193,6 +176,6 @@ bench "Perfect RBST": # 2倍くらい速い！
   var A = B.buildRBST()
   for i in 0..n:
     if randomBit(32) in A: dummy += 1
-#
+
 echo dummy
 output()
