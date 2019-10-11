@@ -88,8 +88,14 @@ proc createRandomGraph*(v:int,e:float,connected:bool=true): seq[seq[int]] =
       result[center].add i
 iterator benchGraph*(maxVertexNum:int,maxEdgeNum:int,loopTime:int,connected:bool = true): seq[seq[int]] =
   for i in 0..<loopTime:
-    let e = 2.0 * random(maxEdgeNum).float / maxVertexNum.float
-    yield createRandomGraph(maxVertexNum,e,connected)
+    let e = random(maxEdgeNum).float / maxVertexNum.float
+    let r = random(5)
+    if r == 0: # たまに木が来る.意外とこういうのがコーナーケースなので
+      let p = random(1000000).float / 1000000.0
+      echo "TREE"
+      yield createRandomTree(maxVertexNum,p)
+    else:
+      yield createRandomGraph(maxVertexNum,e,connected)
 
 # Graphviz で可視化. Mac用.
 import os,osproc
@@ -128,8 +134,10 @@ proc graphviz*(E:seq[seq[int]],filename:string = "",layout:string = "dot") =
   discard execProcess("rm "&filename&".dot")
 
 when isMainModule:
-  let E = createRandomTree(10,0.5)
+  let E1 = createRandomTree(10,0.5)
   # E.graphviz()
+  # for x in benchGraph(20,400,5):
+  #   x.graphviz(layout="neato")
   # for x in benchGraph(20,100,1):
   #   x.graphviz(layout="neato")
   # createRandomGraph(10,3.0).graphviz(layout="neato")
