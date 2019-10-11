@@ -26,14 +26,14 @@ proc siftup[T](heap: var PriorityQueue[T], p: int) =
   var pos = p
   let startpos = pos
   let newitem = heap[pos]
-  var childpos = 2*pos + 1
+  var childpos = 2 * pos + 1
   while childpos < endpos:
     let rightpos = childpos + 1
     if rightpos < endpos and 0 <= heap.cmp(heap[childpos], heap[rightpos]):
       childpos = rightpos
     heap.data[pos] = heap[childpos]
     pos = childpos
-    childpos = 2*pos + 1
+    childpos = 2 * pos + 1
   heap.data[pos] = newitem
   siftdown(heap, startpos, pos)
 proc len*[T](heap: PriorityQueue[T]): int = heap.data.len
@@ -63,10 +63,11 @@ proc toSequence*[T](heap: PriorityQueue[T]): seq[T] = heap.data.sorted(cmp)
 proc `$`*[T](heap: PriorityQueue[T]): string = $heap.toSequence()
 iterator items*[T](heap:PriorityQueue[T]) : T =
   for v in heap.toSequence(): yield v
-proc newPriorityQueue*[T](cmp:proc(x,y:T):int) : PriorityQueue[T]=
+proc newPriorityQueue*[T](cmp:proc(x,y:T):int) : PriorityQueue[T] =
   new(result)
   result.data = @[]
   result.cmp = cmp
+
 
 when isMainModule:
   import unittest
@@ -92,7 +93,6 @@ when isMainModule:
       pq2.push(0)
       check: pq2.pop() == 0
       check: pq2.pop() == 30
-
     block: # 最大値
       var pq = newPriorityQueue[int](descending)
       pq.push(30)
@@ -103,3 +103,9 @@ when isMainModule:
       pq.push(0)
       check: pq.pop() == 10
       check: pq.pop() == 0
+    block: # 直接構築
+      var P = @[1,4,2,4,3243,4234,2342,1231,413123,4231,412,41,411,414,1413545,212,431412].buildPriorityQueue(ascending)
+      var i = 0
+      while P.len > 0:
+        check: P.pop == @[1,2,4,4,41,212,411,412,414,1231,2342,3243,4231,4234,413123,431412,1413545][i]
+        i += 1

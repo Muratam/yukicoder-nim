@@ -1,3 +1,16 @@
+{.checks:off.}
+import sequtils,algorithm,math,tables,sets,strutils,times
+template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
+template loop*(n:int,body) = (for _ in 0..<n: body)
+template `max=`*(x,y) = x = max(x,y)
+template `min=`*(x,y) = x = min(x,y)
+proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" ,discardable.}
+proc scan(): int =
+  while true:
+    let k = getchar_unlocked()
+    if k < '0' or k > '9': return
+    result = 10 * result + k.ord - '0'.ord
+
 # verified : https://atcoder.jp/contests/abc140/tasks/abc140_f
 
 # Treap
@@ -11,6 +24,7 @@
 # Treapと違い,こちらは生の木を扱う実装.
 # 要素の重複が不許可 => singleAdd
 # 追加がTreapより2~3倍遅い.しかしbuildすればstd::mapより速い.
+
 
 type Rbst*[T] = ref object
   key*: T
@@ -383,31 +397,27 @@ proc merge*[T](x,y:Rbst[T]): Rbst[T] =
   echo "できてもO(範囲の中の個数)かかるよ！ "
   doAssert false
 
-import times
-template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
-when isMainModule:
-  import unittest
-  import sequtils
-  test "Rbst":
-    var R = newRbst[int]()
-    let RI = @[0,0,1,1,1,2,3,4,4,4,5,6,7,7,8,8,9]
-    for i in RI: R.add i
-    # for i in 0..<100: R.add i
-    for i in -2..10:
-      echo i,":",R.isKth(i)
-    var L = newRbst[int]()
-    let LI = @[0,0,1,1,1,2,3,4,4,4,5,6,8,8,9]
-    for i in LI: L.add i + 10
-    for i in -2..20:
-      let found = L.findKth(i)
-      if found != nil:
-        echo i,":",found.key
-    echo R
-    echo L
-    let S = R.merge(L)
-    echo S
-    let (S1,S2) = S.split(15)
-    echo S1
-    echo S2
-    echo S1.eraseAt(4..11)
-    echo S1.dump()
+
+stopwatch:
+  let n = scan()
+  let m = 1 shl n
+  var B = newSeq[int](m)
+  for i in 0..<m:B[i] = scan()
+  var S = B.build()
+  # for b in B: S.add b
+  var parent = newSeq[int]()
+  block:
+    let last = S.max().key
+    parent.add last
+    S.erase last
+  n.loop:
+    var child = newSeq[int]()
+    for p in parent:
+      # p未満のものを一つだけ削除する
+      let last = S.findLess(p-1,true)
+      if last == nil:
+        quit "No",0
+      child.add last.key
+      S.erase last.key
+    parent.add child
+  echo "Yes"

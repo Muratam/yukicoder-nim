@@ -155,16 +155,18 @@ bench "intset": # 600ms クソ雑魚. ランキングに載せるのがはばか
   for _ in 0..n: S.incl randomBit(32)
   for i in 0..n:
     if randomBit(32) in S: dummy += 1
-import "./set/patriciatree"
-bench "Patricia Tree":
-  var A = newPatriciaSegmentTree(proc(x,y:bool):bool=x,false)
-  for i in 0..n: A[randomBit(32)] = true
-  for i in 0..n:
-    if randomBit(32).int in A: dummy += 1
-import "./set/lighttreap"
-bench "Light Treap":
+import "./set/treap"
+bench "Treap":
   var A = newTreapRoot[int]()
   for i in 0..n: A.add randomBit(32)
+  for i in 0..n:
+    if randomBit(32) in A: dummy += 1
+import "./set/treap"
+bench "Perfect Treap": # 2倍くらい速い！
+  var B = newSeq[int]()
+  for i in 0..n: B.add randomBit(32)
+  var A = newTreapRoot[int]()
+  A.resetWith(B)
   for i in 0..n:
     if randomBit(32) in A: dummy += 1
 #
