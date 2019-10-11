@@ -1,7 +1,11 @@
 # verified : https://atcoder.jp/contests/abc140/tasks/abc140_f
 
 # RBST に セグツリを乗っけたもの. 重複不可.
+# めっちゃ重たいけど必要になることあるのかな？
+# 座標圧縮して{BIT,セグツリ}でいいはず.
+# 必要な問題が出たらそれがverify用のコードになるのでそれで
 
+#[
 type Monoid*[V] = ref object
   apply:proc(x,y:V):V
   unit:V
@@ -42,19 +46,19 @@ proc update[K,V](self:SegRBST[K,V]) : SegRBST[K,V] {.discardable.} =
     self.count += self.right.count
     self.sum = self.monoid.apply(self.sum,self.right.sum)
   return self
-proc findOrAdd[K,V](self:SegRBST[K,V],key:K) : bool =
+proc findOrSet[K,V](self:SegRBST[K,V],key:K,value:V) : bool =
   if self == nil : return false
   if self.key == key:
-    self.sameCount += 1
+    self.value = value
     self.update()
     return true
   if key < self.key:
     if self.left == nil : return false
-    result = self.left.findOrAdd(key)
+    result = self.left.findOrSet(key,value)
     self.update()
   else:
     if self.right == nil: return false
-    result = self.right.findOrAdd(key)
+    result = self.right.findOrSet(key,value)
     self.update()
 proc mergeImpl[K,V](left,right:SegRBST[K,V]) : SegRBST[K,V] =
   if left == nil: return right
@@ -66,13 +70,13 @@ proc mergeImpl[K,V](left,right:SegRBST[K,V]) : SegRBST[K,V] =
   else:
     right.left = left.mergeImpl(right.left)
     return right.update()
-# 構築
-proc newSegRBST*[K,V]():SegRBST[K,V] = nil
-proc toSegRBST*[K,V](key:K):SegRBST[K,V] =
+proc toSegRBST*[K,V](key:K,value:V,monoid:Monoid[V]):SegRBST[K,V] =
   result = SegRBST[K,V](
     key:key,
-    sameCount:1,
+    value:value,
+    sum:value,
     count:1,
+    monoid:monoid,
   )
 proc split*[K,V](self:SegRBST[K,V],key:K): tuple[l,r:SegRBST[K,V]] =
   # 再帰的に切るだけ. (子は必ず優先度が低いので)
@@ -85,7 +89,7 @@ proc split*[K,V](self:SegRBST[K,V],key:K): tuple[l,r:SegRBST[K,V]] =
     let s = self.right.split(key)
     self.right = s.l
     return (self.update(),s.r)
-# 検索・重複{あり,なし}挿入・削除
+# 検索・挿入・削除
 proc find*[K,V](self:SegRBST[K,V],key:K) : SegRBST[K,V]=
   if self == nil : return nil
   if self.key == key: return self
@@ -98,15 +102,15 @@ proc find*[K,V](self:SegRBST[K,V],key:K) : SegRBST[K,V]=
 proc contains*[K,V](self:SegRBST[K,V],key:K):bool=
   if self == nil : false
   else: self.find(key) != nil
-proc add*[K,V](self:var SegRBST[K,V],key:K) =
+proc `[]=`*[K,V](self:var SegRBST[K,V],key:K,value:V) =
   if self == nil:
     self = key.toSegRBST()
   elif self.key == key:
-    self.sameCount += 1
+    self.value = value
     self.update()
   else:
     # 遅いが平衡を保つためには仕方ない
-    let found = self.findOrAdd(key)
+    let found = self.findOrSet(key)
     if found: return
     let s = self.split(key)
     self = s.l.mergeImpl(key.toSegRBST()).mergeImpl(s.r)
@@ -124,23 +128,19 @@ proc addSingle*[K,V](self:var SegRBST[K,V],key: K): bool {.discardable.}=
     self.right = s.r
     self.update()
   return true
-proc erase*[K,V](self:var SegRBST[K,V],key:K,all:bool = false) :bool {.discardable.} =
+proc erase*[K,V](self:var SegRBST[K,V],key:K) :bool {.discardable.} =
   if self == nil : return false
   # 自分にさようなら
   if self.key == key:
-    if not all and self.sameCount > 1:
-      self.sameCount -= 1
-      self.update()
-    else:
-      self = self.left.mergeImpl(self.right)
+    self = self.left.mergeImpl(self.right)
     return true
   if key < self.key:
     if self.left == nil : return false
-    result = self.left.erase(key,all)
+    result = self.left.erase(key)
     self.update()
   else:
     if self.right == nil : return false
-    result = self.right.erase(key,all)
+    result = self.right.erase(key)
     self.update()
 proc eraseAt*[K,V](self:SegRBST[K,V],slice:Slice[int]): SegRBST[K,V] =
   # 指定した [x..y] を O(logN)で 取り除く
@@ -322,3 +322,4 @@ when isMainModule:
     echo S2
     echo S1.eraseAt(4..11)
     echo S1.dump()
+]#

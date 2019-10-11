@@ -18,7 +18,7 @@
     - Treap :: std::{multi,}set のNim用の代替.
       - 追加・削除・検索・最{小,大}値・{以上,以下}列挙 O(logN)
     - RBST :: ↑ + 結合・分割・K番目
-      - NO_TEST: ＋セグツリ (一点更新, 区間取得)
+      - ↑ ＋セグツリ (一点更新, 区間取得)
     - UnionFind : 森のマージ・根の取得 O(1)
     - bitset : ビット演算の集合. + bitDP(全状態,補集合,superset).
     - PriorityQueue : 最小値検索 O(1), 追加・最小値削除　O(logN)
