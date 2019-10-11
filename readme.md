@@ -25,7 +25,7 @@
     - PriorityQueue亜種
       - SkewHeap : ↑ + マージ O(logN)
       - RadixHeap : 高速版 (制約: popした値は以降も最小値)
-      - ConvoQueue : 最大値+最小値 O(1), 中央値 O(1), k番目(BIT) O(logD)
+      - ConvoQueue : 最大値+最小値 O(1), 中央値 O(1), 任意番目(BIT) O(logD)
   - `string/` :: 構築 O(S). 文字列用.
     - ロリハ(通常/軽量) : 部分文字列同一判定 O(1)
     - SA-IS : prefix検索(個数,{上,下}界) O(PlogS)
@@ -34,7 +34,7 @@
   - modint :: ModInt (累乗,除算)
   - prime :: 素数(SFF,素数表,素数リスト)
   - arith :: 算術(順列,組み合わせ,累乗,四捨五入)
-  - count :: 数え上げ(nCk,カタラン数,第2種スターリング数,x:ベル数,sternBrocotTree(有理数列挙))
+  - count :: 数え上げ(nCk,転倒数,カタラン数,第2種スターリング数,ベル数,有理数列挙)
   - random :: 高速な乱数(xorShift), shuffleAt
   - geometry :: 二次元(複素数)幾何
 - `lib/graph` :: グラフ理論

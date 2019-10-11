@@ -1,3 +1,17 @@
+# iterator版(1/1,1/2,1/3,2/3,2/1... となり)
+iterator sternBrocotTreeIter(maxNum:int): tuple[u,d:int] =
+  type State = tuple[au,ad,bu,bd:int]
+  var stack = newSeq[State]()
+  stack.add((0,1,1,0))
+  while stack.len > 0:
+    let (au,ad,bu,bd) = stack.pop()
+    let mu = au + bu
+    let md = ad + bd
+    if mu > maxNum or md > maxNum : continue
+    stack.add((mu,md,bu,bd))
+    yield (mu,md)
+    stack.add((au,ad,mu,md))
+
 # なにもわからないよー
 # https://lumakernel.github.io/ecasdqina/graph/DP-all-subtree
 # https://ei1333.hateblo.jp/entry/2017/04/10/224413
