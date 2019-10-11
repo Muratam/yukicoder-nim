@@ -88,6 +88,13 @@ proc at[T](arr:seq[T],slice:Slice[T]): Slice[int] =
   if b >= arr.len : b = arr.len - 1
   return a..b
 
+when not defined(upperBound) :
+  proc upperBound*[T](arr:seq[T],a:T): int = # `<`
+    let i = arr.lowerBound(a)
+    if i >= arr.len or a < arr[i]: return i
+    return arr.lowerBound(a + 1)
+
+
 # 更新位置を座標圧縮(位置はlowerboundでアクセス).
 import algorithm
 type CompressedPos*[T] = ref object

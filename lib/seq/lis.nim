@@ -1,25 +1,20 @@
-import sequtils
-import "../datastructure/set/treap"
 # verify https://chokudai_s001.contest.atcoder.jp/tasks/chokudai_S001_h
-# std::map
 # 最長広義増加部分列 O(NlogN)
-proc longestIncreasingSubsequence[T](arr:seq[T],multi:bool) : seq[T] =
-  var S = newTreapSet[T](true)
-  for a in arr:
-    # a より大きいものを一つ削除する
-    let (ok,value) = S.findGreater(a,not multi)
-    if ok: S.erase value
-    S.add a
-  result = newSeq[T](S.len)
-  var i = 0
-  for x in S.items:
-    result[i] = x
-    i += 1
+import algorithm
 proc LMIS[T](arr:seq[T]) : seq[T] =
-  arr.longestIncreasingSubsequence(true)
+  result = @[]
+  for a in arr:
+    let i = result.lowerBound(a)
+    if i < 0 or i == result.len or result[i] == a: result.add a
+    else: result[i] = a
+# 最長増加部分列 O(NlogN)
 proc LIS[T](arr:seq[T]) : seq[T] =
-  arr.longestIncreasingSubsequence(false)
-
+  result = @[]
+  for a in arr:
+    # 自身より大きいものを一つ消して入れ替える
+    let i = result.lowerBound(a)
+    if i < 0 or i == result.len: result.add a
+    else: result[i] = a
 
 when isMainModule:
   import unittest
