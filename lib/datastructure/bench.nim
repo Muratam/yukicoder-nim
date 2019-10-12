@@ -134,7 +134,7 @@ bench "Table": # 160ms
   for i in 0..n: S[R[i]] = i
   for i in 0..n: dummy += S[R[i]]
 import intsets
-bench "intset": # 600ms クソ雑魚. ランキングに載せるのがはばかられる
+bench "intset": # 600ms 用途少なすぎンゴ
   var S = initIntSet()
   for _ in 0..n: S.incl randomBit(32)
   for i in 0..n:
