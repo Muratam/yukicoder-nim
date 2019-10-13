@@ -1,7 +1,6 @@
 import sequtils
+template times*(n:int,body) = (for _ in 0..<n: body)
 
-# 根付き木にする
-# (親も子も同一視して)双方向になっている木を,(0 番を)根として子のノードだけ持つように変更する
 proc toRootedTree*(E:seq[seq[int]],root:int = 0):seq[seq[int]] =
   var answer = newSeq[seq[int]](E.len)
   for i in 0..<E.len: answer[i] = newSeq[int]()
@@ -14,27 +13,6 @@ proc toRootedTree*(E:seq[seq[int]],root:int = 0):seq[seq[int]] =
       answer[now].add(dst)
       stack.add((now,dst))
   return answer
-
-# 木を平滑化してその区間を返す。
-# そこを根とする部分木(自身を含む)がその区間に対応する。
-proc eulerTour(E:seq[seq[int]]):tuple[toured:seq[Slice[int]],rev:seq[int]] =
-  var i = 0
-  # .a は Treeのindex -> 区間のindex
-  var toured = newSeq[Slice[int]](E.len)
-  # 区間のindex -> Treeのindex
-  var rev = newSeq[int](E.len)
-  proc dfs(src:int) =
-    let l = i
-    i += 1
-    for dst in E[src]: dfs(dst)
-    toured[src] = l..<i
-    rev[l] = src
-  dfs(0)
-  return (toured,rev)
-  
-# 木のダブリング. 構築 O(NlogN) 探索:O(logN)
-# どんな木でも、頂点πから頂点へのパス上のクエリを O(logN) で処理できる.
-# verify: https://yukicoder.me/problems/no/386
 type DoublingTree[T] = ref object
   n : int
   root : int # 根の番号[0,n)
@@ -131,82 +109,37 @@ proc LCA(E:seq[seq[int]],root:int = 0) : DoublingTree[IndexAndRank] =
     ,proc(i,rank:int):IndexAndRank = (i,rank)
   )
 
-# パスの長さ with ダブリング
-proc pathLength(E:seq[seq[int]],root:int = 0) : DoublingTree[int] =
-  # 1 大きいので trace値-1 すること
-  E.newDoublingTree(root
-  ,proc(x,y:int):int = x + y
-  ,proc(i,rank:int):int = 1)
+proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
+proc scan(): int =
+  while true:
+    let k = getchar_unlocked()
+    if k < '0': return
+    result = 10 * result + k.ord - '0'.ord
 
-# 全方位木DP. 0-indexed. 可換モノイド.
-# Eは事前に両方向に代入して無向グラフにしておくこと.
-import sets,tables
-proc allTreeDP[T](
-    E:seq[seq[int]],
-    apply:proc(x,y:T):T,
-    init:proc(i:int):T,
-    final:proc(i:int,sum:T):T) : seq[T] =
-  var dp = newSeq[Table[int,T]](E.len)
-  for i in 0..<E.len: dp[i] = initTable[int,T]()
-  proc dfs(src,pre:int) : T =
-    if pre in dp[src]: return dp[src][pre]
-    result = init(src)
-    for dst in E[src]:
-      if dst != pre:
-        result = apply(result,dfs(dst,src))
-    result = final(src,result)
-    dp[src][pre] = result
-  result = newSeq[T](E.len)
-  for i in 0..<E.len: result[i] = dfs(i,-1)
-# 1頂点の木のDP. 0-indexed. 可換モノイド.
-proc treeDP[T](
-    E:seq[seq[int]],
-    root:int,
-    apply:proc(x,y:T):T,
-    init:proc(i:int):T) : seq[T] =
-  var E = E.toRootedTree(root)
-  var dp = newSeq[T](E.len)
-  proc dfs(src:int) : T  =
-    result = init(src)
-    for dst in E[src]:
-      result = apply(result,dfs(dst))
-  discard dfs(root)
-  return dp
-
-when isMainModule:
-  import unittest
-  # import "./testgraph"
-  # let E = createRandomTree(10,0.5)
-  # let lca = E.pathLength(0)
-  # import strutils
-  # E.graphviz(labels=lca.traces.mapIt(($it).replace("\"","")))
-  # E.graphviz(labels=toSeq(0..9).mapIt($it))
-  # for i in 0..<10:
-  #   for j in 0..<10:
-  #     echo i,":",j,":",lca.trace(i,j)
-  test "tree":
-    let E = @[@[1,2],@[0,3],@[0],@[1]]
-    check: E.toRootedTree == @[@[1, 2], @[3], @[], @[]]
-    check: E.toRootedTree.eulerTour().toured == @[(0..<4),(1..<3),(3..<4),(2..<3)]
-    check: E.toRootedTree.eulerTour().rev == @[0,1,3,2]
-    let lca = E.LCA()
-    check: lca.trace(1,3).i == 1
-    check: lca.trace(0,3).i == 0
-    check: lca.trace(1,2).i == 0
-  test "alltreedp":
-    # 例: 全頂点から最も遠い位置(同じ場合はindexが小さい方)までの距離
-    let E = @[@[1], @[0, 2, 3], @[1], @[1]]
-    type WithIndex[T] = tuple[i:int,val:T]
-    let dp = E.allTreeDP(
-      proc(x,y:WithIndex[int]):WithIndex[int] =
-        if x.val == y.val :
-          if x.i < y.i: return x
-          return  y
-        if x.val > y.val : return  x
-        return  y
-      ,
-      proc(i:int):WithIndex[int] = (i,-1),
-      proc(i:int,sum:WithIndex[int]):WithIndex[int] = (sum.i,sum.val+1),
-    )
-    let correct : seq[WithIndex[int]] = @[(2,2),(0,1),(0,2),(0,2)]
-    check: dp == correct
+# 木を造って根からの距離を保持してLCA分引く
+let n = scan()
+var E = newSeqWith(n,newSeq[int]())
+(n-1).times:
+  let u = scan()
+  let v = scan()
+  E[u] .add v
+  E[v] .add u
+let lca = E.LCA(0)
+let ER = E.toRootedTree(0)
+let C = newSeqWith(n,scan()) # cost
+var C0 = newSeqWith(n,-1) # 0 からのcost
+block:
+  var stack = newSeq[tuple[i,c:int]]()
+  stack.add((0,0))
+  while stack.len > 0:
+    let(i,c) = stack.pop()
+    C0[i] = C[i] + c
+    for dst in ER[i]: stack.add((dst,C0[i]))
+var ans = 0
+scan().times:
+  let u = scan()
+  let v = scan()
+  let c = scan()
+  let parent = lca.trace(u,v).i
+  ans += (C0[u] + C0[v] - 2 * C0[parent] + C[parent]) * c
+echo ans

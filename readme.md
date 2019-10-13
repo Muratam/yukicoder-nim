@@ -38,7 +38,7 @@
   - random :: 高速な乱数(xorShift), shuffleAt
   - geometry :: 二次元(複素数)幾何
 - `lib/graph` :: グラフ理論
-  - Tree :: 根付き木に変換,(全方位)木DP,オイラーツアー,最小共通祖先(LCA:O(logN))
+  - Tree :: 根付き木に変換,(全方位)木DP,オイラーツアー,ダブリング(構築:O(NlogN),任意頂点間の可換半群クエリO(logN)::例:最小共通祖先(LCA))
   - DAG :: トポロジカルソート,DAG判定, 強連結成分分解(SCC:O(V+E))
   - MST :: 最小全域木 O(ElogV)
   - ShortestPath :: 最短経路 [ O(ElogE), 負有り:O(EV), 全:O(V^3) ]

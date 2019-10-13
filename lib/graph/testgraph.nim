@@ -98,8 +98,11 @@ iterator benchGraph*(maxVertexNum:int,maxEdgeNum:int,loopTime:int,connected:bool
       yield createRandomGraph(maxVertexNum,e,connected)
 
 # Graphviz で可視化. Mac用.
-import os,osproc
-proc graphviz*(E:seq[seq[int]],filename:string = "",layout:string = "dot") =
+import os,osproc,sequtils
+proc graphviz*(E:seq[seq[int]],labels:seq[string] = @[],filename:string = "",layout:string = "dot") =
+  var labels = labels
+  if labels.len == 0:
+    labels = toSeq(0..E.len-1).mapIt($it)
   var graph = """
     digraph  {
       layout = """" & layout & """";
@@ -118,10 +121,12 @@ proc graphviz*(E:seq[seq[int]],filename:string = "",layout:string = "dot") =
         fontsize = "8",
         fontname = "Helvetica",
         # style = "dashed",
-    ];"""
+      ];"""
   for src,dsts in E:
     for dst in dsts:
       graph.add "a" & ($src) & " -> a" & ($dst) & ";\n"
+  for i,label in labels:
+    graph.add "a" & ($i) & "[label=\"" & label & "\"];\n";
   graph.add "}"
   var filename = filename
   if filename.len == 0: filename = randomStringFast(3,3)
@@ -135,7 +140,8 @@ proc graphviz*(E:seq[seq[int]],filename:string = "",layout:string = "dot") =
 
 when isMainModule:
   let E1 = createRandomTree(10,0.5)
-  # E.graphviz()
+  # E1.graphviz(toSeq(0..9).mapIt(it*it).mapIt($it))
+  # E1.toRootedTree(0).graphviz()
   # for x in benchGraph(20,400,5):
   #   x.graphviz(layout="neato")
   # for x in benchGraph(20,100,1):
