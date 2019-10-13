@@ -31,7 +31,7 @@ proc eulerTour(E:seq[seq[int]]):tuple[toured:seq[Slice[int]],rev:seq[int]] =
     rev[l] = src
   dfs(0)
   return (toured,rev)
-  
+
 # 木のダブリング. 構築 O(NlogN) 探索:O(logN)
 # どんな木でも、頂点πから頂点へのパス上のクエリを O(logN) で処理できる.
 # verify: https://yukicoder.me/problems/no/386
@@ -140,6 +140,8 @@ proc pathLength(E:seq[seq[int]],root:int = 0) : DoublingTree[int] =
 
 # 全方位木DP. 0-indexed. 可換モノイド.
 # Eは事前に両方向に代入して無向グラフにしておくこと.
+# O(KNlogN).(K:DPの状態数)
+# 普通は K < N だが, (入出力がいっぱいなので)スターグラフで死ぬ.
 import sets,tables
 proc allTreeDP[T](
     E:seq[seq[int]],
@@ -158,6 +160,7 @@ proc allTreeDP[T](
     dp[src][pre] = result
   result = newSeq[T](E.len)
   for i in 0..<E.len: result[i] = dfs(i,-1)
+
 # 1頂点の木のDP. 0-indexed. 可換モノイド.
 proc treeDP[T](
     E:seq[seq[int]],
@@ -173,17 +176,65 @@ proc treeDP[T](
   discard dfs(root)
   return dp
 
+
+# 適当な s から最も遠い u を求め, uから最も遠い v を求めるとそれが 最遠頂点 のペアとなり長さlも求まる.
+# 離心数 : 最遠頂点までの距離
+# 直径 : 離心数の最大値
+# 半径 : 離心数の最小値
+# 中心 : 離心数が最小となる頂点
+# 木の直径と端点 O(N)
+proc diameter(E:seq[seq[int]]): tuple[l,u,v:int] = 
+  proc impl(pre,src:int) : tuple[l,u:int] =
+    result = (0,src)
+    for dst in E[src]:
+      if dst == pre : continue
+      var t = impl(src,dst)
+      t.l += 1
+      if t.l > result.l: result = t
+  let r = impl(-1,0)
+  let t = impl(-1,r.u)
+  return (t.l,t.u,r.u)
+# 木の中心と半径 O(NlogN)
+proc center(E:seq[seq[int]]): tuple[l,c:int] = 
+  # 全頂点から最も遠い位置までの距離を全方位木DPして最小値を取る
+  type WithIndex[T] = tuple[i:int,val:T]
+  let dp = E.allTreeDP(
+    proc(x,y:WithIndex[int]):WithIndex[int] =
+      if x.val > y.val : return  x
+      return  y
+    ,
+    proc(i:int):WithIndex[int] = (i,-1),
+    proc(i:int,sum:WithIndex[int]):WithIndex[int] = (sum.i,sum.val+1),
+  )
+  result = (1e12.int,1e12.int)
+  for src,d in dp:
+    let(dst,length) = d
+    if length < result.l:
+      result.l = length
+      result.c = src 
+
+
+
+
+
 when isMainModule:
-  import unittest
+  import unittest,times
+  template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")  
   # import "./testgraph"
-  # let E = createRandomTree(10,0.5)
-  # let lca = E.pathLength(0)
-  # import strutils
-  # E.graphviz(labels=lca.traces.mapIt(($it).replace("\"","")))
-  # E.graphviz(labels=toSeq(0..9).mapIt($it))
-  # for i in 0..<10:
-  #   for j in 0..<10:
-  #     echo i,":",j,":",lca.trace(i,j)
+  block:
+    # let E = createRandomTree(1e4.int,1.0)
+    # E.graphviz()
+    # stopwatch:echo E.center()
+    # stopwatch: echo E.diameter()
+    # let lca = E.pathLength(0)
+    # echo E.diameter()
+    # import strutils
+    # E.graphviz(labels=lca.traces.mapIt(($it).replace("\"","")))
+    # E.graphviz(labels=toSeq(0..9).mapIt($it))
+    # for i in 0..<10:
+    #   for j in 0..<10:
+    #     echo i,":",j,":",lca.trace(i,j)
+    discard
   test "tree":
     let E = @[@[1,2],@[0,3],@[0],@[1]]
     check: E.toRootedTree == @[@[1, 2], @[3], @[], @[]]
