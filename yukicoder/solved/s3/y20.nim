@@ -1,3 +1,4 @@
+{.checks:off.}
 import sequtils,strutils,algorithm
 proc getchar_unlocked():char {. importc:"getchar_unlocked",header: "<stdio.h>" .}
 proc scan(): int =

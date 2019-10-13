@@ -2,9 +2,7 @@
 # O(log(N)): 追加 / 最小値Pop
 # O(1) : 最小値取得
 # https://github.com/nim-lang/Nim/blob/version-1-0/lib/pure/collections/heapqueue.nim#L58
-
-
-
+{.checks:off.}
 import algorithm
 type PriorityQueue*[T] = ref object
   data*: seq[T]
