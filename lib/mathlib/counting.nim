@@ -60,6 +60,6 @@ when isMainModule:
     check: 100.combination(50) == 538992043.toModInt()
     for i,c in @[1, 1, 2, 5, 14, 42, 132, 429, 1430, 4862, 16796, 58786, 208012, 742900, 2674440, 9694845]:
       check: i.catalanNumber() == c.toModInt()
-    check: toSeq(sternBrocotTree(3)) == @[(1,3),(1,2),(2,3),(1,1),(3,2),(2,1),(3,1)]
+    check: sternBrocotTree(3) == @[(1,3),(1,2),(2,3),(1,1),(3,2),(2,1),(3,1)]
   test "inversion number":
     check: @[3,1,5,4,2].inversionNumber() == 5

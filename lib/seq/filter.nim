@@ -78,7 +78,6 @@ proc slideMin[T](arr:seq[T],width:int,paddingLast:bool = false) : seq[T] =
   # arr[deq[0]] は目的(最小値)のもので,残りは順に arr[l] 以下まで
   var deq = initDeque[int]()
   for i in 0..<arr.len:
-    echo arr[i], toSeq(deq.items).mapIt(arr[it])
     # 次に arr[i] が来るので,それ以上の不要なものは後ろから消していく.
     while deq.len > 0 and arr[deq.peekLast()] >= arr[i] : deq.popLast() # 最小値の場合
     # while deq.len > 0 and arr[deq.peekLast()] <= arr[i] : deq.popLast() # 最大値の場合

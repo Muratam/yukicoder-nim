@@ -254,7 +254,7 @@ proc buildRBST*[T](arr:seq[T],allowMulti:bool = true) : Rbst[T] =
   if arr.len <= 0 : return
   var S = newSeq[T]()
   var counts = newSeq[int32]()
-  var arr2 = arr.sorted()
+  var arr2 = arr.sorted(cmp)
   for a in arr2:
     if S.len > 0 and S[^1] == a :
       if allowMulti: counts[^1] += 1
