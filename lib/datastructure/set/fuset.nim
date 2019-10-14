@@ -1,7 +1,11 @@
+# Fixed Universe Set.
+# 整数のトライ木. 爆速. 値同士が近いと更に爆速.
 # https://topcoder.g.hatena.ne.jp/spaghetti_source/20121216/1355652855
-# Fixed Universe Set. 探索木.
-# 制約 : 整数のみ.
-# 特徴 : 爆速. 値同士が近いと更に爆速.
+# verify : https://atcoder.jp/contests/abc140/tasks/abc140_f
+#
+# ベンチではめちゃくちゃ速いのになぜかTreapに負けている.
+# 理由が分からないので今後そういう問題が出たら考える.
+# ベンチ的には std::set よりも速いのでかなり嬉しいんだけどなー.短いし.
 const FU64Bit = false
 when FU64Bit: # 範囲が1e9以内ならfalse (ほんのり速い)
   const FUBit = 4
@@ -65,7 +69,7 @@ proc max(self:FUNode,r:int) : int =
   let h = self.S.maxBit()
   if r <= FUBit: return h
   return (h shl (r - FUBit)) + self.child[h].max(r-FUBit)
-# TODO:
+# どうせ必要ないでしょ.
 # iterator items(self:FUNode,r:int):int =
   # type WithRank = tuple[node:FUNode,r:int]
   # var nodes : seq[WithRank] = @[(self,r)]
@@ -154,15 +158,14 @@ when isMainModule:
     var S = newSeq[string](64)
     for i in 0..<64: S[63 - i] = $(((a and (1 shl i)) != 0).int)
     return S.join("")[(64-maxKey)..^1]
+  let n = 1e6.int
   block:
     stopwatch:
       var S = newFUSet(true)
-      let n = 1e6.int
       for i in 0..<n: S.add i
   block:
     stopwatch:
       var S = newFUSet(true)
-      let n = 1e6.int
       for i in 0..<n: S.add randomBit(30).int
   test "FU Bit":
     var S = newFUSet(false)

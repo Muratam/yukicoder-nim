@@ -26,6 +26,7 @@
       - SkewHeap : ↑ + マージ O(logN)
       - RadixHeap : 高速版 (制約: popした値は以降も最小値)
       - ConvoQueue : 最大値+最小値 O(1), 中央値 O(1), 任意番目(BIT) O(logD)
+    - FixedUniverseSet :: intのみの std::{,multi}set. たぶん爆速.
   - `string/` :: 構築 O(S). 文字列用.
     - ロリハ(通常/軽量) : 部分文字列同一判定 O(1)
     - SA-IS : prefix検索(個数,{上,下}界) O(PlogS)

@@ -6,6 +6,7 @@
 # key には int以外のカスタムの比較関数も取れる
 # 平衡度が緩いため,std::map の2~3倍遅い.
 # 要素が先に分かっている場合は完全な平衡木を作れてstd::mapより速くなる.
+# key が int の場合, FUSet も選択肢に入る.
 
 import sequtils
 import times
