@@ -2,7 +2,7 @@
 # Fixed Universe Set. 探索木.
 # 制約 : 整数のみ.
 # 特徴 : 爆速. 値同士が近いと更に爆速.
-const FU64Bit = true
+const FU64Bit = false
 when FU64Bit: # 範囲が1e9以内ならfalse (ほんのり速い)
   const FUBit = 4
   const FUMaxBit = 64
@@ -85,7 +85,21 @@ proc max(self:FUNode,r:int) : int =
 # iterator revItems(self:FUNode,r:int):int =
 # iterator greater(self:FUNode,x:int,r:int,including:bool):int =
 # iterator less(self:FUNode,x:int,r:int,including:bool):int =
-# proc findGreater(self:FUNode,x:int,r:int,including:bool) : tuple[ok:bool,v:int] =
+proc findGreater(self:FUNode,x:int,r:int,including:bool,sameH:bool=true) : tuple[ok:bool,v:int] =
+  var h = if sameH : self.getH(x,r) else: self.S.minBit()
+  var S = if sameH : self.S and not ((1 shl h) - 1) else: self.S
+  var i = h
+  while S > 0:
+    defer:
+      S = S and (not (1 shl i))
+      if S > 0: i = S.minBit()
+    if (self.S and (1 shl i)) == 0 : continue
+    if r <= FUBit:
+      if sameH and not including and i == h: continue
+      return (true,i)
+    let (ok,v) = self.child[i].findGreater(x,r-FUBit,including,sameH and i == h)
+    if ok: return (true, (i shl (r - FUBit)) + v)
+  return (false,-1)
 proc findLess(self:FUNode,x:int,r:int,including:bool,sameH:bool=true) : tuple[ok:bool,v:int] =
   var h = if sameH : self.getH(x,r) else: self.S.maxBit()
   var S = if sameH : self.S and ((2 shl h) - 1) else: self.S
@@ -93,7 +107,7 @@ proc findLess(self:FUNode,x:int,r:int,including:bool,sameH:bool=true) : tuple[ok
   while S > 0:
     defer:
       S = S and (not (1 shl i))
-      i = S.maxBit()
+      if S > 0: i = S.maxBit()
     if (self.S and (1 shl i)) == 0 : continue
     if r <= FUBit:
       if sameH and not including and i == h: continue
@@ -125,6 +139,10 @@ proc findLess*(self:FUSet,x:int,including:bool): tuple[ok:bool,v:int] =
   let (ok,v) = self.root.findLess(x + FUOffset,FUMaxBit,including)
   if not ok: return (false,-1)
   return (true,v - FUOffset)
+proc findGreater*(self:FUSet,x:int,including:bool): tuple[ok:bool,v:int] =
+  let (ok,v) = self.root.findGreater(x + FUOffset,FUMaxBit,including)
+  if not ok: return (false,-1)
+  return (true,v - FUOffset)
 
 when isMainModule:
   import unittest
@@ -151,7 +169,8 @@ when isMainModule:
     for i in @[100,300,200,210,205,201,200,202]:
       S.add i
     # for i in 310.countdown(90):
-    #   echo i,":",S.findLess(i,false),S.findLess(i,true)
+    #   echo i,"LT:",S.findLess(i,false),S.findLess(i,true)
+    #   echo i,"GT:",S.findGreater(i,false),S.findGreater(i,true)
     # echo 100 in S
     # for i in 0..<100: S.add i
     # echo S.min()

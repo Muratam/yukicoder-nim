@@ -150,6 +150,12 @@ bench "intset": # 600ms 用途少なすぎンゴ
 #   for i in 0..n: A.add randomBit(32)
 #   for i in 0..n:
 #     if randomBit(32) in A: dummy += 1
+import "./set/fuset"
+bench "Fixed Universe Set":
+  var B = newFUSet(true)
+  for i in 0..n: B.add randomBit(30)
+  for i in 0..n:
+    if randomBit(30) in B: dummy += 1
 import "./set/treap"
 bench "Treap":
   var A = newTreapSet[int]()
@@ -176,6 +182,7 @@ bench "Perfect RBST": # 2倍くらい速い！
   var A = B.buildRBST()
   for i in 0..n:
     if randomBit(32) in A: dummy += 1
+
 
 echo dummy
 output()
