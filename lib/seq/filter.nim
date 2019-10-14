@@ -40,7 +40,39 @@ proc LIS[T](arr:seq[T]) : seq[T] =
     if i < 0 or i == result.len: result.add a
     else: result[i] = a
 
-# (更新位置のみを)座標圧縮(位置はlowerboundでアクセス).
+# 最長共通部分列(LCS) O(NlogN)
+# http://www.prefield.com/algorithm/dp/lcs_hs.html
+import tables,algorithm
+proc LCS*[T](A,B:seq[T]):seq[T] =
+  # B内の文字 -> index
+  var BT = initTable[T,seq[int]]()
+  for i in (B.len-1).countdown(0):
+    if B[i] in BT : BT[B[i]].add i
+    else: BT[B[i]] = @[i]
+  # LIS
+  var A2 = newSeq[int](A.len+1)
+  for i in 0..<A2.len: A2[i] = 1e12.int
+  A2[0] = -1e12.int
+  type Node = ref object
+    value:T
+    next:Node
+  var links = newSeq[Node](A2.len)
+  for a in A:
+    if a notin BT: continue
+    for ib in BT[a]:
+      let k = A2.lowerBound(ib)
+      A2[k] = ib
+      links[k] = Node(value:B[ib],next:links[k-1])
+  var p = links[A2.lowerBound(1e12.int-1) - 1]
+  result = @[]
+  while p != nil:
+    result.add p.value
+    p = p.next
+  return result.reversed()
+
+
+# 座標圧縮
+# 更新位置のみを圧縮. 位置はlowerboundでアクセス.
 import algorithm
 type CompressedPos*[T] = ref object
   data*: seq[T]
@@ -61,37 +93,6 @@ proc `[]`*[T](self:CompressedPos[T],i:Slice[T]): Slice[int] =
 proc `$`*[T](self:CompressedPos[T]): string = $self.data
 proc id*[T](x:T):T = x # nim0.13用
 
-# スライド最小値
-# 幅wの窓をずらしていって得られる範囲の最小値列 構築O(N)
-# [0 3 8 7 6 7 7 ...
-#  !]
-#  3 !]
-#  8 8 8]
-#  7 7 7 7]
-#   [6 ! ! !] ...
-import "../datastructure/queue/deques"
-import sequtils
-proc slideMin[T](arr:seq[T],width:int,paddingLast:bool = false) : seq[T] =
-  let size = if paddingLast : arr.len else: arr.len-width+1
-  result = newSeqWith(size,-1)
-  # arr[deq_i]はソートされた配列になっている. deq_i はindexを格納している.
-  # arr[deq[0]] は目的(最小値)のもので,残りは順に arr[l] 以下まで
-  var deq = initDeque[int]()
-  for i in 0..<arr.len:
-    # 次に arr[i] が来るので,それ以上の不要なものは後ろから消していく.
-    while deq.len > 0 and arr[deq.peekLast()] >= arr[i] : deq.popLast() # 最小値の場合
-    # while deq.len > 0 and arr[deq.peekLast()] <= arr[i] : deq.popLast() # 最大値の場合
-    deq.addLast(i)
-    let l = i - width + 1
-    if l < 0:continue
-    result[l] = arr[deq.peekFirst()]
-    if deq.peekFirst() == l: deq.popFirst()
-  if not paddingLast : return
-  # 後ろに最後の数字を詰めて同じサイズにする
-  # paddingFirstが無くて非対称なのは面倒だったから
-  for i in arr.len-width+1..<arr.len:
-    result[i] = arr[deq.peekFirst()]
-    if deq.peekFirst() == i: deq.popFirst()
 
 
 when isMainModule:
@@ -99,9 +100,10 @@ when isMainModule:
   test "sequence filter":
     let arr = "iikannji".mapIt(it)
     check: arr.deduplicated() == @['a','i','j','k','n']
-  test "LIS":
+  test "LIS / LCS":
     check: @[1,3,13,5,2,3,3,3,3,4,5,7,12,144,15,66].LMIS() == @[1, 2, 3,3,3,3, 4, 5, 7, 12, 15, 66]
     check: @[1,3,13,5,2,3,3,3,3,4,5,7,12,144,15,66].LIS() == @[1, 2, 3, 4, 5, 7, 12, 15, 66]
+    check: @[1,2,3,4,5,5,6,3,2,1,2,3,4].mapIt($it).LCS(@[1,3,5,5,3,3,3,2,1,2,3,4].mapIt($it)) == @[1, 3, 5, 5, 3, 2, 1, 2, 3, 4].mapIt($it)
   test "compressed Position":
     let poses = @[1,10,100,1000,10000]
     var T = poses.newCompressedPos()
@@ -115,7 +117,3 @@ when isMainModule:
     check: T[101..1001] == 3..3
     check: T[101..102] == 3..2 # 区間が反転している時は 区間内に存在するものが無かった！
     check: T[id(-100)..1000] == 0..3
-  test "slide min":
-    let arr = @[0, 3, 8, 7, 6, 7, 7, 12, 14, 10, 11]
-    check: arr.slideMin(4) == @[0, 3, 6, 6, 6, 7, 7, 10]
-    check: arr.slideMin(4,true) == @[0, 3, 6, 6, 6, 7, 7, 10, 10, 10, 11]
