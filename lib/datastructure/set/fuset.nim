@@ -23,7 +23,7 @@ type FUSet = ref object
 proc newFUNode(isLeaf:bool):FUNode = FUNode(isLeaf:isLeaf)
 proc getH(self:FUNode,x:int,r:int):int{.inline.} =
   (x shr (r - FUBit)) and ((1 shl FUBit) - 1)
-proc addImpl(self:FUNode,x:int,r:int,multi:bool = true) : bool =
+proc add(self:FUNode,x:int,r:int,multi:bool = true) : bool =
   let h = self.getH(x,r)
   self.S = self.S or (1 shl h)
   if r <= FUBit : # 最下層
@@ -33,13 +33,13 @@ proc addImpl(self:FUNode,x:int,r:int,multi:bool = true) : bool =
     return
   if self.child[h] == nil:
     self.child[h] = newFUNode(r <= FUBit * 2)
-  return self.child[h].addImpl(x,r - FUBit,multi)
-proc findImpl(self:FUNode,x:int,r:int) : bool =
+  return self.child[h].add(x,r - FUBit,multi)
+proc find(self:FUNode,x:int,r:int) : bool =
   let h = self.getH(x,r)
   if (self.S and (1 shl h)) == 0 : return false
   if r <= FUBit: return true
-  return self.child[h].findImpl(x,r-FUBit)
-proc delImpl(self:FUNode,x:int,r:int) : bool =
+  return self.child[h].find(x,r-FUBit)
+proc del(self:FUNode,x:int,r:int) : bool =
   let h = self.getH(x,r)
   if (self.S and (1 shl h)) == 0 : return false
   if r <= FUBit:  # 最下層
@@ -48,10 +48,19 @@ proc delImpl(self:FUNode,x:int,r:int) : bool =
     if result:
       self.S = self.S and not (1 shl h)
   else:
-    result = self.child[h].delImpl(x,r-FUBit)
+    result = self.child[h].del(x,r-FUBit)
     if self.child[h].S == 0:
       self.S = self.S and not (1 shl h)
-# proc getAllImpl(self:FUNode): seq[int] =
+proc countLeadingZeroBits(x: culonglong): cint {.importc: "__builtin_clzll", cdecl.}
+proc countTrailingZeroBits(x: culonglong): cint {.importc: "__builtin_ctzll", cdecl.}
+proc min(self:FUNode,r:int) : int =
+  let h = cast[culonglong](self.S).countTrailingZeroBits().int
+  if r <= FUBit: return h
+  return (h shl (r - FUBit)) + self.child[h].min(r-FUBit)
+proc max(self:FUNode,r:int) : int =
+  let h = 63 - cast[culonglong](self.S).countLeadingZeroBits().int
+  if r <= FUBit: return h
+  return (h shl (r - FUBit)) + self.child[h].max(r-FUBit)
 
 
 proc newFUSet*(multi:bool):FUSet =
@@ -60,15 +69,18 @@ proc newFUSet*(multi:bool):FUSet =
   result.multi = multi
   result.size = 0
 proc add*(self:FUSet,x:int) =
-  let ok = self.root.addImpl(x + FUOffset,FUMaxBit,self.multi)
+  let ok = self.root.add(x + FUOffset,FUMaxBit,self.multi)
   if ok: self.size += 1
 proc contains*(self:FUSet,x:int) : bool =
-  self.root.findImpl(x + FUOffset,FUMaxBit)
+  self.root.find(x + FUOffset,FUMaxBit)
 proc del*(self:FUSet,x:int) =
-  let ok = self.root.delImpl(x + FUOffset,FUMaxBit)
+  let ok = self.root.del(x + FUOffset,FUMaxBit)
   if ok: self.size -= 1
 proc len*(self:FUSet):int = self.size
-
+proc min*(self:FUSet):int =
+  self.root.min(FUMaxBit) - FUOffset
+proc max*(self:FUSet):int =
+  self.root.max(FUMaxBit) - FUOffset
 import times
 import "../../mathlib/random"
 block:
@@ -83,10 +95,14 @@ block:
       var S = newFUSet(true)
       let n = 1e6.int
       for i in 0..<n: S.add randomBit(30).int
-# when isMainModule:
-#   import unittest
-#   test "FU Bit":
-#     var S = newFUSet(true)
-#     echo 100 in S
-#     for i in 0..<100: S.add i
-#     # for i in 0..<110: echo i in S
+when isMainModule:
+  import unittest
+  test "FU Bit":
+    var S = newFUSet(true)
+    echo 100 in S
+    for i in 0..<100: S.add i
+    echo S.min()
+    echo S.max()
+    for i in -100..<300: S.add i
+    echo S.min()
+    echo S.max()
