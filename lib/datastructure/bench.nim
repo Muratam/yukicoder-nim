@@ -1,5 +1,5 @@
 {.checks:off.}
-# if true: quit 0
+if true: quit 0
 import algorithm,math,tables,sets,times,sequtils,strutils
 import "../mathlib/random"
 template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")

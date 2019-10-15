@@ -29,9 +29,9 @@
 210ms   HashSet
 282ms   Priority Queue
 440ms   Sort + LowerBound
+500ms   Fixed Universe Set
 527ms   Convo Queue
 595ms   intset
-774ms   Fixed Universe Set
 898ms   Sparse Segment Tree
 1182ms  Perfect Treap
 2231ms  Skew Heap            # NO-GC -> 1337ms
@@ -43,7 +43,7 @@
 - 4500ms: RBST
   - 3000ms: Treap  :: ↑ -kth
     - 1200ms: stdSet :: ↑ -cmp
-      -  800ms: FUSet  :: ↑ -type
+      -  500ms: FUSet  :: ↑ -type
     - 450ms: LowerBound :: ↑ -add -del+pop
     - 500ms : Convo  :: ↑ -find -lt -gt -del+pop
       - 300ms : PQueue :: ↑ -max -maxPop
