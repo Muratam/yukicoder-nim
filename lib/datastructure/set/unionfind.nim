@@ -25,7 +25,8 @@ proc count*(self:var UnionFind,x:int):int = # 木毎の要素数(最初は全て
     if self.root(p) == root: result += 1
 
 # https://ei1333.github.io/luzhiled/snippets/structure/union-find.html
-# UnionFindの拡張 : undo可能 / 重み付き / 2部グラフの頂点彩色
+# UnionFindの拡張 : undo可能 / 2部グラフの頂点彩色
+# 可換群に対して重み付きUnionFindを使える(例:親との差分をオンラインで保持)
 
 when isMainModule:
   import unittest

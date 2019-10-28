@@ -13,5 +13,14 @@ proc scan(): int =
 # proc scanf(formatstr: cstring){.header: "<stdio.h>", varargs.}
 # proc scan(): int = scanf("%lld\n",addr result)
 
+proc deduplicated*[T](arr: seq[T]): seq[T] =
+  result = @[]
+  for a in arr:
+    if result.len > 0 and result[^1] == a : continue
+    result.add a
+
+
 let n = scan()
-let A = newSeqWith(n,scan())
+let S = newSeqWith(n,getchar_unlocked())
+let S2 = S.deduplicated()
+echo S2.len

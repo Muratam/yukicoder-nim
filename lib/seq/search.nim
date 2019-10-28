@@ -69,7 +69,7 @@ proc termarySearch[T,S](slice:Slice[T],f:proc(x:T):S,searchType:static[SearchTyp
 #  ... [lowerBound ... ][upperBound ...
 #  ... [x:         ... ][succ(x):   ...
 import algorithm
-when not defined(upperBound) : # Nim0.13.0には無いため
+when not declared(upperBound) : # Nim0.13.0には無いため
   proc upperBound[T](a: openArray[T], key: T): int =
     result = a.low
     var count = a.high - a.low + 1

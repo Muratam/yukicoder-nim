@@ -13,5 +13,7 @@ proc scan(): int =
 # proc scanf(formatstr: cstring){.header: "<stdio.h>", varargs.}
 # proc scan(): int = scanf("%lld\n",addr result)
 
-let n = scan()
-let A = newSeqWith(n,scan())
+let a = scan()
+let b = scan()
+let ans = a - 2 * b
+echo 0.max(ans)

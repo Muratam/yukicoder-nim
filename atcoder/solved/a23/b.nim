@@ -14,4 +14,9 @@ proc scan(): int =
 # proc scan(): int = scanf("%lld\n",addr result)
 
 let n = scan()
-let A = newSeqWith(n,scan())
+let D = newSeqWith(n,scan())
+var ans = 0
+for i in 0..<n:
+  for j in (i+1)..<n:
+    ans += D[i] * D[j]
+echo ans

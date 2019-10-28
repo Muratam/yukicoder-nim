@@ -12,7 +12,7 @@ proc deduplicated*[T](arr: seq[T]): seq[T] =
 # 最長{広義,}増加部分列 O(NlogN)
 # verify https://chokudai_s001.contest.atcoder.jp/tasks/chokudai_S001_h
 import algorithm
-when not defined(upperBound) :
+when not declared(upperBound) :
   proc upperBound[T](a: openArray[T], key: T): int =
     result = a.low
     var count = a.high - a.low + 1
