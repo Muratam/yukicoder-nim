@@ -140,23 +140,27 @@ proc bfs() =
       let next = now + d
       if mat[next] != Empty: continue
       q.add((next,(-d).fromDir))
-# 通らない道は消す
+# 各ロボットが通る道だけ残す
 proc simplify() =
   var route = newSeqWith(n,newSeqWith(n,false))
   for r in robots:
-    var p = r.pos
-    # ゴール不可能
-    if mat[p] == Empty: continue
-    while mat[p] != BGoal:
-      route[p] = true
-      p = p + mat[p].toDir
+    var pos = r.pos
+    var dir = r.dir
+    # ゴール不可能なロボット
+    if mat[pos] == Empty: continue
+    # ゴールまで
+    while mat[pos] != BGoal:
+      let matDir = mat[pos].toDir
+      if matDir != dir:
+        route[pos] = true
+      pos = pos + matDir
+      dir = matDir
   for x in 0..<n:
     for y in 0..<n:
       let p : Pos = (x,y)
       if route[p]: continue
       if mat[p] in [BL,BR,BU,BD]:
         mat[p] = Empty
-
 
 bfs()
 simplify()
