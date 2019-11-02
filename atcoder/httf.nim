@@ -51,7 +51,7 @@ proc scan(): int =
     result = 10 * result + k.ord - '0'.ord
 type Pos = tuple[x,y:int]
 type Robot = tuple[pos,dir:Pos]
-type Block = enum Empty,BGoal,BBlock,BL,BR,BU,BD,
+type Block = enum Empty,BGoal,BBlock,BL,BR,BU,BD
 const dp4 : seq[Pos] = @[(-1,0),(1,0),(0,-1),(0,1)]
 proc toDir(b:Block):Pos =
   if b == BL : return (-1,0)
@@ -116,11 +116,15 @@ let b = scan() # 300
 let goal = scanPos()
 let robots = newSeqWith(m,scanRobot())
 let blocklist = newSeqWith(b,scanPos())
-var mat = newSeqWith(n,newSeqWith(n,Empty))
+var mat = newSeqWith(n,newSeqWith(n,Empty)) # 床
+var initRobMat = newSeqWith(n,newSeqWith(n,Empty)) # ロボットの初期位置
 block: # make mat
   mat[goal] = BGoal
-  for b in blocklist: mat[b] = BBlock
-# とりあえず最低限動くコードとして置きまくって全員ゴールさせる
+  for b in blocklist:
+    mat[b] = BBlock
+  for r in robots:
+    initRobMat[r.pos] = r.dir.fromDir()
+# とりあえず正解を置く
 proc bfs() =
   type PosKind = tuple[pos:Pos,kind:Block]
   var q = initQueue[PosKind]()
@@ -136,6 +140,24 @@ proc bfs() =
       let next = now + d
       if mat[next] != Empty: continue
       q.add((next,(-d).fromDir))
+# 通らない道は消す
+proc simplify() =
+  var route = newSeqWith(n,newSeqWith(n,false))
+  for r in robots:
+    var p = r.pos
+    # ゴール不可能
+    if mat[p] == Empty: continue
+    while mat[p] != BGoal:
+      route[p] = true
+      p = p + mat[p].toDir
+  for x in 0..<n:
+    for y in 0..<n:
+      let p : Pos = (x,y)
+      if route[p]: continue
+      if mat[p] in [BL,BR,BU,BD]:
+        mat[p] = Empty
+
 
 bfs()
+simplify()
 mat.printAnswer()
