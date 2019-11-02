@@ -53,6 +53,7 @@ type Pos = tuple[x,y:int]
 type Robot = tuple[pos,dir:Pos]
 type Block = enum Empty,BGoal,BBlock,BL,BR,BU,BD
 const dp4 : seq[Pos] = @[(-1,0),(1,0),(0,-1),(0,1)]
+const arrow4 : seq[Block] = @[BL,BR,BU,BD]
 proc toDir(b:Block):Pos =
   if b == BL : return (-1,0)
   if b == BR : return (1,0)
@@ -93,16 +94,17 @@ proc `$`(b:Block): string =
     of BD: "D"
     of BL: "L"
     of BR: "R"
-proc printAnswer(mat:var seq[seq[Block]]) =
-  type Put = tuple[pos:Pos,kind:Block]
-  var puts = newSeq[Put]()
+type Arrow = tuple[pos:Pos,kind:Block] # 設置されている方向のやつ
+proc getArrows(mat:var seq[seq[Block]]): seq[Arrow] =
+  result = @[]
   for x in 0..<mat.len:
     for y in 0..<mat[x].len:
       let k = mat[x][y]
-      if k in [Empty,BGoal,BBlock]: continue
-      puts.add(((x,y),k))
-  echo puts.len
-  for p in puts:
+      if k in arrow4: result.add(((x,y),k))
+proc printAnswer(mat:var seq[seq[Block]]) =
+  let arrows = mat.getArrows()
+  echo arrows.len
+  for p in arrows:
     echo p.pos.y," ",p.pos.x," ",p.kind
 let n = scan() # 40x40
 proc `+`(a,b:Pos):Pos =
@@ -141,13 +143,15 @@ proc bfs() =
       if mat[next] != Empty: continue
       q.add((next,(-d).fromDir))
 # 各ロボットが通る道だけ残す
-proc simplify() =
+proc simplify() : seq[Robot]=
   var route = newSeqWith(n,newSeqWith(n,false))
+  result = @[]
   for r in robots:
     var pos = r.pos
     var dir = r.dir
     # ゴール不可能なロボット
     if mat[pos] == Empty: continue
+    result.add r
     # ゴールまで
     while mat[pos] != BGoal:
       let matDir = mat[pos].toDir
@@ -159,9 +163,40 @@ proc simplify() =
     for y in 0..<n:
       let p : Pos = (x,y)
       if route[p]: continue
-      if mat[p] in [BL,BR,BU,BD]:
+      if mat[p] in arrow4:
         mat[p] = Empty
+# 消しても上手く行く道だけ残す
+proc reduce(okRobots:seq[Robot]) =
+  var initialArrows = mat.getArrows()
+  while true:
+    var validArrows = newSeq[Arrow]()
+    for arrow in initialArrows:
+      let oldArrow = mat[arrow.pos]
+      mat[arrow.pos] = Empty
+      # 閉路検索してもいいが,ダルいので500ターンとかで
+      proc isNeed():bool =
+        for r in okRobots:
+          var pos = r.pos
+          var dir = r.dir
+          var turn = 0
+          while mat[pos] != BGoal:
+            if mat[pos] == BBlock:
+              return true
+            if turn > 500:
+              return true
+            if mat[pos] != Empty:
+              dir = mat[pos].toDir
+            pos = pos + dir
+            turn += 1
+        return false
+      if isNeed():
+        mat[arrow.pos] = oldArrow
+        validArrows.add arrow
+    if initialArrows.len == validArrows.len:
+      break
+    initialArrows = validArrows
 
 bfs()
-simplify()
+let okRobots = simplify()
+okRobots.reduce()
 mat.printAnswer()
