@@ -2,11 +2,11 @@
 # 追加・最近傍探索: O(log N)
 # 削除は未実装
 type
-  Pos[T] = tuple[x,y:T]
+  Pos*[T] = tuple[x,y:T]
   KDNode2D[T] = ref object
     pos: Pos[T]
     left,right: KDNode2D[T]
-  KDTree2D[T] = ref object
+  KDTree2D*[T] = ref object
     root: KDNode2D[T]
     size: int
 proc distance[T](a,b:Pos[T]): T =
@@ -14,7 +14,7 @@ proc distance[T](a,b:Pos[T]): T =
 proc newKDNode2D[T](pos:Pos[T]):KDNode2D[T] =
   new(result)
   result.pos = pos
-proc newKDTree2D[T]():KDTree2D[T] = new(result)
+proc newKDTree2D*[T]():KDTree2D[T] = new(result)
 proc add[T](self:KDNode2D[T],isX:bool,pos:Pos[T]):KDNode2D[T] =
   if self == nil:
     return newKDNode2D(pos)
@@ -47,11 +47,11 @@ proc findNearest[T](self:KDNode2D[T],isX:bool,pos:Pos[T],nowDist:T): tuple[pos:P
     (not isX and abs(pos.y - self.pos.y) <= resDist):
     update(not isLeft)
   return (resPos,resDist)
-proc add[T](self:KDTree2D[T],pos:Pos[T]) =
+proc add*[T](self:KDTree2D[T],pos:Pos[T]) =
   self.root = self.root.add(false,pos)
   self.size += 1
-proc len[T](self:KDTree2D[T]):int = self.size
-proc findNearest[T](self:KDTree2D[T],pos:Pos[T]): tuple[pos:Pos[T],dist:T] =
+proc len*[T](self:KDTree2D[T]):int = self.size
+proc findNearest*[T](self:KDTree2D[T],pos:Pos[T]): tuple[pos:Pos[T],dist:T] =
   self.root.findNearest(false,pos,1e12.T)
 
 when isMainModule:
@@ -60,13 +60,15 @@ when isMainModule:
   import "../../mathlib/random"
   template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
   if false:
-    let n = 1e6.int
+    let n = 1e5.int
     stopwatch:
       var kdTree = newKDTree2D[int]()
       for i in 0..<n: kdTree.add((randomBit(20),randomBit(20)))
-    for i in 0..<10:
-      let pos = (randomBit(20),randomBit(20))
-      echo pos,kdTree.findNearest(pos)
+    var sumD = 0
+    stopwatch:
+      for i in 0..<n:
+        let pos = (randomBit(20),randomBit(20))
+        sumD += kdTree.findNearest(pos).dist
   test "KDTree":
     var kdTree = newKDTree2D[int]()
     kdTree.add((0,10))
