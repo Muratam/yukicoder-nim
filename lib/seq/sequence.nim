@@ -9,8 +9,33 @@ proc argMax[T](arr:seq[T]): int =
   for i,a in arr:
     if a == maxVal: return i
 
+# 0-indexed で k番目のインデックスを 平均 O(N)
+# http://www.prefield.com/algorithm/sort/quickselect.html
+# 毎回全てシャッフルしてからやれば、コーナーケースは通せる.
+proc nthElement[T](arr:var seq[T],n:int): T =
+  var n = n
+  var l = 0
+  var r = arr.len - 1
+  while l <= r:
+    let p = arr[(l + r) shr 1]
+    var i = l - 1
+    var j = r + 1
+    while true:
+      while true:
+        i += 1
+        if arr[i] >= p: break
+      while true:
+        j -= 1
+        if arr[j] <= p: break
+      if i >= j : break
+      arr[i].swap arr[j]
+    if n == i - l: return arr[i]
+    elif n < i - l: r = i - 1
+    else:
+      n -= i - l + 1
+      l = j + 1
+
 # 区間を指定してクイックソート
-# Nim0.13.0 だと同等以上の速度で, Nim0.20.0 だと2倍くらい速い.
 # `<` 関数を使ってソートするので定義すること.ソート順は最後の引数で指定.
 import "../mathlib/random"
 proc countTrailingZeroBits(x: culonglong): cint {.importc: "__builtin_ctzll", cdecl.}
@@ -81,6 +106,9 @@ proc joinAsDecimal*(A:seq[int]):int =(for a in A: result = result * 10 + a)
 
 when isMainModule:
   import unittest
+  import times
+  template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
+
   test "sequence":
     check: @[1,3,7,-1,10,5,3,10,-1].argMin() == 3
     check: @[1,3,7,-1,10,5,3,10,-1].argMax() == 4
@@ -104,9 +132,15 @@ when isMainModule:
         var T2 = T1
         T2.quickSort(true)
         check: T1 == T2
-
-  import times
-  template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
+  test "nthElement":
+    var x = @[9, 8, 7, 6, 5, 0, 1, 2, 3, 4]
+    for i in 0..9:
+      check: i == x.nthElement(i)
+    # let n = 1e6.int
+    # for i in 0..10:
+    #   var S1 = newSeqWith(n,randomBit(50))
+    #   stopwatch:
+    #     echo S1.nthElement(random(n))
   proc cmp1(x,y:int):int {.noSideEffect.}= x - y
   if true:
     # ソートのベンチ

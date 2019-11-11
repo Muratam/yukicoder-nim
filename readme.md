@@ -53,7 +53,7 @@
   - TestGraph :: テスト用のグラフ(木・DAG・制限なし)を生成・可視化.
 - `lib/seq/` :: seqを操作
   - search : {二,三}分探索 / {lower,upper}Bound(`< <= > >=`)
-  - sequence : arg{min,max} / quicksortAt / 10進数<->配列
+  - sequence : arg{min,max} / nthElement / quicksortAt / 10進数<->配列
   - filter : 最長{増加,共通}部分列 / deduplicate / 座標圧縮
   - iteration : 全順列 / 全ペア順列 / 階段走査
   - slide : スライド最小値
