@@ -59,11 +59,18 @@ when isMainModule:
   import times
   import "../../mathlib/random"
   template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
-  let n = 1e6.int
-  block:
+  if false:
+    let n = 1e6.int
     stopwatch:
       var kdTree = newKDTree2D[int]()
       for i in 0..<n: kdTree.add((randomBit(20),randomBit(20)))
     for i in 0..<10:
       let pos = (randomBit(20),randomBit(20))
       echo pos,kdTree.findNearest(pos)
+  test "KDTree":
+    var kdTree = newKDTree2D[int]()
+    kdTree.add((0,10))
+    kdTree.add((1000,50))
+    kdTree.add((1000,1050))
+    check: kdTree.len == 3
+    check: kdTree.findNearest((900,800)) == ((1000,1050),350)
