@@ -50,9 +50,9 @@ proc contains[T](self:KDNode2D[T],isX:bool,pos:Pos[T]) : bool =
   else:
     return self.right.contains(not isX,pos)
 proc findNearest[T](self:KDNode2D[T],distanceFunc : proc (a,b:Pos[T]): T,isX:bool,pos:Pos[T],nowDist:T): tuple[pos:Pos[T],dist:T] =
-  if self == nil: return ((-1.T,-1.T),1e12.T)
+  if self == nil: return (pos,nowDist)
   var resDist = nowDist
-  var resPos = (0.T,0.T)
+  var resPos : Pos[T]
   if self.sameCount > 0:
     let dist = distanceFunc(self.pos,pos)
     if dist < resDist:
@@ -69,8 +69,8 @@ proc findNearest[T](self:KDNode2D[T],distanceFunc : proc (a,b:Pos[T]): T,isX:boo
       resPos = found.pos
       resDist = found.dist
   update(isLeft)
-  if (isX and abs(pos.x - self.pos.x) < resDist) or
-    (not isX and abs(pos.y - self.pos.y) < resDist):
+  if (isX and distanceFunc(pos,(self.pos.x,pos.y)) < resDist) or
+    (not isX and distanceFunc(pos,(pos.x,self.pos.y)) < resDist):
     update(not isLeft)
   return (resPos,resDist)
 proc newKDTree2D*[T]():KDTree2D[T] = new(result)
@@ -106,7 +106,7 @@ when isMainModule:
   import "../../mathlib/random"
   template stopwatch(body) = (let t1 = cpuTime();body;stderr.writeLine "TIME:",(cpuTime() - t1) * 1000,"ms")
   if false:
-    let n = 1e5.int
+    let n = 1e6.int
     stopwatch:
       var kdTree = newKDTree2D[int]()
       for i in 0..<n: kdTree.add((randomBit(20),randomBit(20)))
