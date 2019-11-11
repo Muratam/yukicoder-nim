@@ -2,7 +2,7 @@
 # https://topcoder.g.hatena.ne.jp/spaghetti_source/20120908/1347059626
 # 追加・最近傍探索: O(log N)
 # 削除は再構築しないので徐々に遅くなっていく.
-# => N回find/eraseしたら根から(平衡なKD木を)再構築とかすると多分 O(logN)になると思います.
+# => N回find/eraseしたら根から(平衡なKD木を)再構築すると多分 O(logN)になると思います.
 type
   Pos*[T] = tuple[x,y:T]
   KDNode2D[T] = ref object
@@ -101,8 +101,8 @@ proc chebyshevDistance*[T](a,b:Pos[T]): T = # 四角
   abs(a.x - b.x).max(abs(a.y - b.y))
 
 import algorithm
+# O(N(logN)^2)
 proc buildKDNode[T](poses:seq[Pos[T]],isX:bool):KDNode2D[T] =
-  # WARN: 毎回ソートが入るのがちょっと気になる
   if poses.len == 0 : return nil
   let poses =
     if isX: poses.sortedByIt(it.x)
@@ -160,4 +160,4 @@ when isMainModule:
     check: (10,10) notin kdTree
     kdTree.add((0,10))
     check: kdTree.len == 3
-    echo toSeq(kdTree)
+    # echo toSeq(kdTree)
