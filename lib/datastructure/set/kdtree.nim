@@ -100,6 +100,35 @@ proc manhattanDistance*[T](a,b:Pos[T]): T = # ひし形
 proc chebyshevDistance*[T](a,b:Pos[T]): T = # 四角
   abs(a.x - b.x).max(abs(a.y - b.y))
 
+import algorithm
+proc buildKDNode[T](poses:seq[Pos[T]],isX:bool):KDNode2D[T] =
+  # WARN: 毎回ソートが入るのがちょっと気になる
+  if poses.len == 0 : return nil
+  let poses =
+    if isX: poses.sortedByIt(it.x)
+    else: poses.sortedByIt(it.y)
+  new(result)
+  let mid = poses.len div 2
+  var midP = mid
+  var midM = mid
+  result.pos = poses[mid]
+  result.sameCount = 1
+  for i in (mid+1)..<poses.len:
+    if poses[i] != poses[mid]: break
+    result.sameCount += 1
+    midP = i
+  for i in (mid-1).countDown(0):
+    if poses[i] != poses[mid]: break
+    result.sameCount += 1
+    midM = i
+  result.left = poses[0..<midM].buildKDNode(not isX)
+  result.right = poses[midP+1..^1].buildKDNode(not isX)
+proc buildKDTree2D*[T](poses:seq[Pos[T]]):KDTree2D[T] =
+  new(result)
+  result.size = poses.len
+  result.root = poses.buildKDNode(false)
+
+
 when isMainModule:
   import unittest
   import times,sequtils
