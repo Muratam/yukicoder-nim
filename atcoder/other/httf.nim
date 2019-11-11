@@ -184,7 +184,7 @@ let b = scan() # 300
 let goal = scanPos()
 let robots = newSeqWith(m,scanRobot())
 let blocklist = newSeqWith(b,scanPos())
-proc solve(bfsIsQueue:bool,perm:seq[int]):tuple[mat:seq[seq[Block]],score:int] =
+proc solve(bfsIsQueue:bool,perm:seq[int]):tuple[mat:seq[seq[Block]],score:int,okRobots:seq[Robot]] =
   var mat = newSeqWith(n,newSeqWith(n,Empty)) # 床
   var initRobMat = newSeqWith(n,newSeqWith(n,Empty)) # ロボットの初期位置
   block: # make mat
@@ -213,6 +213,7 @@ proc solve(bfsIsQueue:bool,perm:seq[int]):tuple[mat:seq[seq[Block]],score:int] =
         while mat[next] == Empty:
           q.add((next,(-d).fromDir,dist+1))
           next = next + d
+
   # 各ロボットが通る道だけ残す
   proc simplify() : seq[Robot]=
     var route = newSeqWith(n,newSeqWith(n,false))
@@ -236,36 +237,79 @@ proc solve(bfsIsQueue:bool,perm:seq[int]):tuple[mat:seq[seq[Block]],score:int] =
         if route[p]: continue
         if mat[p] in arrow4:
           mat[p] = Empty
+  #
+  proc isNeeded(okRobots:seq[Robot]):bool =
+    for r in okRobots:
+      var pos = r.pos
+      var dir = r.dir
+      var turn = 0
+      while mat[pos] != BGoal:
+        if mat[pos] == BBlock:
+          return true
+        if turn > 500:
+          return true
+        if mat[pos] != Empty:
+          dir = mat[pos].toDir
+        pos = pos + dir
+        turn += 1
+    return false
+
   # 消しても上手く行く道だけ残す
   proc reduce(okRobots:seq[Robot]) =
-    var initialArrows = mat.getArrows()
+    var nowArrows = mat.getArrows()
     while true:
-      var validArrows = newSeq[Arrow]()
-      for arrow in initialArrows:
+      var nextArrows = newSeq[Arrow]()
+      for arrow in nowArrows:
         let oldArrow = mat[arrow.pos]
         mat[arrow.pos] = Empty
-        # 閉路検索してもいいが,ダルいので500ターンとかで
-        proc isNeed():bool =
-          for r in okRobots:
-            var pos = r.pos
-            var dir = r.dir
-            var turn = 0
-            while mat[pos] != BGoal:
-              if mat[pos] == BBlock:
-                return true
-              if turn > 500:
-                return true
-              if mat[pos] != Empty:
-                dir = mat[pos].toDir
-              pos = pos + dir
-              turn += 1
-          return false
-        if isNeed():
+        # 閉路検索はダルいので500ターンとかで
+        if okRobots.isNeeded():
           mat[arrow.pos] = oldArrow
-          validArrows.add arrow
-      if initialArrows.len == validArrows.len:
+          nextArrows.add arrow
+      if nowArrows.len == nextArrows.len:
         break
-      initialArrows = validArrows
+      nowArrows = nextArrows
+    # ロボットが上に乗ってる系を回転させてみる.
+    nowArrows = mat.getArrows()
+    while true:
+      for arrow in nowArrows:
+        # ロボットが上に乗ってない
+        if initRobMat[arrow.pos] == Empty:
+          continue
+        let oldArrow = mat[arrow.pos]
+        # 別のやつに消された
+        if oldArrow == Empty:
+          continue
+        var target = arrow.pos
+        block: # 必ずゴールか矢印に着くはず
+          var dir = arrow.kind.toDir()
+          var pos = arrow.pos + dir
+          while mat[pos] != BGoal:
+            if mat[pos] != Empty:
+              target = pos
+              break
+            pos = pos + dir
+        if mat[target] == BGoal:
+          continue
+        assert target != arrow.pos
+        # けしてみる
+        let oldTargetArrow = mat[target]
+        mat[target] = Empty
+        var otherDir = Empty
+        for other in arrow4:
+          if other == oldArrow: continue
+          mat[arrow.pos] = other
+          if not okRobots.isNeeded():
+            otherDir = other
+            break
+        if otherDir == Empty:
+          mat[target] = oldTargetArrow
+          mat[arrow.pos] = oldArrow
+      var nextArrows = mat.getArrows()
+      if nowArrows.len == nextArrows.len:
+        break
+      nowArrows = nextArrows
+
   if bfsIsQueue:
     var q = initQueue[PosKindDist]()
     q.bfs()
@@ -301,16 +345,198 @@ proc solve(bfsIsQueue:bool,perm:seq[int]):tuple[mat:seq[seq[Block]],score:int] =
   let okRobots = simplify()
   okRobots.reduce()
   let score = okRobots.calcScore()
+  return (mat,score,okRobots)
+proc solve2(perm:seq[int],okRobots:seq[Robot]):tuple[mat:seq[seq[Block]],score:int] =
+  var mat = newSeqWith(n,newSeqWith(n,Empty)) # 床
+  var isGoalMat = newSeqWith(n,newSeqWith(n,false)) # この上に乗れば勝ち
+  var goals = @[goal]
+  proc updateGoal(pos:Pos) =
+    if isGoalMat[pos] : return
+    isGoalMat[pos] = true
+    goals.add pos
+  block: # make mat
+    mat[goal] = BGoal
+    goal.updateGoal()
+    for b in blocklist:
+      mat[b] = BBlock
+  # goals からベタなmapを生成
+  var allowed = newSeqWith(n,newSeqWith(n,Empty))
+  proc bfs(mat:seq[seq[Block]]): tuple[mat:seq[seq[Block]],count:seq[seq[int]]] =
+    var resMat = mat
+    var resCnt = newSeqWith(n,newSeqWith(n,0))
+    # 曲がる回数が少ない順に埋めていく
+    type PosKindDist = tuple[pos:Pos,kind:Block,dist:int]
+    var q = initQueue[PosKindDist]()
+    for g in goals:
+      for i in 0..<4:
+        let d = dp4[perm[i]]
+        var next = g + d
+        while resMat[next] == Empty:
+          resCnt[next] = 1
+          q.add((next,(-d).fromDir,1))
+          next = next + d
+    while q.len > 0:
+      let (now,kind,dist) = q.pop()
+      if resMat[now] != Empty: continue
+      if allowed[now] == Empty:
+        resMat[now] = kind
+      elif allowed[now] == kind:
+        resMat[now] = allowed[now]
+      else:
+        continue
+      for i in 0..<4:
+        let d = dp4[perm[i]]
+        var next = now + d
+        while resMat[next] == Empty:
+          resCnt[next] = dist + 1
+          q.add((next,(-d).fromDir,dist + 1))
+          next = next + d
+    return (resMat,resCnt)
+  # 各ロボットが通る道だけ残す
+  proc simplify(mat:var seq[seq[Block]],robots:seq[Robot]) =
+    var route = newSeqWith(n,newSeqWith(n,false))
+    for r in robots:
+      var pos = r.pos
+      var dir = r.dir
+      # ゴールまで
+      while mat[pos] != BGoal:
+        let matDir = mat[pos].toDir
+        if matDir != dir:
+          route[pos] = true
+        if allowed[pos] == Empty:
+          allowed[pos] = mat[pos]
+        pos = pos + matDir
+        dir = matDir
+    for x in 0..<n:
+      for y in 0..<n:
+        let p : Pos = (x,y)
+        if route[p]:
+          updateGoal(p)
+          continue
+        if mat[p] in arrow4:
+          mat[p] = Empty
+  proc calcScore(okRobots:seq[Robot]) : int =
+    var route = newSeqWith(n,newSeqWith(n,false))
+    for r in okRobots:
+      var pos = r.pos
+      var dir = r.dir
+      while mat[pos] != BGoal:
+        route[pos] = true
+        if mat[pos] != Empty:
+          dir = mat[pos].toDir
+        pos = pos + dir
+    result = 1
+    for x in 0..<n:
+      for y in 0..<n:
+        if route[x][y]: result += 1
+    return result + 1000 * okRobots.len() - 10 * mat.getArrows().len()
+  #
+  proc isNeeded(okRobots:seq[Robot]):bool =
+    for r in okRobots:
+      var pos = r.pos
+      var dir = r.dir
+      var turn = 0
+      while mat[pos] != BGoal:
+        if mat[pos] == BBlock:
+          return true
+        if turn > 500:
+          return true
+        if mat[pos] != Empty:
+          dir = mat[pos].toDir
+        pos = pos + dir
+        turn += 1
+    return false
+  # 消しても上手く行く道だけ残す
+  proc reduce(okRobots:seq[Robot]) =
+    var nowArrows = mat.getArrows()
+    while true:
+      var nextArrows = newSeq[Arrow]()
+      for arrow in nowArrows:
+        let oldArrow = mat[arrow.pos]
+        mat[arrow.pos] = Empty
+        # 閉路検索はダルいので500ターンとかで
+        if okRobots.isNeeded():
+          mat[arrow.pos] = oldArrow
+          nextArrows.add arrow
+      if nowArrows.len == nextArrows.len:
+        break
+      nowArrows = nextArrows
+    # ロボットが上に乗ってる系を回転させてみる.
+    nowArrows = mat.getArrows()
+    while true:
+      for arrow in nowArrows:
+        # # ロボットが上に乗ってない
+        # if initRobMat[arrow.pos] == Empty:
+        #   continue
+        let oldArrow = mat[arrow.pos]
+        # 別のやつに消された
+        if oldArrow == Empty:
+          continue
+        var target = arrow.pos
+        block: # 必ずゴールか矢印に着くはず
+          var dir = arrow.kind.toDir()
+          var pos = arrow.pos + dir
+          while mat[pos] != BGoal:
+            if mat[pos] != Empty:
+              target = pos
+              break
+            pos = pos + dir
+        if mat[target] == BGoal:
+          continue
+        assert target != arrow.pos
+        # けしてみる
+        let oldTargetArrow = mat[target]
+        mat[target] = Empty
+        var otherDir = Empty
+        for other in arrow4:
+          if other == oldArrow: continue
+          mat[arrow.pos] = other
+          if not okRobots.isNeeded():
+            otherDir = other
+            break
+        if otherDir == Empty:
+          mat[target] = oldTargetArrow
+          mat[arrow.pos] = oldArrow
+      var nextArrows = mat.getArrows()
+      if nowArrows.len == nextArrows.len:
+        break
+      nowArrows = nextArrows
+  #
+  proc goalLength(x:Pos) : int = (goal.sub x).len
+  var leftRobots = robots.sortedByIt(-it.pos.goalLength)
+  while true:
+    var (nextMat,nextCnt) = mat.bfs()
+    leftRobots = leftRobots.filterIt(nextCnt[it.pos] > 0)
+    # WARN: 同じくらいの距離でも一番遠いやつの方がよいと思います
+    leftRobots = leftRobots.sortedByIt(-nextCnt[it.pos])
+    if leftRobots.len == 0 : break
+    let left = leftRobots[^1]
+    leftRobots = leftRobots[0..^2]
+    nextMat.simplify(okRobots)
+    mat = nextMat
+    if leftRobots.len == 0 : break
+  okRobots.reduce()
+  let score = okRobots.calcScore()
   return (mat,score)
 
+
+# 制限時間に注意
+let t1 = cpuTime()
 var mat = newSeqWith(1,newSeqWith(1,Empty))
 var score = 0
 var perm = toSeq(0..3)
 while true:
-  for isQueue in [false,true]:
-    var (tmpMat,tmpScore) = solve(isQueue,perm)
+  var (tmpMat,tmpScore,okRobots) = solve(true,perm)
+  # if tmpScore > score:
+  #   score = tmpScore
+  #   mat = tmpMat
+  block:
+    var (tmpMat,tmpScore) = solve2(perm,okRobots)
     if tmpScore > score:
       score = tmpScore
       mat = tmpMat
   if not perm.nextPermutation(): break
+  let t2 = cpuTime()
+  if t2 - t1 > 2.5:
+    break
 mat.printAnswer()

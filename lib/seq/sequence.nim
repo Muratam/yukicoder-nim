@@ -5,9 +5,9 @@ proc argMin[T](arr:seq[T]): int =
   for i,a in arr:
     if a == minVal: return i
 proc argMax[T](arr:seq[T]): int =
-  let minVal = arr.max()
+  let maxVal = arr.max()
   for i,a in arr:
-    if a == minVal: return i
+    if a == maxVal: return i
 
 # 区間を指定してクイックソート
 # Nim0.13.0 だと同等以上の速度で, Nim0.20.0 だと2倍くらい速い.

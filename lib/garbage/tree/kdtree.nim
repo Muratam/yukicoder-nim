@@ -18,7 +18,6 @@ proc newKDNode[T,S](self:var KDTree[T,S],value:T):KDNode[T] =
   new(result)
   result.value = value
   self.coumt += 1
-
 proc initPos2KDTree*():KDTree[Pos,int] =
   new(result)
   result.root = nil
@@ -57,10 +56,7 @@ proc nearer*[T,S](self:var KDTree[T,S],pos:T,x,y:KDNode[T]) : KDNode[T] =
   let dy = self.distance(y.value,pos)
   if dx < dy : return x
   return y
-
-# proc distPC[T,S](self:var KDTree[T,S],pos,top,bottom:T) : S =
-
-
+proc distPC[T,S](self:var KDTree[T,S],pos,top,bottom:T) : S =
 proc nearestImpl[T,S](self:var KDTree[T,S],now:KDNode[T],pos,top,bottom:T,depth:int) : KDNode[T] =
   var ltop = top
   var rbottom = bottom
@@ -74,10 +70,14 @@ proc nearestImpl[T,S](self:var KDTree[T,S],now:KDNode[T],pos,top,bottom:T,depth:
   if now.right == nil:
     let cand = self.nearestImpl(now.left,pos,ltop,bottom,(depth+1) mod self.dimension)
     return self.nearer(pos,now,cand)
-  if now.value[depth] > pos[depths]:
+  if now.value[depth] > pos[depth]:
     var nearer = now.left.nearestImpl(pos,ltop,bottom,(depth+1) mod self.dimension)
     let distNow = self.distance(pos,top,rbottom)
     let distAnother =
 
 proc getNearerest*[T,S](self:var KDTree[T,S],pos:T) : T =
   return self.nearestImpl(self.root,pos,self.top,self.bottom,0).value
+
+is isMainModule:
+  var kdTree = initPos2KDTree()
+  kdTree.add((0,10))
