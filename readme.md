@@ -20,6 +20,7 @@
     - RBST :: ↑ + 結合・分割・K番目
       - ↑ ＋セグツリ (一点更新, 区間取得)
     - UnionFind : 森のマージ・根の取得 O(1)
+      - 亜種 : +モノイド
     - KDTree2D : 2次元で 追加・最近傍探索 O(logN)
     - bitset : ビット演算の集合. + bitDP(全状態,補集合,superset).
     - PriorityQueue : 最小値検索 O(1), 追加・最小値削除　O(logN)

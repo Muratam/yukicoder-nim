@@ -100,8 +100,8 @@ proc manhattanDistance*[T](a,b:Pos[T]): T = # ひし形
 proc chebyshevDistance*[T](a,b:Pos[T]): T = # 四角
   abs(a.x - b.x).max(abs(a.y - b.y))
 
-import algorithm
-# O(N(logN)^2)
+
+# O(N(logN)^2) => nthElement を使えば NlogNにできる
 proc buildKDNode[T](poses:seq[Pos[T]],isX:bool):KDNode2D[T] =
   if poses.len == 0 : return nil
   let poses =
