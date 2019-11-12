@@ -41,7 +41,7 @@ proc merge*[T](self:var MonoidUnionFind[T],sx,sy:int) : bool {.discardable.} =
   if self.same(sx,sy) : return false
   let srx = self.data[self.root(sx)]
   let sry = self.data[self.root(sy)]
-  self.uf.merge(sx,sy)
+  result = self.uf.merge(sx,sy)
   let r = self.root(sx)
   self.data[r] = self.apply(srx,sry)
 proc rootElem*[T](self: var MonoidUnionFind[T],x:int): T = self.data[self.uf.root(x)]
